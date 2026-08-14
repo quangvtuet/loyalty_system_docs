@@ -14,7 +14,7 @@
 ### Key Architectural Characteristics
 - **Throughput & Latency**: Sustained ingestion of ≥ 500 earn events/second with end-to-end processing latency ≤ 2,000 ms (p95).
 - **Settlement SLA**: Real-time event consumption from core banking within ≤ 60 seconds of transaction settlement.
-- **Data Integrity**: Append-only immutable point ledger, strict FIFO point consumption, and zero duplicate credits via distributed idempotency locks.
+- **Data Integrity**: Append-only immutable Sổ cái (Earning Ledger) (`point_transaction`), mutable Point Balance snapshot (`point_balance`) for fast read access, strict FIFO point consumption, and zero duplicate credits via distributed idempotency locks.
 - **Reporting Isolation**: Complete separation of transactional OLTP datastores from analytical workloads via near-real-time (< 10 min lag) Change Data Capture (CDC) into an analytical Data Warehouse.
 - **Resilience & DR**: Target RTO ≤ 5 minutes, RPO ≤ 10 minutes with multi-AZ failover and automated point batch recovery.
 
@@ -143,7 +143,7 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 
 | Module | Core Responsibility | Domain Entities Owned | Data Store Type |
 |---|---|---|---|
-| **Earning Engine** | Ingests settled events, calculates base & bonus points, manages immutable ledger, enforces FIFO & idempotency, schedules expiry. | `PointTransaction`, `EarnRule`, `EarnEventLog`, `ExpirySchedule` | PostgreSQL (Append-Only Ledger) + Redis (Idempotency Cache) |
+| **Earning Engine** | Ingests settled events, calculates base & bonus points, manages immutable Sổ cái (Earning Ledger) and mutable Point Balance snapshot, enforces FIFO & idempotency, schedules expiry. | `PointTransaction`, `PointBalance`, `EarnRule`, `EarnEventLog`, `ExpirySchedule` | PostgreSQL (Append-Only Ledger + Balance Table) + Redis (Idempotency Cache) |
 | **Tiering System** | Accrues Qualifying Points (QP), performs instant tier upgrades, executes end-of-year batch evaluations, manages 30-day grace periods. | `MemberTier`, `QpLedger`, `TierRule`, `TierEvaluationLog`, `TierEvent` | PostgreSQL (Partitioned Ledger & Snapshot) |
 | **Redemption Engine** | Manages reward catalog, validates point balances, executes atomic FIFO point debits, coordinates partner fulfillment, handles reversals. | `RewardItem`, `RedemptionOrder`, `FulfillmentRecord` | PostgreSQL (ACID Transactions) + Redis (Debit Locks) |
 | **Program Management** | Program lifecycle, campaign configuration & priority, rule versioning, member enrollments, partner registry & OAuth gateway, manual adjustments. | `LoyaltyProgram`, `Campaign`, `Enrollment`, `Partner`, `ConfigVersionLog`, `ManualAdjustmentLog` | PostgreSQL (Temporal Tables & WORM Audit) |
@@ -242,5 +242,5 @@ flowchart TD
 ### High Availability & DR Guarantees
 - **Failover**: Automated primary database promotion via Patroni / cloud managed RDS within **< 60 seconds**.
 - **Recovery Time Objective (RTO)**: **≤ 5 minutes** for full transactional recovery.
-- **Recovery Point Objective (RPO)**: **≤ 10 minutes** for data warehouse analytics; **0 data loss (RPO = 0)** for confirmed point ledger entries.
+- **Recovery Point Objective (RPO)**: **≤ 10 minutes** for data warehouse analytics; **0 data loss (RPO = 0)** for confirmed Sổ cái (Earning Ledger) entries.
 - **Backup & Archival**: Continuous WAL archiving + automated snapshot every 6 hours, tested quarterly.

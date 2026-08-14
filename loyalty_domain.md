@@ -29,6 +29,7 @@ Automatically calculates and credits loyalty points to a customer's account base
 - **Bonus Campaign**: A time-limited multiplier or flat bonus applied on top of the base earn rate (e.g., the **"Double Points August"** campaign awards **2× points** on all eligible spend from 1 Aug – 31 Aug).
 - **Expiry**: Points carry an expiry date set at credit time. Two policies supported: **rolling** (12 months from earn date) or **fixed** (31 December of the earn year). Members are notified **30 days** and **7 days** before their points expire.
 - **Pending vs. Confirmed Points**: Points may be held in a pending state until a transaction is fully settled, then confirmed/credited.
+- **Sổ cái (Earning Ledger)**: Hệ thống ghi sổ chuyên dụng của Earning Engine. Mọi giao dịch cộng điểm (base, bonus) hoặc trừ điểm (expire, reversed) đều được ghi nhận như một bút toán không thể sửa xóa (append-only, immutable). Đây là nguồn sự thật duy nhất (single source of truth) cho số dư điểm của thành viên.
 
 ### Key Entities
 | Entity | Description |

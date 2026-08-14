@@ -86,12 +86,18 @@ curl -X POST http://localhost:8081/api/v1/partners/earn \
 *Kết quả mong đợi:* Trả về `202 Accepted` và sinh ra log báo tính điểm thành công.
 *Kiểm tra Idempotency:* Nếu bạn chạy lại nguyên lệnh curl trên, hệ thống sẽ báo `409 Conflict - Duplicate transaction detected` nhờ vào Redis Idempotency.
 
-## Cách kiểm tra dữ liệu trong Database
+## Cách kiểm tra dữ liệu Sổ cái (Earning Ledger) trong Database
 
-Dữ liệu lịch sử cộng điểm được lưu vào bảng `point_transaction` trong PostgreSQL. Bạn có thể kiểm tra trực tiếp qua Docker container bằng lệnh sau:
+Dữ liệu lịch sử cộng điểm được ghi nhận không thể sửa xóa (append-only) vào **Sổ cái (Earning Ledger)** thông qua bảng `point_transaction`. Đồng thời, tổng số dư hiện tại của khách hàng được cập nhật đồng bộ vào bảng **Snapshot Số dư (`point_balance`)**. Bạn có thể kiểm tra trực tiếp qua Docker container bằng lệnh sau:
 
+**1. Kiểm tra lịch sử giao dịch (Sổ cái):**
 ```bash
 docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT * FROM point_transaction;"
+```
+
+**2. Kiểm tra tổng số dư hiện tại (Snapshot):**
+```bash
+docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT * FROM point_balance;"
 ```
 
 Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, DataGrip, pgAdmin) để kết nối vào Database với thông số:

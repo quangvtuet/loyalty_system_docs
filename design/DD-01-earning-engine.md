@@ -9,7 +9,7 @@
 
 ## 1. Module Overview & Responsibilities
 
-The **Earning Engine** is responsible for consuming settled transaction events, evaluating base and bonus earn rules, calculating awarded points with mathematical precision (FLOOR rounding), appending immutable point ledger records, scheduling expiry timelines, and emitting QP accrual events to the Tiering System.
+The **Earning Engine** is responsible for consuming settled transaction events, evaluating base and bonus earn rules, calculating awarded points with mathematical precision (FLOOR rounding), appending immutable Sổ cái (Earning Ledger) records, scheduling expiry timelines, and emitting QP accrual events to the Tiering System.
 
 ---
 
@@ -35,9 +35,9 @@ flowchart TB
     end
 
     subgraph Persistence["4. Ledger & Expiry Persistence"]
-        LEDGER_SVC[Point Ledger Service]
+        LEDGER_SVC[Earning Ledger Service]
         EXPIRY_SCHED[Expiry Scheduler Service]
-        DB_LEDGER[(PostgreSQL<br/>point_transaction)]
+        DB_LEDGER[(PostgreSQL<br/>point_transaction, point_balance)]
     end
 
     subgraph Egress["5. Event Publishing"]
@@ -94,7 +94,7 @@ sequenceDiagram
     participant Consumer as Earning Ingestion Consumer
     participant Redis as Redis Idempotency Cache
     participant Engine as Earn Rule Evaluator
-    participant Ledger as Point Ledger DB
+    participant Ledger as Sổ cái (Earning Ledger) DB
     participant Kafka as Kafka Event Broker
 
     CB->>Consumer: Settled Transaction Event ($50 spend, Member Gold)
@@ -108,7 +108,9 @@ sequenceDiagram
     Engine->>Engine: Total Points = 150 pts
 
     Consumer->>Ledger: INSERT point_transaction (EARN, 75 pts, CONFIRMED, expiry: NOW + 12M)
+    Consumer->>Ledger: UPDATE point_balance SET confirmed_balance += 75
     Consumer->>Ledger: INSERT point_transaction (BONUS, 75 pts, CONFIRMED, expiry: NOW + 12M, campaign_id)
+    Consumer->>Ledger: UPDATE point_balance SET confirmed_balance += 75
     Consumer->>Kafka: Publish loyalty.earning.qp_accrued (member_id, qp=50)
 
     Consumer-->>CB: Commit Kafka Offset (Processed in < 150ms)
@@ -122,7 +124,7 @@ sequenceDiagram
     participant CB as Core Banking Feed
     participant Consumer as Earning Ingestion Consumer
     participant Redis as Redis Idempotency Cache
-    participant Ledger as Point Ledger DB
+    participant Ledger as Sổ cái (Earning Ledger) DB
 
     CB->>Consumer: Retransmitted Transaction Event (Same source_txn_id)
     Consumer->>Redis: SET SHA256(txn_id + prog_id) NX EX 86400
@@ -138,7 +140,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant Cron as Expiry Sweep Job (Daily 00:01 UTC)
-    participant Ledger as Point Ledger DB
+    participant Ledger as Sổ cái (Earning Ledger) DB
     participant Notif as Notification Service
     participant DW as Data Warehouse CDC
 

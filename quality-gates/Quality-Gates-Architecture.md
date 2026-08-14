@@ -70,7 +70,7 @@ Design Approval       Readiness                   Readiness             Readines
 | ID | Criterion | Evidence Required | Status |
 |----|-----------|------------------|--------|
 | G01-03-001 | Entity-Relationship (ER) diagram approved for core entities: `Member`, `LoyaltyProgram`, `EarnRule`, `PointTransaction`, `MemberTier`, `TierRule`, `RedemptionOrder`, `RewardItem`, `FulfillmentRecord`, `Campaign`, `Partner`, `Enrollment` | ER Diagram v1.0 | 🔲 |
-| G01-03-002 | Point ledger is designed as an **append-only immutable ledger** — no UPDATE/DELETE on point transactions | Data Model ADR | 🔲 |
+| G01-03-002 | Point ledger is designed as an **append-only immutable Sổ cái (Earning Ledger)** — no UPDATE/DELETE on point transactions | Data Model ADR | 🔲 |
 | G01-03-003 | FIFO ordering is enforceable by the data model: `PointTransaction` has `earn_date` and `expiry_date` indexed for efficient FIFO consumption (FR-01-053, FR-03-021) | Index Design Doc | 🔲 |
 | G01-03-004 | Configuration versioning is modeled: all rule tables (`EarnRule`, `TierRule`, `RedemptionRule`) have `valid_from`, `valid_to`, and `version` columns | Data Model | 🔲 |
 | G01-03-005 | QP ledger is separate from the redeemable point ledger (FR-02-001) — no shared table | Data Model | 🔲 |
@@ -126,7 +126,7 @@ Design Approval       Readiness                   Readiness             Readines
 
 | ID | Criterion | Source | Evidence Required | Status |
 |----|-----------|--------|------------------|--------|
-| G02-03-001 | Redemption Engine reads confirmed point balance from Earning Engine ledger API; balance is consistent under concurrent read/write scenarios | FR-03-012 | Concurrency test log | 🔲 |
+| G02-03-001 | Redemption Engine reads confirmed point balance from Earning Engine Sổ cái (Earning Ledger) API; balance is consistent under concurrent read/write scenarios | FR-03-012 | Concurrency test log | 🔲 |
 | G02-03-002 | Fulfillment partner (at least one) is integrated; a test redemption reaches `FULFILLED` status end-to-end | FR-03-030 | Integration test result | 🔲 |
 | G02-03-003 | Fulfillment failure callback triggers automatic reversal; points are re-credited to member balance | FR-03-040 | Reversal test trace | 🔲 |
 
@@ -185,7 +185,7 @@ Design Approval       Readiness                   Readiness             Readines
 
 | ID | Criterion | Target | Source | Test Method | Status |
 |----|-----------|--------|--------|------------|--------|
-| G03-02-001 | Point ledger durability | Zero confirmed point transactions lost under simulated node failure | NFR-01-003 | Chaos: kill primary DB node mid-write; verify recovery | 🔲 |
+| G03-02-001 | Sổ cái (Earning Ledger) durability | Zero confirmed point transactions lost under simulated node failure | NFR-01-003 | Chaos: kill primary DB node mid-write; verify recovery | 🔲 |
 | G03-02-002 | Idempotency guarantee | Zero duplicate point credits under 10,000 duplicate event injection | NFR-01-004 | Duplicate event stress test | 🔲 |
 | G03-02-003 | Redemption atomicity | No partial debits survive: kill process mid-debit; verify rollback | NFR-03-003 | Chaos: kill Redemption service mid-debit | 🔲 |
 | G03-02-004 | Config change durability | Config write acknowledged only after durable commit | NFR-04-003 | Kill config service after write; verify on recovery | 🔲 |
@@ -231,7 +231,7 @@ Design Approval       Readiness                   Readiness             Readines
 | ID | Criterion | Source | Evidence Required | Status |
 |----|-----------|--------|------------------|--------|
 | G04-01-001 | All 5 modules emit structured logs (JSON) with correlation ID, module name, and severity | AS-01..05 Alert tables | Log sample from each module | 🔲 |
-| G04-01-002 | Distributed tracing is enabled: a single earn event can be traced end-to-end across Earning → Tiering → Ledger | NFR-01-001 | Trace sample screenshot | 🔲 |
+| G04-01-002 | Distributed tracing is enabled: a single earn event can be traced end-to-end across Earning → Tiering → Sổ cái (Earning Ledger) | NFR-01-001 | Trace sample screenshot | 🔲 |
 | G04-01-003 | Metrics exported to monitoring platform (e.g., Prometheus/Grafana): earn event rate, earn latency p95, tier upgrade count, redemption rate, DW pipeline lag | AS-01..05 | Dashboard screenshot | 🔲 |
 | G04-01-004 | All High-severity alerts from AS-01..05 are configured in alerting platform with correct thresholds and routing | AS-01..05 Alert Tables | Alert config export | 🔲 |
 
@@ -251,7 +251,7 @@ Design Approval       Readiness                   Readiness             Readines
 
 | ID | Criterion | Source | Evidence Required | Status |
 |----|-----------|--------|------------------|--------|
-| G04-03-001 | Point Ledger DB failover tested: primary failure → replica promoted → earn events resume within RTO ≤ 5 minutes | NFR-01-003 | DR test report | 🔲 |
+| G04-03-001 | Sổ cái (Earning Ledger) DB failover tested: primary failure → replica promoted → earn events resume within RTO ≤ 5 minutes | NFR-01-003 | DR test report | 🔲 |
 | G04-03-002 | Earning Engine restart tested: all in-flight events reprocessed without duplication after crash recovery | NFR-01-004 | Chaos test report | 🔲 |
 | G04-03-003 | Data Warehouse recovery tested: pipeline replay from last checkpoint within RPO ≤ 10 minutes | NFR-05-003 | DW DR test report | 🔲 |
 | G04-03-004 | Backup schedule verified: point ledger and config DB backed up every 6 hours; backups tested restorable | NFR-04-003 | Backup verification log | 🔲 |

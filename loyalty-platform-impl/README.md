@@ -105,3 +105,4 @@ Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, Dat
 - **Idempotency**: Dùng Redis setIfAbsent (NX) với thời gian tồn tại 24h kết hợp hàm hash SHA-256 của chuỗi giao dịch.
 - **Precision**: Dùng `Math.floor()` đảm bảo việc làm tròn xuống theo yêu cầu kiến trúc (DD-01).
 - **Event-Driven**: Đã thiết lập sẵn Kafka Consumer lắng nghe event `corebanking.transactions.settled`.
+

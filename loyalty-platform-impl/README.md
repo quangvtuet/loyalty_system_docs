@@ -45,6 +45,14 @@ loyalty-platform-impl/
         ├── domain/       # Entities (LoyaltyProgram, Campaign, ConfigVersionLog) & Enums
         ├── repository/   # Repositories for configuration entities
         └── service/      # ProgramService, CampaignService, AuditLogService
+├── analytics-reporting/     # DD-05: Analytics & Reporting (Port 8085)
+    ├── pom.xml
+    ├── mvnw / mvnw.cmd
+    └── src/main/java/com/loyalty/analytics_reporting/
+        ├── api/          # REST Controller (ReportingController)
+        ├── domain/       # Fact & Dimension Tables (Star Schema)
+        ├── repository/   # FactPointTransactionRepository for computing Liability
+        └── service/      # ReportingService
 ```
 
 ## Hướng dẫn cài đặt và chạy (Step-by-Step)
@@ -89,6 +97,12 @@ cd redemption-engine/
 cd program-management/
 ./mvnw spring-boot:run
 ```
+
+**Analytics & Reporting** (Port 8085) — mở terminal mới:
+```bash
+cd analytics-reporting/
+./mvnw spring-boot:run
+```
 *(Trên Windows dùng: `mvnw.cmd spring-boot:run`)*
 
 ### Bước 3: Chạy Unit Tests (từng service)
@@ -98,6 +112,7 @@ cd earning-engine/  && ./mvnw test
 cd tiering-system/  && ./mvnw test
 cd redemption-engine/ && ./mvnw test
 cd program-management/ && ./mvnw test
+cd analytics-reporting/ && ./mvnw test
 ```
 
 ## Kiểm thử chức năng (Manual Verification)
@@ -211,4 +226,5 @@ Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, Dat
 | Tiering System | 8082 | DD-02 |
 | Redemption Engine | 8083 | DD-03 |
 | Program Management| 8084 | DD-04 |
+| Analytics & Reporting| 8085 | DD-05 |
 

@@ -1,8 +1,8 @@
 # FR-05: Analytics & Reporting — Functional Requirements
 
 **Module**: Analytics & Reporting
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md)
 **Depends On**: [FR-01](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md), [FR-02](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md), [FR-03](file:///d:/learn/loyalty/requirements/FR-03-redemption-engine.md), [FR-04](file:///d:/learn/loyalty/requirements/FR-04-program-management.md)
 
@@ -84,7 +84,7 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-05-030 | The system **SHALL** produce a Point Liability Report showing the total outstanding confirmed point balance and its monetary equivalent. | Must | Domain §5 |
-| FR-05-031 | Point Liability **SHALL** be calculated as: `SUM(confirmed_unspent_points) × cost_per_point`, where `cost_per_point` is defined per program. | Must | Domain §5 KPIs: Point Liability |
+| FR-05-031 | Point Liability **SHALL** be calculated as: **`SUM(confirmed_unspent_points) × cost_per_point`**, where `cost_per_point` is defined per program (e.g., **$0.01 per point = 100 pts per $1**). | Must | Domain §5 KPIs: Point Liability |
 | FR-05-032 | The report **SHALL** include a breakdown by: program, tier, and point age bucket (0–3 months, 3–6 months, 6–12 months, >12 months). | Must | Domain §5 |
 | FR-05-033 | The report **SHALL** include expiry forecast: estimated points expiring in the next 30, 60, and 90 days. | Must | Domain §5 |
 
@@ -95,7 +95,7 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-05-040 | The system **SHALL** produce a Tier Movement Report showing the count of tier upgrades, downgrades, and no-changes per tier per period. | Must | Domain §5 |
-| FR-05-041 | The report **SHALL** include current tier distribution: count and percentage of members in each tier at the end of the reporting period. | Must | Domain §5 |
+| FR-05-041 | The report **SHALL** include current tier distribution: count and percentage of members in each tier (**Silver / Gold / Platinum**) at the end of the reporting period. | Must | Domain §5 |
 | FR-05-042 | The report **SHALL** include average QP balance at upgrade and at downgrade for each tier transition type. | Should | Domain §5 |
 
 ---
@@ -105,7 +105,7 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-05-050 | The system **SHALL** produce an Expiry Report showing points that expired in the selected period, grouped by program, tier, and earn cohort. | Must | Domain §5 |
-| FR-05-051 | The report **SHALL** include the Breakage Rate KPI: `points expired / points issued` for the selected period. | Must | Domain §5 KPIs: Breakage Rate |
+| FR-05-051 | The report **SHALL** include the Breakage Rate KPI: **`expired points / issued points × 100`** for the selected period. | Must | Domain §5 KPIs: Breakage Rate |
 | FR-05-052 | The report **SHALL** include a forward-looking breakage forecast for the next 90 days based on scheduled expiry events. | Should | Domain §5 |
 
 ---
@@ -114,8 +114,8 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-05-060 | The system **SHALL** produce a Member Engagement Report showing: total enrolled members, active members, inactive members, and dormant members (no activity in >90 days). | Must | Domain §5 |
-| FR-05-061 | The report **SHALL** include the Active Member Rate KPI: `active members / total enrolled members`. | Must | Domain §5 KPIs |
+| FR-05-060 | The system **SHALL** produce a Member Engagement Report showing: total enrolled members, active members (≥1 qualifying activity in the period), inactive members, and dormant members (**no activity for >90 days**). | Must | Domain §5 |
+| FR-05-061 | The report **SHALL** include the Active Member Rate KPI: **`active members / total enrolled members × 100`**. | Must | Domain §5 KPIs |
 | FR-05-062 | The report **SHALL** include average earn events per active member per period and average points earned per member. | Should | Domain §5 |
 | FR-05-063 | The report **SHOULD** support member segmentation by tier, channel, and geography. | Could | Domain §5 |
 
@@ -126,7 +126,7 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-05-070 | The system **SHALL** produce a Campaign Performance Report for each campaign, showing: campaign name, active dates, total bonus points issued, participating member count, and cost-per-point. | Must | Domain §5 |
-| FR-05-071 | The report **SHALL** calculate incremental activity lift: `(points earned during campaign / baseline daily points) - 1`. The baseline is derived from the 30-day pre-campaign average. | Should | Domain §5 |
+| FR-05-071 | The report **SHALL** calculate incremental activity lift: `(points earned during campaign / baseline daily points) - 1`. The baseline is derived from the **30-day pre-campaign average**. | Should | Domain §5 |
 | FR-05-072 | The report **SHALL** include the Program ROI KPI for campaigns where incremental revenue data is available: `incremental revenue / total campaign cost`. | Could | Domain §5 KPIs: Program ROI |
 
 ---
@@ -136,7 +136,7 @@ The Analytics & Reporting module provides **data-driven insights** into loyalty 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-05-080 | The system **SHALL** provide a real-time dashboard displaying: today's earn events count, today's points issued, today's redemptions, current point liability, and active member count. | Must | Domain §5 |
-| FR-05-081 | Dashboard data **SHALL** refresh automatically at a configurable interval (default: 5 minutes). | Should | Domain §5 |
+| FR-05-081 | Dashboard data **SHALL** refresh automatically at a configurable interval (**default: 5 minutes**). | Should | Domain §5 |
 | FR-05-082 | The dashboard **SHALL** display alerts when KPI thresholds are breached (e.g., liability exceeds configured limit, breakage rate drops below expected range). | Should | Domain §5 |
 
 ---

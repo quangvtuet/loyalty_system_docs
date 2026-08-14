@@ -1,8 +1,8 @@
 # AS-04: Program Management — Analytics Specification
 
 **Module**: Program Management
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-04](file:///d:/learn/loyalty/requirements/FR-04-program-management.md)
 
 ---
@@ -30,14 +30,14 @@ This specification defines **metrics, data lineage, and reporting** for the Prog
 ## 3. Key Metrics & KPIs
 
 | Metric | Definition | Formula | Source Fields | Refresh |
-|--------|-----------|---------|--------------|---------|
+|--------|-----------|---------|--------------|---------| 
 | **Active Programs** | Count of programs in ACTIVE status | `COUNT(lp.program_id) WHERE lp.status='ACTIVE'` | `loyalty_program.status` | Real-time |
 | **Total Enrolled Members** | Members with ACTIVE enrollment across all programs | `COUNT(DISTINCT e.member_id) WHERE e.status='ACTIVE'` | `enrollment.status` | Daily |
 | **Enrollment Rate** | New enrollments as % of eligible population | `COUNT(new_enrollments) / eligible_member_count × 100` | `enrollment`, external member registry | Monthly |
 | **Enrollment Churn Rate** | % of enrollments cancelled/suspended in the period | `COUNT(e.status IN ('CANCELLED','SUSPENDED')) / COUNT(total_enrollments) × 100` | `enrollment.status` | Monthly |
 | **Active Campaigns** | Count of campaigns currently active | `COUNT(c.campaign_id) WHERE c.status='ACTIVE' AND NOW() BETWEEN c.start_date AND c.end_date` | `campaign` | Real-time |
-| **Campaign Earn Lift** | Incremental earn during campaign vs. pre-campaign baseline | `(points_during_campaign / avg_daily_baseline_points) - 1 × 100` | `point_transaction`, `campaign` | Per Campaign |
-| **Partner Earn Share** | % of total points issued originating from partner events | `SUM(pt.amount WHERE pt.source_type='PARTNER') / Total Points Issued × 100` | `point_transaction.source_type` | Daily |
+| **Campaign Earn Lift** | Incremental earn during campaign vs. **30-day** pre-campaign baseline (e.g., "Double Points August" 2× campaign) | `(points_during_campaign / avg_daily_baseline_points) - 1 × 100` | `point_transaction`, `campaign` | Per Campaign |
+| **Partner Earn Share** | % of total points issued originating from partner events (partners authenticated via **OAuth 2.0**, rate-limited at **1,000 req/min**) | `SUM(pt.amount WHERE pt.source_type='PARTNER') / Total Points Issued × 100` | `point_transaction.source_type` | Daily |
 | **Active Partners** | Count of partners in ACTIVE status | `COUNT(p.partner_id) WHERE p.status='ACTIVE'` | `partner.status` | Real-time |
 | **Manual Adjustment Volume** | Total points manually adjusted in the period | `SUM(ABS(ma.point_amount))` | `manual_adjustment_log.point_amount` | Daily |
 | **Manual Adjustment Rate** | Manual adjustments as % of total point transactions | `COUNT(manual_adjustments) / COUNT(total_point_transactions) × 100` | `manual_adjustment_log`, `point_transaction` | Monthly |
@@ -65,6 +65,7 @@ This specification defines **metrics, data lineage, and reporting** for the Prog
 |-----------|---------|-------------|---------|
 | Program, Campaign Status | Campaign Name, Type, Priority, Start Date, End Date, Expected Points Budget, Actual Points Issued | Per Campaign | Program, Status, Date Range |
 
+**Example Reference Campaign**: "Double Points August" (2× multiplier, 1 Aug – 31 Aug, Priority 1, "BankRewards 2025").
 **Purpose**: Audit active and upcoming campaigns; track budget adherence.
 **Output**: Table + budget vs. actual comparison
 **Delivery**: On-demand + weekly (active campaigns only)

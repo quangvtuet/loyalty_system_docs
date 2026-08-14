@@ -1,7 +1,7 @@
 # Quality Gates — Design
 **Domain**: Loyalty Banking
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | FR-01..05 | AS-01..05
 
 ---
@@ -64,9 +64,9 @@ Compliance              Validation               Sign-Off                  Accur
 | ID | Business Rule | FR Source | Test Assertion | Status |
 |----|--------------|-----------|---------------|--------|
 | G01-02-001 | QP balance is **separate** from redeemable point balance; earning 100 QP does not add 100 redeemable points | FR-02-001 | Check both balances after QP accrual; assert independence | 🔲 |
-| G01-02-002 | Tier upgrade takes effect **immediately** when QP threshold is crossed | FR-02-011 | Member at Silver (999 QP); earns 1 more QP → assert instant Gold upgrade | 🔲 |
+| G01-02-002 | Tier upgrade takes effect **immediately** when QP threshold is crossed | FR-02-011 | Member at Silver (999 QP); earns 1 more QP → assert instant Gold upgrade (1,000 QP threshold) | 🔲 |
 | G01-02-003 | A member may upgrade through **multiple tiers** in one QP accrual if balance exceeds multiple thresholds | FR-02-013 | Member at Silver (0 QP) earns 5,000 QP (Gold=1,000, Platinum=3,000) → assert Platinum upgrade | 🔲 |
-| G01-02-004 | Tier downgrade takes effect only **after** the evaluation cycle + grace period | FR-02-022, FR-02-030 | End-of-period: member below threshold → assert still on current tier during grace period | 🔲 |
+| G01-02-004 | Tier downgrade takes effect only **after** the evaluation cycle + grace period (30 days) | FR-02-022, FR-02-030 | End-of-period: member below threshold → assert still on current tier during 30-day grace period | 🔲 |
 | G01-02-005 | Member downgrades **one tier at a time** per cycle (default config) | FR-02-023 | Platinum member qualifies for Silver at evaluation → assert downgrade to Gold, not Silver | 🔲 |
 | G01-02-006 | QP resets to **zero** at the start of each new tier period; redeemable balance unaffected | FR-02-003 | After period reset: assert QP=0; assert redeemable balance unchanged | 🔲 |
 | G01-02-007 | Grace period rescue: member earns required QP before grace expires → downgrade cancelled | FR-02-033 | Initiate grace period; member earns QP to meet threshold → assert downgrade_cancelled event | 🔲 |

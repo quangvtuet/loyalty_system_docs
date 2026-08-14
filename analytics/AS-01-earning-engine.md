@@ -1,8 +1,8 @@
 # AS-01: Earning Engine — Analytics Specification
 
 **Module**: Earning Engine
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-01](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md)
 
 ---
@@ -20,7 +20,7 @@ This specification defines the **metrics, data lineage, and reporting requiremen
 | Earning Engine DB | `point_transaction` | All earn, bonus, expiry, adjustment ledger entries | Real-time |
 | Earning Engine DB | `earn_rule` | Base earn rule definitions and validity periods | Config |
 | Program Mgmt DB | `campaign` | Campaign definitions, dates, and multipliers | Config |
-| Core Banking Feed | `transaction_event` | Settled transaction events (source of earn) | < 60 sec |
+| Core Banking Feed | `transaction_event` | Settled transaction events (source of earn) | **≤ 60 s [SLA]** |
 | Program Mgmt DB | `enrollment` | Member-program enrollment status | Config |
 
 ---
@@ -28,13 +28,13 @@ This specification defines the **metrics, data lineage, and reporting requiremen
 ## 3. Key Metrics & KPIs
 
 | Metric | Definition | Formula | Source Fields | Refresh |
-|--------|-----------|---------|--------------|---------|
+|--------|-----------|---------|--------------|---------| 
 | **Total Points Issued** | Gross points credited to member accounts | `SUM(pt.amount) WHERE pt.type IN ('EARN','BONUS') AND pt.status = 'CONFIRMED'` | `point_transaction.amount`, `.type`, `.status` | Daily |
 | **Base Points Issued** | Points from base earn rules only | `SUM(pt.amount) WHERE pt.type = 'EARN' AND pt.status = 'CONFIRMED'` | `point_transaction.amount`, `.type` | Daily |
 | **Bonus Points Issued** | Points attributed to campaigns | `SUM(pt.amount) WHERE pt.type = 'BONUS' AND pt.status = 'CONFIRMED'` | `point_transaction.amount`, `.type` | Daily |
 | **Bonus Contribution Rate** | Share of total points from bonus campaigns | `Bonus Points Issued / Total Points Issued × 100` | Derived | Daily |
 | **Total Earn Events** | Number of unique qualifying transactions processed | `COUNT(DISTINCT pt.source_event_id) WHERE pt.type = 'EARN'` | `point_transaction.source_event_id` | Daily |
-| **Avg Points per Event** | Average earn per qualifying transaction | `Total Points Issued / Total Earn Events` | Derived | Daily |
+| **Avg Points per Event** | Average earn per qualifying transaction (at default rate: **1 pt/$1**) | `Total Points Issued / Total Earn Events` | Derived | Daily |
 | **Pending Point Volume** | Points in PENDING state (not yet confirmed) | `SUM(pt.amount) WHERE pt.status = 'PENDING'` | `point_transaction.amount`, `.status` | Hourly |
 | **Idempotency Hit Rate** | Rate of duplicate earn event rejections | `COUNT(duplicate_rejects) / COUNT(total_earn_attempts) × 100` | `earn_event_log.is_duplicate` | Daily |
 | **Earn Latency (p95)** | Processing time from event receipt to ledger commit | `PERCENTILE_95(pt.ledger_commit_ts - event.receipt_ts)` | `point_transaction`, `transaction_event` | Real-time |
@@ -60,6 +60,7 @@ This specification defines the **metrics, data lineage, and reporting requiremen
 |-----------|---------|-------------|---------|
 | Date, Campaign Name, Campaign Type | Bonus Points Issued, Participating Members, Bonus Contribution Rate | Campaign Period | Program, Campaign, Date Range |
 
+**Example**: "Double Points August" campaign (2× multiplier, 1 Aug–31 Aug) — compare Bonus Contribution Rate during campaign vs. baseline period.
 **Delivery**: On-demand
 **Output**: Bar chart (contribution %), data table
 

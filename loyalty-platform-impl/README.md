@@ -37,6 +37,14 @@ loyalty-platform-impl/
         ├── domain/       # Entities (RewardItem, RedemptionOrder) & Enums (OrderStatus, FulfillmentType)
         ├── repository/   # RewardItemRepository, RedemptionOrderRepository
         └── service/      # CatalogService, BalanceLockService, FifoDebitService, RedemptionService
+├── program-management/      # DD-04: Program Management (Port 8084)
+    ├── pom.xml
+    ├── mvnw / mvnw.cmd
+    └── src/main/java/com/loyalty/program_management/
+        ├── api/          # REST Controller (ProgramController)
+        ├── domain/       # Entities (LoyaltyProgram, Campaign, ConfigVersionLog) & Enums
+        ├── repository/   # Repositories for configuration entities
+        └── service/      # ProgramService, CampaignService, AuditLogService
 ```
 
 ## Hướng dẫn cài đặt và chạy (Step-by-Step)
@@ -75,6 +83,12 @@ cd tiering-system/
 cd redemption-engine/
 ./mvnw spring-boot:run
 ```
+
+**Program Management** (Port 8084) — mở terminal mới:
+```bash
+cd program-management/
+./mvnw spring-boot:run
+```
 *(Trên Windows dùng: `mvnw.cmd spring-boot:run`)*
 
 ### Bước 3: Chạy Unit Tests (từng service)
@@ -83,6 +97,7 @@ cd redemption-engine/
 cd earning-engine/  && ./mvnw test
 cd tiering-system/  && ./mvnw test
 cd redemption-engine/ && ./mvnw test
+cd program-management/ && ./mvnw test
 ```
 
 ## Kiểm thử chức năng (Manual Verification)
@@ -195,4 +210,5 @@ Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, Dat
 | Earning Engine | 8081 | DD-01 |
 | Tiering System | 8082 | DD-02 |
 | Redemption Engine | 8083 | DD-03 |
+| Program Management| 8084 | DD-04 |
 

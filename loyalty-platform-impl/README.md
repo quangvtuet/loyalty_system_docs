@@ -1,6 +1,6 @@
-# Loyalty Platform - Earning Engine
+# Loyalty Platform - Implementation
 
-Dự án này là module **Earning Engine (DD-01)** của hệ thống Loyalty Banking Platform, được phát triển bằng **Java Spring Boot 3**.
+Dự án triển khai thực tế các module của hệ thống **Loyalty Banking Platform**, phát triển bằng **Java Spring Boot 3**.
 
 ## Yêu cầu hệ thống (Prerequisites)
 - [Docker](https://docs.docker.com/get-docker/) và Docker Compose (để chạy Kafka, Redis, PostgreSQL).
@@ -12,28 +12,31 @@ Dự án này là module **Earning Engine (DD-01)** của hệ thống Loyalty B
 ```
 loyalty-platform-impl/
 ├── docker-compose.yml       # Cấu hình hạ tầng (PostgreSQL 16, Redis 7, Kafka 7.4)
-├── earning-engine/          # Mã nguồn Spring Boot cho Earning Engine (Port 8081)
+├── earning-engine/          # DD-01: Earning Engine (Port 8081)
 │   ├── pom.xml
 │   ├── mvnw / mvnw.cmd
-│   └── src/
-│       ├── main/java/com/loyalty/earning_engine/
-│       │   ├── api/          # REST Controller (PartnerEarnController)
-│       │   ├── domain/       # JPA Entities (PointTransaction, PointBalance)
-│       │   ├── kafka/        # Kafka Consumer (TransactionSettledConsumer)
-│       │   ├── repository/   # Repositories (PointTransactionRepo, PointBalanceRepo)
-│       │   └── service/      # EarnCalculator, EarningLedgerService
-│       └── resources/application.yml
-└── tiering-system/          # Mã nguồn Spring Boot cho Tiering System (Port 8082)
+│   └── src/main/java/com/loyalty/earning_engine/
+│       ├── api/          # REST Controller (PartnerEarnController)
+│       ├── domain/       # JPA Entities (PointTransaction, PointBalance)
+│       ├── kafka/        # Kafka Consumer (TransactionSettledConsumer)
+│       ├── repository/   # PointTransactionRepo, PointBalanceRepo
+│       └── service/      # EarnCalculator, EarningLedgerService
+├── tiering-system/          # DD-02: Tiering System (Port 8082)
+│   ├── pom.xml
+│   ├── mvnw / mvnw.cmd
+│   └── src/main/java/com/loyalty/tiering_system/
+│       ├── domain/       # Entities (QpLedger, MemberTier) & Enums (TierName, TierStatus)
+│       ├── event/        # DTOs (QpAccruedEvent, TierChangedEvent)
+│       ├── kafka/        # Kafka Consumer (QpAccruedConsumer)
+│       ├── repository/   # QpLedgerRepository, MemberTierRepository
+│       └── service/      # QpLedgerService, TierUpgradeService, GracePeriodService
+└── redemption-engine/       # DD-03: Redemption Engine (Port 8083)
     ├── pom.xml
     ├── mvnw / mvnw.cmd
-    └── src/
-        ├── main/java/com/loyalty/tiering_system/
-        │   ├── domain/       # Entities (QpLedger, MemberTier) & Enums (TierName, TierStatus)
-        │   ├── event/        # DTOs (QpAccruedEvent, TierChangedEvent)
-        │   ├── kafka/        # Kafka Consumer (QpAccruedConsumer)
-        │   ├── repository/   # QpLedgerRepository, MemberTierRepository
-        │   └── service/      # QpLedgerService, TierUpgradeService, GracePeriodService
-        └── resources/application.yml
+    └── src/main/java/com/loyalty/redemption_engine/
+        ├── domain/       # Entities (RewardItem, RedemptionOrder) & Enums (OrderStatus, FulfillmentType)
+        ├── repository/   # RewardItemRepository, RedemptionOrderRepository
+        └── service/      # CatalogService, BalanceLockService, FifoDebitService, RedemptionService
 ```
 
 ## Hướng dẫn cài đặt và chạy (Step-by-Step)
@@ -53,26 +56,33 @@ Lệnh này sẽ tải và khởi động các container:
 
 *Kiểm tra trạng thái:* `docker-compose ps` để đảm bảo tất cả đều `Up`.
 
-### Bước 2: Chạy ứng dụng Spring Boot
+### Bước 2: Chạy từng service
 
-Mở một terminal khác, chuyển vào thư mục `earning-engine`:
-
+**Earning Engine** (Port 8081):
 ```bash
 cd earning-engine/
 ./mvnw spring-boot:run
 ```
-*(Trên Windows dùng lệnh: `mvnw.cmd spring-boot:run`)*
 
-Ứng dụng sẽ tự động khởi tạo kết nối Database (Hibernate auto update schema), Kafka và Redis.
-Server sẽ chạy trên port `8081`.
+**Tiering System** (Port 8082) — mở terminal mới:
+```bash
+cd tiering-system/
+./mvnw spring-boot:run
+```
 
-### Bước 3: Chạy Unit Tests
+**Redemption Engine** (Port 8083) — mở terminal mới:
+```bash
+cd redemption-engine/
+./mvnw spring-boot:run
+```
+*(Trên Windows dùng: `mvnw.cmd spring-boot:run`)*
 
-Để đảm bảo logic tính toán điểm chính xác:
+### Bước 3: Chạy Unit Tests (từng service)
 
 ```bash
-cd earning-engine/
-./mvnw test
+cd earning-engine/  && ./mvnw test
+cd tiering-system/  && ./mvnw test
+cd redemption-engine/ && ./mvnw test
 ```
 
 ## Kiểm thử chức năng (Manual Verification)
@@ -94,9 +104,43 @@ curl -X POST http://localhost:8081/api/v1/partners/earn \
 *Kết quả mong đợi:* Trả về `202 Accepted` và sinh ra log báo tính điểm thành công.
 *Kiểm tra Idempotency:* Nếu bạn chạy lại nguyên lệnh curl trên, hệ thống sẽ báo `409 Conflict - Duplicate transaction detected` nhờ vào Redis Idempotency.
 
-## Cách kiểm tra dữ liệu Sổ cái (Earning Ledger) trong Database
+---
 
-Dữ liệu lịch sử cộng điểm được ghi nhận không thể sửa xóa (append-only) vào **Sổ cái (Earning Ledger)** thông qua bảng `point_transaction`. Đồng thời, tổng số dư hiện tại của khách hàng được cập nhật đồng bộ vào bảng **Snapshot Số dư (`point_balance`)**. Bạn có thể kiểm tra trực tiếp qua Docker container bằng lệnh sau:
+**Khởi tạo dữ liệu mẫu catalog cho Redemption Engine:**
+```bash
+# Thêm phần thưởng Silver (300 điểm = $3)
+curl -X POST http://localhost:8083/api/v1/catalog/items \
+  -H "Content-Type: application/json" \
+  -d '{
+    "programId": "DEFAULT_PROG",
+    "name": "Coffee Voucher",
+    "category": "VOUCHER",
+    "pointsCost": 300,
+    "currencyValue": 3.00,
+    "fulfillmentType": "DIGITAL",
+    "minTierRequired": "SILVER"
+  }'
+```
+
+**Đổi điểm (Redemption Order):**
+```bash
+curl -X POST http://localhost:8083/api/v1/redemptions/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "memberId": "member-001",
+    "programId": "DEFAULT_PROG",
+    "rewardItemId": "<item-id-from-catalog>",
+    "quantity": 1,
+    "memberTier": "SILVER",
+    "availableBalance": 500
+  }'
+```
+
+*Kết quả mong đợi:* Trả về `201 Created` kèm `orderId` và `status: PENDING`.
+
+## Kiểm tra dữ liệu trong Database
+
+Tất cả các service đều dùng chung PostgreSQL `loyalty_db`. Dưới đây là các lệnh kiểm tra trực tiếp qua Docker:
 
 **1. Kiểm tra lịch sử giao dịch (Sổ cái Earning Engine):**
 ```bash
@@ -118,6 +162,16 @@ docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT *
 docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT member_id, current_tier, previous_tier, cumulative_qp, status, grace_period_end FROM member_tier;"
 ```
 
+**5. Kiểm tra catalog phần thưởng (Redemption Engine):**
+```bash
+docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT item_id, name, points_cost, min_tier_required, status FROM reward_item;"
+```
+
+**6. Kiểm tra đơn đổi điểm:**
+```bash
+docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT order_id, member_id, total_points_debited, member_tier_at_order, status, failure_reason FROM redemption_order ORDER BY created_at DESC;"
+```
+
 Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, DataGrip, pgAdmin) để kết nối vào Database với thông số:
 - **Host**: `localhost`
 - **Port**: `5432`
@@ -125,30 +179,20 @@ Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, Dat
 - **User**: `loyalty_user`
 - **Password**: `loyalty_password`
 
-## Hướng dẫn chạy Tiering System
-
-### Bước 1: Đảm bảo Infrastructure đang chạy
-```bash
-docker-compose up -d
-```
-
-### Bước 2: Chạy Tiering System (Port 8082)
-```bash
-cd tiering-system/
-./mvnw spring-boot:run
-```
-*(Trên Windows: `mvnw.cmd spring-boot:run`)*
-
-### Bước 3: Chạy Unit Tests
-```bash
-cd tiering-system/
-./mvnw test
-```
-
-> **Lưu ý**: Để end-to-end flow hoạt động đầy đủ (Earning → Tiering), cần chạy đồng thời cả `earning-engine` (port 8081) và `tiering-system` (port 8082). Khi Earning Engine phát event `loyalty.earning.qp_accrued`, Tiering System sẽ tự động nhận và đánh giá tier.
 
 ## Thiết kế nổi bật
-- **Idempotency**: Dùng Redis setIfAbsent (NX) với thời gian tồn tại 24h kết hợp hàm hash SHA-256 của chuỗi giao dịch.
-- **Precision**: Dùng `Math.floor()` đảm bảo việc làm tròn xuống theo yêu cầu kiến trúc (DD-01).
-- **Event-Driven**: Đã thiết lập sẵn Kafka Consumer lắng nghe event `corebanking.transactions.settled`.
+- **Idempotency**: Earning Engine dùng Redis NX + SHA-256 ngăn truy vấn trùng lặp.
+- **Precision**: Dùng `Math.floor()` đảm bảo làm tròn xuống theo yêu cầu DD-01.
+- **Event-Driven**: Earning → Tiering qua Kafka topic `loyalty.earning.qp_accrued`.
+- **FIFO Debit**: Redemption Engine tiêu điểm theo thứ tự `earn_date ASC` để giữ nguyên lịch sử expiry.
+- **Distributed Lock**: Redemption dùng Redis `SET NX EX 10` để chống concurrent redemption cùng member.
+- **Dual Table**: `point_transaction` (append-only ledger) + `point_balance` (snapshot số dư) tách biệt hiệu năng đọc/ghi.
+
+## Ports Summary
+
+| Service | Port | Design Doc |
+|---|---|---|
+| Earning Engine | 8081 | DD-01 |
+| Tiering System | 8082 | DD-02 |
+| Redemption Engine | 8083 | DD-03 |
 

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9bc9c2b3-4e9a-4b8c-a95d-4c34fd1fec6c" name="Changes" comment="lab3">
-      <change afterPath="$PROJECT_DIR$/loyalty-platform-impl/tiering-system/.gitignore" afterDir="false" />
+    <list default="true" id="9bc9c2b3-4e9a-4b8c-a95d-4c34fd1fec6c" name="Changes" comment="tier system">
+      <change afterPath="$PROJECT_DIR$/loyalty-platform-impl/redemption-engine/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -70,6 +71,11 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/loyalty-platform-impl/tiering-system" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -89,7 +95,7 @@
       <workItem from="1786679355845" duration="114000" />
       <workItem from="1786679493802" duration="28000" />
       <workItem from="1786692090788" duration="5016000" />
-      <workItem from="1786723312555" duration="1071000" />
+      <workItem from="1786723312555" duration="2264000" />
     </task>
     <task id="LOCAL-00001" summary="hoangdd">
       <option name="closed" value="true" />
@@ -115,7 +121,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786696796926</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="tier system">
+      <option name="closed" value="true" />
+      <created>1786726443192</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1786726443192</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -135,6 +149,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="hoangdd" />
     <MESSAGE value="lab3" />
-    <option name="LAST_COMMIT_MESSAGE" value="lab3" />
+    <MESSAGE value="tier system" />
+    <option name="LAST_COMMIT_MESSAGE" value="tier system" />
   </component>
 </project>

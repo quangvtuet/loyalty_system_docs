@@ -59,4 +59,11 @@ public class CatalogService {
             default         -> List.of("SILVER");
         };
     }
+
+    /**
+     * Thêm item vào catalog (dùng khi seed data).
+     */
+    public RewardItem addItem(RewardItem item) {
+        return rewardItemRepository.save(item);
+    }
 }

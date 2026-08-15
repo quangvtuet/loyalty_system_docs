@@ -58,7 +58,7 @@ public class RedemptionController {
                 .stockQuantity(request.getStockQuantity())
                 .status("ACTIVE")
                 .build();
-        // Trong production sẽ có CatalogService.addItem(); ở đây gọi thẳng repository qua service
+        item = catalogService.addItem(item);
         log.info("[Catalog] Item added: {} ({} pts, tier: {})", item.getName(), item.getPointsCost(), item.getMinTierRequired());
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
     }

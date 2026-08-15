@@ -19,4 +19,6 @@ public class PartnerEarnRequest {
     private Integer spendAmount;
     
     private String campaignId;
+    
+    private String programId;
 }

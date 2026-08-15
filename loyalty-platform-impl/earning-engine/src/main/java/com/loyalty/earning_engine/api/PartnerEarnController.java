@@ -37,7 +37,8 @@ public class PartnerEarnController {
                 request.getSpendAmount(),
                 request.getTransactionId(),
                 "SILVER", // Default tier for partner earn in this mock
-                request.getCampaignId()
+                request.getCampaignId(),
+                request.getProgramId()
         );
 
         return ResponseEntity.accepted().body(Map.of(

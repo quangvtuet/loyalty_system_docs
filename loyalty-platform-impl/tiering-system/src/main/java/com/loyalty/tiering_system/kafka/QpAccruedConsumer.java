@@ -20,21 +20,27 @@ public class QpAccruedConsumer {
 
     private final QpLedgerService qpLedgerService;
     private final TierUpgradeService tierUpgradeService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     @KafkaListener(topics = "loyalty.earning.qp_accrued", groupId = "tiering-system-group")
-    public void consume(QpAccruedEvent event) {
-        log.info("[QP Accrued] Received: memberId={}, programId={}, qpAmount={}, sourceEventId={}",
-                event.getMemberId(), event.getProgramId(), event.getQpAmount(), event.getSourceEventId());
+    public void consume(String message) {
+        try {
+            QpAccruedEvent event = objectMapper.readValue(message, QpAccruedEvent.class);
+            log.info("[QP Accrued] Received: memberId={}, programId={}, qpAmount={}, sourceEventId={}",
+                    event.getMemberId(), event.getProgramId(), event.getQpAmount(), event.getSourceEventId());
 
-        // 1. Ghi QP vào sổ cái và lấy tổng tích lũy
-        long cumulativeQp = qpLedgerService.recordQpAndGetCumulative(
-                event.getMemberId(),
-                event.getProgramId(),
-                event.getSourceEventId(),
-                event.getQpAmount()
-        );
+            // 1. Ghi QP vào sổ cái và lấy tổng tích lũy
+            long cumulativeQp = qpLedgerService.recordQpAndGetCumulative(
+                    event.getMemberId(),
+                    event.getProgramId(),
+                    event.getSourceEventId(),
+                    event.getQpAmount()
+            );
 
-        // 2. Đánh giá real-time upgrade (SLA ≤ 500ms)
-        tierUpgradeService.evaluateAndUpgrade(event.getMemberId(), event.getProgramId(), cumulativeQp);
+            // 2. Đánh giá real-time upgrade (SLA ≤ 500ms)
+            tierUpgradeService.evaluateAndUpgrade(event.getMemberId(), event.getProgramId(), cumulativeQp);
+        } catch (Exception e) {
+            log.error("Failed to process QP Accrued event", e);
+        }
     }
 }

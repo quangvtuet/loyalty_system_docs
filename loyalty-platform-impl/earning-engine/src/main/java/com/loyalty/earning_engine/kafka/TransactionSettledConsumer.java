@@ -32,7 +32,8 @@ public class TransactionSettledConsumer {
                     event.getAmount().intValue(),
                     event.getSourceTxnId(),
                     event.getTier() != null ? event.getTier() : "SILVER",
-                    null // Default no campaign for raw settled event in this mock
+                    null, // Default no campaign for raw settled event in this mock
+                    null  // Default no programId
             );
             log.info("Successfully processed transaction: {}", event.getSourceTxnId());
         } catch (Exception e) {

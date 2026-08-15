@@ -18,9 +18,10 @@ import java.time.LocalDateTime;
 public class EarnCalculator {
 
     private final EarningLedgerService ledgerService;
+    private final org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
-    public void processEarn(String memberId, Integer spendAmount, String sourceTxnId, String tier, String campaignId) {
+    public void processEarn(String memberId, Integer spendAmount, String sourceTxnId, String tier, String campaignId, String programId) {
         log.info("Processing earn for member: {}, spend: {}, tier: {}", memberId, spendAmount, tier);
         
         // 1. Calculate Base Points
@@ -28,6 +29,15 @@ public class EarnCalculator {
         int basePoints = (int) Math.floor(spendAmount * 1.0 * tierMultiplier);
 
         ledgerService.recordBaseEarn(memberId, basePoints, sourceTxnId);
+
+        // Publish QP event
+        java.util.Map<String, Object> qpEvent = new java.util.HashMap<>();
+        qpEvent.put("memberId", memberId);
+        qpEvent.put("qpAmount", basePoints);
+        qpEvent.put("programId", programId);
+        qpEvent.put("sourceEventId", sourceTxnId);
+        kafkaTemplate.send("loyalty.earning.qp_accrued", memberId, qpEvent);
+        log.info("Published QP event for member: {}, qpAmount: {}", memberId, basePoints);
 
         // 2. Calculate Bonus Points (if applicable)
         if (campaignId != null && !campaignId.isEmpty()) {

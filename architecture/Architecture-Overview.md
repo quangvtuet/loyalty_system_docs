@@ -151,9 +151,118 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 
 ---
 
-## 5. Communication Patterns & API Standards
+## 5. Component Diagrams (C4 Level 3)
 
-### 5.1 Synchronous REST / gRPC Interfaces
+The following diagrams decompose each domain service container (from §3) into its internal components. Detailed specifications per component are in the respective Detailed Design documents ([DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md)–[DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md)).
+
+### 5.1 Earning Engine — Internal Components
+
+```mermaid
+flowchart TB
+    subgraph EarningEngine["Earning Engine Service"]
+        direction TB
+        INGESTION["Ingestion Layer\n• Kafka Consumer (settled_txn)\n• Partner Earn REST Controller\n• Schema Validator"]
+        DEDUP["Idempotency Guard\n• SHA-256 Key Generator\n• Redis NX Cache (TTL: 24h)"]
+        CALC["Calculation Engine\n• Tier Multiplier Resolver\n• Base Earn Evaluator (FLOOR)\n• Campaign Bonus Evaluator"]
+        LEDGER["Ledger & Expiry Service\n• Append-Only PointTransaction Writer\n• PointBalance Snapshot Updater\n• FIFO Expiry Scheduler"]
+        EGRESS["Event Publisher\n• Kafka Producer (qp_accrued)\n• CDC Stream Emitter"]
+    end
+
+    INGESTION --> DEDUP
+    DEDUP --> CALC
+    CALC --> LEDGER
+    LEDGER --> EGRESS
+```
+
+### 5.2 Tiering System — Internal Components
+
+```mermaid
+flowchart TB
+    subgraph TieringSystem["Tiering System Service"]
+        direction TB
+        QP_INGEST["QP Accrual Ingestion\n• Kafka Consumer (qp_accrued)\n• QP Ledger Writer"]
+        RT_ENGINE["Real-Time Upgrade Engine\n• Threshold Checker (≤ 500ms)\n• Tier Rules Cache"]
+        BATCH["Batch Evaluation Engine\n• End-of-Period Job (31 Dec)\n• 1M Members in ≤ 4 Hours\n• Idempotent Re-run"]
+        GRACE["Grace Period Manager\n• 30-Day State Machine\n• Grace Rescue Evaluator"]
+        DISPATCH["Tier Event Dispatcher\n• Kafka Producer (tier_changed)\n• Notification Trigger"]
+    end
+
+    QP_INGEST --> RT_ENGINE
+    QP_INGEST --> BATCH
+    RT_ENGINE --> DISPATCH
+    BATCH --> GRACE
+    GRACE --> DISPATCH
+```
+
+### 5.3 Redemption Engine — Internal Components
+
+```mermaid
+flowchart TB
+    subgraph RedemptionEngine["Redemption Engine Service"]
+        direction TB
+        API_LAYER["API Layer\n• Catalog REST Controller\n• Order REST Controller"]
+        VALIDATION["Validation & Locking\n• Tier Access Validator\n• Redis Distributed Lock\n  (lock:member:bal:UUID)"]
+        FIFO["FIFO Debit Engine\n• Earning Ledger Client (gRPC)\n• FIFO Batch Allocator\n• Oldest earn_date first"]
+        ORDER_SM["Order State Machine\n• PENDING → IN_PROGRESS\n• → FULFILLED / FAILED / REVERSED"]
+        FULFILL["Fulfillment Dispatcher\n• Partner API Client\n• Auto-Reversal Handler"]
+    end
+
+    API_LAYER --> VALIDATION
+    VALIDATION --> FIFO
+    FIFO --> ORDER_SM
+    ORDER_SM --> FULFILL
+    FULFILL -->|"On Failure"| FIFO
+```
+
+### 5.4 Program Management — Internal Components
+
+```mermaid
+flowchart TB
+    subgraph ProgramMgmt["Program Management Service"]
+        direction TB
+        ADMIN_API["Admin REST API\n• Program CRUD\n• Campaign CRUD\n• Enrollment Management"]
+        PARTNER_GW["Partner OAuth 2.0 Gateway\n• Token Issuer (JWT, TTL: 3600s)\n• Redis Rate Limiter (1,000 RPM)"]
+        RULE_ENGINE["Versioned Rule Registry\n• Prospective Version Control\n• valid_from / valid_to Management\n• Config Audit Logger"]
+        CAMPAIGN_ENGINE["Campaign Priority Engine\n• argmin(priority) Resolver\n• Stacking Configuration"]
+        ADJUST_WF["Manual Adjustment Workflow\n• Dual-Control State Machine\n• Threshold Gate (5,000 pts)\n• WORM Audit Logger"]
+        CONFIG_PUB["Config Event Publisher\n• Kafka (rule_updated)\n• Kafka (campaign_activated)"]
+    end
+
+    ADMIN_API --> RULE_ENGINE
+    ADMIN_API --> CAMPAIGN_ENGINE
+    ADMIN_API --> ADJUST_WF
+    PARTNER_GW --> ADMIN_API
+    RULE_ENGINE --> CONFIG_PUB
+    CAMPAIGN_ENGINE --> CONFIG_PUB
+```
+
+### 5.5 Analytics & Reporting — Internal Components
+
+```mermaid
+flowchart TB
+    subgraph AnalyticsService["Analytics & Reporting Service"]
+        direction TB
+        CDC_INGEST["CDC Ingestion Pipeline\n• Debezium WAL Reader\n• Kafka Connect Workers\n• Star Schema Transformer"]
+        DW_STORE["Data Warehouse Store\n• Fact Tables (point_txn, redemption)\n• Dimension Tables (member, program, ...)\n• Materialized Views (5-min refresh)"]
+        REPORT_ENGINE["Report Generation Engine\n• 7 Standard Reports\n• CSV / XLSX / PDF Export\n• Async Queue for >1M rows"]
+        ALERT_MONITOR["Real-Time Alert Monitor\n• 5-Minute Polling Cycle\n• Liability Ceiling Alerts\n• Latency Breach Alerts"]
+        RBAC_GUARD["RBAC Program Scoping\n• Row-Level Security\n• Program-Level Filters"]
+        DELIVERY["Delivery Channels\n• Dashboard WebSocket\n• Email / SFTP Scheduler\n• PagerDuty Integration"]
+    end
+
+    CDC_INGEST --> DW_STORE
+    DW_STORE --> REPORT_ENGINE
+    DW_STORE --> ALERT_MONITOR
+    REPORT_ENGINE --> RBAC_GUARD
+    RBAC_GUARD --> DELIVERY
+    ALERT_MONITOR --> DELIVERY
+```
+
+---
+
+## 6. Communication Patterns & API Standards
+
+### 6.1 Synchronous REST / gRPC Interfaces
 - **API Standard**: REST over HTTPS with OpenAPI 3.0 specification; inter-service synchronous reads use gRPC over HTTP/2 for sub-50ms latency (NFR-02-003).
 - **URI Versioning**: Standardized URI path prefix `/api/v1/...` with forward-compatible semantic schemas.
 - **Security**: OAuth 2.0 Bearer JWT tokens for internal/external users; OAuth 2.0 Client Credentials flow for third-party partners.
@@ -171,7 +280,7 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 }
 ```
 
-### 5.2 Asynchronous Event Streams (Kafka Topics)
+### 6.2 Asynchronous Event Streams (Kafka Topics)
 - **Message Protocol**: Apache Kafka with JSON / Apache Avro schema registry.
 - **Standard Envelope**: All events contain metadata headers (`event_id`, `event_type`, `timestamp`, `correlation_id`, `source_module`, `partition_key`).
 
@@ -186,7 +295,7 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 
 ---
 
-## 6. Technology Stack & Infrastructure
+## 7. Technology Stack & Infrastructure
 
 | Component Layer | Technology Choice | Architectural Justification |
 |---|---|---|
@@ -201,7 +310,7 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 
 ---
 
-## 7. Deployment Topology & Resilience (Multi-AZ)
+## 8. Deployment Topology & Resilience (Multi-AZ)
 
 ```mermaid
 flowchart TD

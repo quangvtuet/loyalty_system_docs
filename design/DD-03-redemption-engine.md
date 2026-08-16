@@ -83,9 +83,47 @@ If fulfillment returns `FAILED`:
 
 ---
 
-## 4. Sequence Diagrams
+## 4. RedemptionOrder Lifecycle State Machine
 
-### 4.1 Successful Redemption with FIFO Point Consumption (FLOW-04 / UC-03-02)
+The `RedemptionOrder` entity follows a strict lifecycle corresponding to the `status` column in `redemption_db.redemption_order`. Full specification with cross-entity interactions: [entity-lifecycle-models.md §3](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md).
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Member Submits Request\n[FR-03-010]
+
+    state ValidationGate <<choice>>
+    PENDING --> ValidationGate: Validate Balance + Tier + Min Points
+
+    ValidationGate --> CANCELLED: Validation Failed\n(Insufficient balance / Tier ineligible / Below 100 pts)
+    ValidationGate --> IN_PROGRESS: Validation Passed\n→ FIFO Debit Executed\n→ Fulfillment Dispatched
+
+    IN_PROGRESS --> FULFILLED: Partner Confirms Delivery\n[FR-03-030]
+    IN_PROGRESS --> FAILED: Partner Returns Failure\n[FR-03-040]
+
+    FAILED --> REVERSED: Auto-Reversal\n(Points re-credited, original FIFO position restored)\n[FR-03-041]
+
+    PENDING --> CANCELLED: Member Cancels\n[FR-03-043]
+
+    CANCELLED --> [*]
+    FULFILLED --> [*]
+    REVERSED --> [*]
+
+    note right of IN_PROGRESS
+        Points debited IMMEDIATELY on entry.
+        Cancellation NOT permitted after
+        IN_PROGRESS [FR-03-043].
+    end note
+```
+
+### Concurrent Redemption Protection (FR-03-024, G01-03-009)
+- Redis distributed lock `lock:member:bal:{member_id}` with TTL 10s prevents concurrent over-debit.
+- If lock acquisition fails, request returns `409 Conflict`.
+
+---
+
+## 5. Sequence Diagrams
+
+### 5.1 Successful Redemption with FIFO Point Consumption (FLOW-04 / UC-03-02)
 
 ```mermaid
 sequenceDiagram
@@ -116,7 +154,7 @@ sequenceDiagram
     Controller->>Ledger: Confirm Debit: Transition PENDING_DEBIT -> CONFIRMED_DEBIT
 ```
 
-### 4.2 Fulfillment Failure & Automatic Reversal (FLOW-05 / UC-03-06)
+### 5.2 Fulfillment Failure & Automatic Reversal (FLOW-05 / UC-03-06)
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +176,7 @@ sequenceDiagram
     OrderService->>Notif: Send Reversal Alert: "Reward delivery failed. 300 points restored with original expiry."
 ```
 
-### 4.3 Tier-Restricted Catalog Check (FLOW-09 / UC-03-02)
+### 5.3 Tier-Restricted Catalog Check (FLOW-09 / UC-03-02)
 
 ```mermaid
 sequenceDiagram

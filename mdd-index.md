@@ -163,17 +163,14 @@ This index is the **single entry point** for navigating all model-driven artifac
 |---|---|---|---|---|
 | ADR-001 | Module Boundaries & Data Isolation | [ADR-001](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md) | Accepted | Database-per-service; no cross-DB access |
 | ADR-002 | Event-Driven Earn Ingestion & Idempotency | [ADR-002](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) | Accepted | Kafka + Redis SHA-256 idempotency |
-| ADR-003 | Data Warehouse & Analytics Isolation | [ADR-003](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md) | Accepted | CDC to star schema; OLTP/OLAP separation |
+| ADR-003 | Data Warehouse & Analytics Isolation | [ADR-003](file:///Users/dusainbolt/Documents/vc## 7. Quality, Governance & Traceability Models
 
----
-
-## 7. Quality & Traceability Models
-
-| Model | Document | Criteria Count |
+| Model | Document | Criteria / Scope Count |
 |---|---|---|
-| Architecture Quality Gates (ARCH-GATE-01..04) | [Quality-Gates-Architecture.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/quality-gates/Quality-Gates-Architecture.md) | 64 criteria |
-| Design Quality Gates (DESIGN-GATE-01..04) | [Quality-Gates-Design.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/quality-gates/Quality-Gates-Design.md) | 103 criteria |
-| Traceability Matrix | [traceability.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/traceability.md) | 5 modules × 8 columns + 12 cross-module flows |
+| Architectural Governance Framework | [Architectural-Governance-Framework.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/architecture/Architectural-Governance-Framework.md) | 5-Tier Hierarchy, Focus Matrix (7×6), 5 Quality Gates, 9-Role RACI |
+| Architecture Quality Gates (ARCH-GATE-01..04) | [Quality-Gates-Architecture.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/quality-gates/Quality-Gates-Architecture.md) | 64 criteria |
+| Design Quality Gates (DESIGN-GATE-01..04) | [Quality-Gates-Design.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/quality-gates/Quality-Gates-Design.md) | 103 criteria |
+| Traceability Matrix | [traceability.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/traceability.md) | 5 modules × 8 columns + 12 cross-module flows |
 
 ---
 
@@ -183,38 +180,36 @@ This index is the **single entry point** for navigating all model-driven artifac
 
 | Module | Document | FR Count |
 |---|---|---|
-| Earning Engine | [FR-01-earning-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-01-earning-engine.md) | 22 FRs + 4 NFRs |
-| Tiering System | [FR-02-tiering-system.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-02-tiering-system.md) | 21 FRs + 3 NFRs |
-| Redemption Engine | [FR-03-redemption-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-03-redemption-engine.md) | 22 FRs + 4 NFRs |
-| Program Management | [FR-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-04-program-management.md) | 22 FRs + 4 NFRs |
-| Analytics & Reporting | [FR-05-analytics-reporting.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-05-analytics-reporting.md) | 26 FRs + 5 NFRs |
+| Earning Engine | [FR-01-earning-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-01-earning-engine.md) | 22 FRs + 4 NFRs |
+| Tiering System | [FR-02-tiering-system.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-02-tiering-system.md) | 21 FRs + 3 NFRs |
+| Redemption Engine | [FR-03-redemption-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-03-redemption-engine.md) | 22 FRs + 4 NFRs |
+| Program Management | [FR-04-program-management.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-04-program-management.md) | 22 FRs + 4 NFRs |
+| Analytics & Reporting | [FR-05-analytics-reporting.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-05-analytics-reporting.md) | 26 FRs + 5 NFRs |
 
 ### 8.2 Analytics Specifications
 
 | Module | Document | Metrics | Reports |
 |---|---|---|---|
-| Earning Engine | [AS-01-earning-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/analytics/AS-01-earning-engine.md) | 9 | 4 |
-| Tiering System | [AS-02-tiering-system.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/analytics/AS-02-tiering-system.md) | 10 | 5 |
-| Redemption Engine | [AS-03-redemption-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/analytics/AS-03-redemption-engine.md) | 10 | 5 |
-| Program Management | [AS-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/analytics/AS-04-program-management.md) | 11 | 5 |
-| Analytics & Reporting | [AS-05-analytics-reporting.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/analytics/AS-05-analytics-reporting.md) | 9 | 5 |
+| Earning Engine | [AS-01-earning-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-01-earning-engine.md) | 9 | 4 |
+| Tiering System | [AS-02-tiering-system.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-02-tiering-system.md) | 10 | 5 |
+| Redemption Engine | [AS-03-redemption-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-03-redemption-engine.md) | 10 | 5 |
+| Program Management | [AS-04-program-management.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-04-program-management.md) | 11 | 5 |
+| Analytics & Reporting | [AS-05-analytics-reporting.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-05-analytics-reporting.md) | 9 | 5 |
 
 ---
 
 ## 9. Document Inventory Summary
 
-| Category | Documents | Models | New in Lab 4 |
+| Category | Documents | Models | New in Governance Suite |
 |---|---|---|---|
 | Domain Model | 1 | 2 (class diagram + aggregate table) | ✅ UML Class Diagram |
 | Requirements | 5 | 5 (FR specs with use case tables) | — |
 | Analytics | 5 | 5 (metric + report specs) | — |
-| Architecture | 3 docs + 3 ADRs | 10 (C4, ER, deployment, security, ADRs) | ✅ Domain Event Catalog |
+| Architecture & Governance | 4 docs + 3 ADRs | 14 (C4, Hierarchy, Focus Matrix, RACI, ER, deployment, security, ADRs) | ✅ Governance Framework, Event Catalog |
 | Design | 5 DD docs + 1 lifecycle doc | 22 (components, sequences, state machines, formulas) | ✅ Entity Lifecycle Models |
-| Quality Gates | 2 | 2 (167 total criteria) | — |
+| Quality Gates | 2 | 2 (167 total criteria + 5-stage lifecycle) | ✅ 5-Stage Gate Lifecycle |
 | Traceability | 1 | 1 (full cross-reference matrix) | — |
-| MDD Index | 1 | — | ✅ This document |
-| **Total** | **27 documents** | **47 formal models** | **4 new artifacts** |
+| MDD Index | 1 | — | ✅ Master Catalog |
+| **Total** | **28 documents** | **51 formal models** | **5 core governance & model artifacts** |
 
----
-
-*Generated from: Loyalty Banking documentation suite (v1.1) · Lab 4: Model-Driven Design Standardization*
+*Generated from: Loyalty Banking documentation suite (v1.2) · Architectural Governance & Model-Driven Design*

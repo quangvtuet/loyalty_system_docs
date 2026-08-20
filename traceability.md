@@ -3,7 +3,7 @@
 **Version**: 1.1  
 **Date**: 2026-08-14  
 **Domain**: Loyalty Banking  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [Requirements (FR-01..05)](file:///d:/learn/loyalty/requirements/) | [Analytics (AS-01..05)](file:///d:/learn/loyalty/analytics/) | [Architecture](file:///d:/learn/loyalty/architecture/) | [Detailed Design](file:///d:/learn/loyalty/design/) | [Quality Gates](file:///d:/learn/loyalty/quality-gates/)
+**Source**: [loyalty_domain.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/loyalty_domain.md) | [Requirements (FR-01..05)](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/) | [Analytics (AS-01..05)](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/) | [Architecture & Governance](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/architecture/Architectural-Governance-Framework.md) | [Detailed Design](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/design/) | [Quality Gates](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/quality-gates/)
 
 ---
 

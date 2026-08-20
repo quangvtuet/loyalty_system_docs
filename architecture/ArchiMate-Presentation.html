@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loyalty Banking — ArchiMate 3.2 Architecture Presentation</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151d30;
+            --bg-sidebar: #070a12;
+            --border-color: #263352;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #c084fc;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-orange: #fb923c;
+            --badge-bg: rgba(56, 189, 248, 0.12);
+            --badge-border: rgba(56, 189, 248, 0.3);
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-blue: #0284c7;
+            --accent-cyan: #0891b2;
+            --accent-purple: #9333ea;
+            --accent-green: #16a34a;
+            --accent-yellow: #ca8a04;
+            --accent-orange: #ea580c;
+            --badge-bg: rgba(2, 132, 199, 0.08);
+            --badge-border: rgba(2, 132, 199, 0.2);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 50;
+        }
+
+        .sidebar-header {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-header i {
+            font-size: 24px;
+            color: var(--accent-blue);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-header h2 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .sidebar-header span {
+            font-size: 11px;
+            color: var(--accent-cyan);
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .nav-item i {
+            font-size: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.14), rgba(6, 182, 212, 0.05));
+            color: var(--accent-blue);
+            border-color: var(--badge-border);
+        }
+
+        .nav-item.active i {
+            color: var(--accent-blue);
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 12px;
+            background-color: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .theme-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            height: 68px;
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            flex-shrink: 0;
+        }
+
+        .header-title-box h1 {
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title-box p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: #04101e;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            color: #04101e;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+            position: relative;
+        }
+
+        /* TAB PANES */
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* DIAGRAM CARD */
+        .diagram-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diagram-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(255, 255, 255, 0.01);
+            user-select: none;
+        }
+
+        .diagram-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .diagram-title .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .badge-mot { background: rgba(192, 132, 252, 0.15); color: var(--accent-purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+        .badge-bus { background: rgba(250, 204, 21, 0.15); color: var(--accent-yellow); border: 1px solid rgba(250, 204, 21, 0.3); }
+        .badge-app { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-tec { background: rgba(74, 222, 128, 0.15); color: var(--accent-green); border: 1px solid rgba(74, 222, 128, 0.3); }
+        .badge-imp { background: rgba(251, 146, 60, 0.15); color: var(--accent-orange); border: 1px solid rgba(251, 146, 60, 0.3); }
+
+        .diagram-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-btn {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .diagram-container {
+            min-height: 520px;
+            height: 560px;
+            background: radial-gradient(circle at center, rgba(56, 189, 248, 0.03) 0%, transparent 70%);
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .diagram-container:active {
+            cursor: grabbing;
+        }
+
+        .svg-viewport {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .svg-viewport svg {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 95%;
+            max-height: 95%;
+        }
+
+        .diagram-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background-color: var(--bg-main);
+            min-height: 100vh;
+        }
+
+        .zoom-hint {
+            position: absolute;
+            bottom: 12px;
+            right: 14px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background-color: rgba(11, 15, 25, 0.8);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* EXPLANATION CARDS */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .info-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 18px;
+        }
+
+        .info-card h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card p, .info-card ul {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-card ul {
+            padding-left: 18px;
+        }
+
+        /* TABLE STYLING */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .matrix-table th, .matrix-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .matrix-table th {
+            background-color: rgba(255, 255, 255, 0.03);
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .matrix-table tr:hover td {
+            background-color: rgba(56, 189, 248, 0.02);
+        }
+
+        /* LEGEND BAR */
+        .legend-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 12px 18px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside>
+        <div class="sidebar-header">
+            <i class="fa-solid fa-layer-group"></i>
+            <div>
+                <h2>Loyalty Banking</h2>
+                <span>ArchiMate 3.2 Architecture</span>
+            </div>
+        </div>
+
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchTab(this, 'overview')">
+                <i class="fa-solid fa-compass"></i>
+                <span>1. Tổng quan Khung Kiến trúc</span>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'motivation')">
+                <i class="fa-solid fa-bullseye" style="color: var(--accent-purple);"></i>
+                <span>2. Động lực & Chiến lược</span>
+                <div class="nav-badge">Motivation</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'business')">
+                <i class="fa-solid fa-briefcase" style="color: var(--accent-yellow);"></i>
+                <span>3. Tầng Nghiệp vụ</span>
+                <div class="nav-badge">Business</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'application')">
+                <i class="fa-solid fa-cubes" style="color: var(--accent-blue);"></i>
+                <span>4. Tầng Ứng dụng</span>
+                <div class="nav-badge">Application</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'technology')">
+                <i class="fa-solid fa-server" style="color: var(--accent-green);"></i>
+                <span>5. Tầng Công nghệ (Tối giản)</span>
+                <div class="nav-badge">Technology</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'implementation')">
+                <i class="fa-solid fa-road" style="color: var(--accent-orange);"></i>
+                <span>6. Lộ trình Triển khai</span>
+                <div class="nav-badge">Roadmap</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'traceability')">
+                <i class="fa-solid fa-link" style="color: var(--accent-cyan);"></i>
+                <span>7. Tích hợp Đa tầng</span>
+                <div class="nav-badge">Traceability</div>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'matrix')">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>8. Bảng Ánh xạ Ma trận</span>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+                <span id="theme-text">Chế độ Tối</span>
+            </button>
+            <span style="font-size: 11px; color: var(--text-secondary);">v3.0 Capstone</span>
+        </div>
+    </aside>
+
+    <!-- MAIN PRESENTATION AREA -->
+    <main>
+        <header>
+            <div class="header-title-box">
+                <h1 id="header-title"><i class="fa-solid fa-compass" style="color: var(--accent-blue);"></i> Tổng quan Khung Kiến trúc ArchiMate 3.2</h1>
+                <p id="header-desc">Khung phân tầng kiến trúc tổng thể cho hệ thống Khách hàng Thân thiết Ngân hàng (Loyalty Banking Platform)</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-action" onclick="resetCurrentZoom()"><i class="fa-solid fa-arrows-rotate"></i> Reset Zoom</button>
+                <button class="btn-action btn-primary" onclick="printDoc()"><i class="fa-solid fa-print"></i> Xuất / In Báo Cáo</button>
+            </div>
+        </header>
+
+        <div class="content-area">
+
+            <!-- ARTIMATE LEGEND -->
+            <div class="legend-bar">
+                <span style="font-weight: 700; color: var(--text-primary);">Quy chuẩn Màu ArchiMate:</span>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--accent-purple);"></div> Motivation & Strategy</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--accent-yellow);"></div> Business Layer (Nghiệp vụ)</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--accent-blue);"></div> Application Layer (Ứng dụng)</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--accent-green);"></div> Technology Layer (Hạ tầng)</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--accent-orange);"></div> Implementation & Migration</div>
+            </div>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div class="tab-pane active" id="tab-overview">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Khung Phân tầng Tổng thể (ArchiMate Core Stack)</span>
+                            <span class="badge badge-app">Overview</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-overview')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-overview')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-overview')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-overview')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-overview" onwheel="handleWheel(event, 'd-overview')">
+                        <div class="svg-viewport" id="vp-d-overview">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-bolt"></i> Mục tiêu Cốt lõi</h4>
+                        <p>Xử lý tích điểm và đổi điểm thời gian thực với thông lượng ≥ 500 TPS, duy trì sổ cái bất biến (Immutable Ledger) và độ trễ dưới 2 giây.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-shield-halved"></i> 3 Quyết định Bất biến (ADRs)</h4>
+                        <p><strong>ADR-001</strong>: Cô lập dữ liệu CSDL từng Service<br><strong>ADR-002</strong>: Xử lý sự kiện Kafka & Khóa Idempotency Redis<br><strong>ADR-003</strong>: Tách biệt OLTP và OLAP qua Debezium CDC.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-diagram-project"></i> 5 Khối Microservices</h4>
+                        <p>Earning Engine (Tích điểm), Tiering System (Xét hạng), Redemption Engine (Đổi quà), Program Mgmt (Cấu hình), Analytics & Reporting (Báo cáo nợ).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MOTIVATION & STRATEGY -->
+            <div class="tab-pane" id="tab-motivation">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Động lực & Năng lực Chiến lược (Motivation & Strategy)</span>
+                            <span class="badge badge-mot">Motivation & Strategy</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-motivation')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-motivation')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-motivation')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-motivation')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-motivation" onwheel="handleWheel(event, 'd-motivation')">
+                        <div class="svg-viewport" id="vp-d-motivation">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: BUSINESS LAYER -->
+            <div class="tab-pane" id="tab-business">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Tầng Nghiệp vụ (Business Layer — Actors, Services, Processes, Objects)</span>
+                            <span class="badge badge-bus">Business</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-business')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-business')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-business')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-business')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-business" onwheel="handleWheel(event, 'd-business')">
+                        <div class="svg-viewport" id="vp-d-business">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: APPLICATION LAYER -->
+            <div class="tab-pane" id="tab-application">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Tầng Ứng dụng & Microservices (Application Layer)</span>
+                            <span class="badge badge-app">Application</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-application')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-application')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-application')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-application')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-application" onwheel="handleWheel(event, 'd-application')">
+                        <div class="svg-viewport" id="vp-d-application">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: TECHNOLOGY LAYER (SIMPLIFIED) -->
+            <div class="tab-pane" id="tab-technology">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Tầng Công nghệ & Hạ tầng Tinh gọn (Technology & Infrastructure)</span>
+                            <span class="badge badge-tec">Technology</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-technology')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-technology')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-technology')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-technology')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-technology" onwheel="handleWheel(event, 'd-technology')">
+                        <div class="svg-viewport" id="vp-d-technology">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-server"></i> 1. Khối Cổng & Mạng (Edge)</h4>
+                        <p>API Gateway xác thực JWT, định tuyến REST/gRPC và giới hạn Rate Limit 1.000 req/phút để bảo vệ hệ thống.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-cubes-stacked"></i> 2. Khối Tính toán (K8s Platform)</h4>
+                        <p>5 Microservices chạy độc lập trên Kubernetes, tự động mở rộng Pods (HPA) khi thông lượng đạt ≥ 500 TPS.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-network-wired"></i> 3. Khối Middleware (Kafka & Redis)</h4>
+                        <p><strong>Kafka</strong> điều phối sự kiện theo `member_id`. <strong>Redis</strong> đảm bảo khóa phân tán Redlock và Idempotency 72h.</p>
+                    </div>
+                    <div class="info-card">
+                        <h4><i class="fa-solid fa-database"></i> 4. Khối CSDL (Polyglot Storage)</h4>
+                        <p>4 CSDL PostgreSQL độc lập cho từng service. Debezium CDC đồng bộ sang Star Schema Data Warehouse.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: IMPLEMENTATION -->
+            <div class="tab-pane" id="tab-implementation">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Lộ trình Triển khai Capstone (Implementation & Migration)</span>
+                            <span class="badge badge-imp">Roadmap</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-implementation')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-implementation')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-implementation')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-implementation')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-implementation" onwheel="handleWheel(event, 'd-implementation')">
+                        <div class="svg-viewport" id="vp-d-implementation">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: TRACEABILITY -->
+            <div class="tab-pane" id="tab-traceability">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Sơ đồ Tích hợp Đa tầng (Cross-Layer Traceability View)</span>
+                            <span class="badge badge-app">Traceability</span>
+                        </div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" title="Phóng to" onclick="zoomIn('d-traceability')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" title="Thu nhỏ" onclick="zoomOut('d-traceability')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" title="Đặt lại" onclick="resetZoom('d-traceability')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" title="Toàn màn hình" onclick="toggleFullscreen('d-traceability')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-traceability" onwheel="handleWheel(event, 'd-traceability')">
+                        <div class="svg-viewport" id="vp-d-traceability">
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang tải sơ đồ...</div>
+                        </div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Cuộn chuột hoặc Kéo thả để Di chuyển / Phóng to</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: MATRIX -->
+            <div class="tab-pane" id="tab-matrix">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title">
+                            <span>Bảng Ma trận Ánh xạ Truy vết Phần tử ArchiMate (Traceability Matrix)</span>
+                            <span class="badge badge-app">Matrix Checklist</span>
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tầng Kiến trúc</th>
+                                    <th>Loại Phần tử</th>
+                                    <th>Tên Phần tử trong Dự án Loyalty</th>
+                                    <th>Trách nhiệm & Ý nghĩa Nghiệp vụ / Kỹ thuật</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td><strong style="color: var(--accent-purple);">Motivation</strong></td>
+                                    <td>Stakeholder</td>
+                                    <td>Ban Lãnh đạo, Marketing, Kế toán, Chủ thẻ, Đối tác</td>
+                                    <td>Các bên tham gia trực tiếp vào chuỗi giá trị Loyalty</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td><strong style="color: var(--accent-purple);">Motivation</strong></td>
+                                    <td>Driver / Goal</td>
+                                    <td>Thông lượng ≥ 500 TPS, SLA ≤ 60s, Sổ cái Bất biến</td>
+                                    <td>Chỉ số đo lường hiệu năng và cam kết dịch vụ tài chính</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td><strong style="color: var(--accent-purple);">Motivation</strong></td>
+                                    <td>Principle</td>
+                                    <td>ADR-001 (Cô lập DB), ADR-002 (Sự kiện/Idempotency), ADR-003 (CDC)</td>
+                                    <td>3 quyết định kiến trúc cốt lõi định hình nền tảng</td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td><strong style="color: var(--accent-purple);">Strategy</strong></td>
+                                    <td>Capability</td>
+                                    <td>Tích điểm tốc độ cao, Quản lý Hạng thẻ động, Đổi quà FIFO</td>
+                                    <td>Năng lực cốt lõi phục vụ hệ sinh thái Loyalty Ngân hàng</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td><strong style="color: var(--accent-yellow);">Business</strong></td>
+                                    <td>Business Actor</td>
+                                    <td>Khách hàng (Member), Core Banking, Support Agent, Kế toán</td>
+                                    <td>Con người và hệ thống nguồn tham gia luồng nghiệp vụ</td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td><strong style="color: var(--accent-yellow);">Business</strong></td>
+                                    <td>Business Service</td>
+                                    <td>Tích điểm, Nâng hạng Silver/Gold/Platinum, Đổi thưởng, Báo cáo Nợ</td>
+                                    <td>Gói dịch vụ cung cấp ra người dùng và nội bộ ngân hàng</td>
+                                </tr>
+                                <tr>
+                                    <td>7</td>
+                                    <td><strong style="color: var(--accent-yellow);">Business</strong></td>
+                                    <td>Business Process</td>
+                                    <td>Tích điểm từ Core Banking, Chu kỳ Hạng 30d Grace, Lệnh Duyệt kép</td>
+                                    <td>Các quy trình kinh doanh và luồng nghiệp vụ chuẩn</td>
+                                </tr>
+                                <tr>
+                                    <td>8</td>
+                                    <td><strong style="color: var(--accent-yellow);">Business</strong></td>
+                                    <td>Business Object</td>
+                                    <td>Sổ cái Điểm (point_transaction), Số dư Điểm, QP, Đơn Đổi quà</td>
+                                    <td>Thực thể thông tin và dữ liệu kinh doanh tài chính</td>
+                                </tr>
+                                <tr>
+                                    <td>9</td>
+                                    <td><strong style="color: var(--accent-blue);">Application</strong></td>
+                                    <td>App Component</td>
+                                    <td>Earning Engine, Tiering, Redemption, Program Mgmt, Analytics DW</td>
+                                    <td>5 Microservices độc lập theo nguyên tắc Domain-Driven Design</td>
+                                </tr>
+                                <tr>
+                                    <td>10</td>
+                                    <td><strong style="color: var(--accent-blue);">Application</strong></td>
+                                    <td>App Interface / Topic</td>
+                                    <td>settled_transactions, tier_event, cdc_stream, REST Gateway</td>
+                                    <td>Giao diện API và hàng đợi điều phối sự kiện phân tán Kafka</td>
+                                </tr>
+                                <tr>
+                                    <td>11</td>
+                                    <td><strong style="color: var(--accent-blue);">Application</strong></td>
+                                    <td>Data Object</td>
+                                    <td>point_transaction, point_balance, qp_ledger, fact_*</td>
+                                    <td>Mô hình dữ liệu quan hệ và Star Schema Data Warehouse</td>
+                                </tr>
+                                <tr>
+                                    <td>12</td>
+                                    <td><strong style="color: var(--accent-green);">Technology</strong></td>
+                                    <td>Node / System Software</td>
+                                    <td>Kubernetes Cluster, Kafka, Redis Cluster, PostgreSQL, ClickHouse</td>
+                                    <td>Nền tảng hạ tầng tính toán, bộ nhớ đệm và CSDL phân tán</td>
+                                </tr>
+                                <tr>
+                                    <td>13</td>
+                                    <td><strong style="color: var(--accent-green);">Technology</strong></td>
+                                    <td>Artifact</td>
+                                    <td>earning-engine.jar, Docker Containers, *.sql Migration Scripts</td>
+                                    <td>Các tệp nhị phân đóng gói triển khai thực tế trên K8s</td>
+                                </tr>
+                                <tr>
+                                    <td>14</td>
+                                    <td><strong style="color: var(--accent-orange);">Implementation</strong></td>
+                                    <td>Work Package</td>
+                                    <td>WP1 (Hạ tầng) → WP6 (Dual-Control & Quality Gates 500 TPS)</td>
+                                    <td>Các gói công việc triển khai thực tế cho đồ án Capstone</td>
+                                </tr>
+                                <tr>
+                                    <td>15</td>
+                                    <td><strong style="color: var(--accent-orange);">Implementation</strong></td>
+                                    <td>Plateau</td>
+                                    <td>Plateau 0 (Baseline) → Plateau 3 (Target State Hoàn chỉnh)</td>
+                                    <td>Các giai đoạn bàn giao kiến trúc qua từng chặng đồ án</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Mermaid Configuration
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // SIMPLIFIED, INTUITIVE DIAGRAM DEFINITIONS
+        const diagrams = {
+            'd-overview': `flowchart TD
+    M["1. Motivation & Strategy Layer\\n(Mục tiêu ≥ 500 TPS, Sổ cái Bất biến, 3 Nguyên tắc ADRs)"] --> B["2. Business Layer\\n(5 Quy trình: Tích điểm, Xét hạng, Đổi quà FIFO, Duyệt kép, Báo cáo nợ)"]
+    B --> A["3. Application Layer\\n(5 Microservices: Earning, Tiering, Redemption, Program, Analytics)"]
+    A --> T["4. Technology Layer\\n(Hạ tầng: K8s Container, Kafka, Redis, PostgreSQL per service, ClickHouse)"]
+    I["5. Implementation Layer\\n(Lộ trình: Plateau 0 -> Plateau 3 với 6 Work Packages)"] -.-> M
+    I -.-> B
+    I -.-> A
+    I -.-> T
+
+    style M fill:#f8d7da,stroke:#721c24,stroke-width:2px,color:#000
+    style B fill:#fff3cd,stroke:#856404,stroke-width:2px,color:#000
+    style A fill:#d1ecf1,stroke:#0c5460,stroke-width:2px,color:#000
+    style T fill:#d4edda,stroke:#155724,stroke-width:2px,color:#000
+    style I fill:#e2e3e5,stroke:#383d41,stroke-width:2px,color:#000`,
+
+            'd-motivation': `flowchart TB
+    subgraph Motivation["Motivation Layer (Động lực & Mục tiêu)"]
+        direction TB
+        SH["Stakeholders\\n(Lãnh đạo, Marketing, Kế toán, Chủ thẻ, Đối tác)"]
+        DR["Drivers\\n(Giữ chân khách hàng, Mở rộng liên minh, Tránh thất thoát điểm)"]
+        GOAL["Goals\\n(≥ 500 TPS, SLA ≤ 60s, Sổ cái Bất biến 100%)"]
+        PRIN["Principles\\n(ADR-001 Cô lập DB, ADR-002 Hướng sự kiện, ADR-003 Tách biệt OLAP)"]
+
+        SH --> DR
+        DR --> GOAL
+        PRIN -.-> GOAL
+    end
+
+    subgraph Strategy["Strategy Layer (Năng lực & Chuỗi Giá trị)"]
+        direction TB
+        CAP["Core Capabilities\\n(Tích điểm tốc độ cao, Xét hạng tự động, Đổi quà đa kênh, Phân tích nợ điểm)"]
+        
+        subgraph ValueStream["Value Stream: Hành trình Khách hàng Loyalty"]
+            V1["1. Chi tiêu Thẻ"] --> V2["2. Tích điểm & Nâng hạng"]
+            V2 --> V3["3. Đổi Quà & Voucher"]
+            V3 --> V4["4. Gắn kết & Duy trì"]
+        end
+    end
+
+    GOAL ==> CAP
+    CAP --> V2
+    CAP --> V3
+
+    style Motivation fill:#fdf2f8,stroke:#db2777,stroke-width:2px,color:#000
+    style Strategy fill:#faf5ff,stroke:#9333ea,stroke-width:2px,color:#000`,
+
+            'd-business': `flowchart TD
+    subgraph Actors["Tác nhân Nghiệp vụ (Business Actors)"]
+        direction LR
+        A1["Chủ thẻ (Member)"]
+        A2["Core Banking"]
+        A3["Quản trị viên (Admin)"]
+        A4["Kế toán (Finance)"]
+        A5["Đối tác (Partner)"]
+    end
+
+    subgraph Services["Dịch vụ Nghiệp vụ (Business Services)"]
+        direction LR
+        S1["Dịch vụ Tích điểm"]
+        S2["Dịch vụ Xét hạng"]
+        S3["Dịch vụ Đổi quà"]
+        S4["Dịch vụ Duyệt kép"]
+        S5["Dịch vụ Báo cáo Nợ"]
+    end
+
+    subgraph Processes["5 Quy trình Nghiệp vụ Cốt lõi (Business Processes)"]
+        direction TB
+        P1["BP 01: Tích điểm Giao dịch & Ghi Sổ cái Bất biến"]
+        P2["BP 02: Tích lũy QP, Nâng hạng Tức thì & Ân hạn 30 ngày"]
+        P3["BP 03: Đổi quà Danh mục, Trừ điểm FIFO & Đối tác"]
+        P4["BP 04: Điều chỉnh Điểm Kiểm soát Kép (Ngưỡng 500 điểm)"]
+        P5["BP 05: Tổng hợp CDC & Báo cáo Nợ điểm Tài chính"]
+    end
+
+    subgraph Objects["Thực thể Dữ liệu Nghiệp vụ (Business Objects)"]
+        direction LR
+        O1[("Sổ cái Điểm (Ledger)")]
+        O2[("Số dư Khả dụng")]
+        O3[("Hạng thẻ & QP")]
+        O4[("Đơn Đổi quà")]
+        O5[("Báo cáo Nợ & Breakage")]
+    end
+
+    Actors --> Services
+    Services --> Processes
+    P1 --> O1
+    P1 --> O2
+    P2 --> O3
+    P3 --> O4
+    P4 --> O1
+    P5 --> O5
+
+    style Actors fill:#fffbeb,stroke:#f59e0b,stroke-width:1px,color:#000
+    style Services fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#000
+    style Processes fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#000
+    style Objects fill:#ecfdf5,stroke:#10b981,stroke-width:1px,color:#000`,
+
+            'd-application': `flowchart TD
+    subgraph Clients["Clients & External Systems"]
+        direction LR
+        CLI_MOB["Mobile App"]
+        CLI_WEB["Admin / Web Portal"]
+        CLI_PART["Partner API"]
+        CLI_CORE["Core Banking Stream"]
+    end
+
+    subgraph Gateway["Edge Gateway"]
+        GW["API Gateway & OAuth 2.0 Auth Server\\n(JWT Validation, RBAC, Rate Limit)"]
+    end
+
+    subgraph Microservices["5 Core Domain Microservices"]
+        direction LR
+        EE["Earning Engine Service\\n(Tích điểm, Sổ cái, Idempotency)"]
+        TS["Tiering System Service\\n(QP Ledger, Nâng hạng, 30d Grace)"]
+        RE["Redemption Engine Service\\n(Kho quà, Trừ điểm FIFO, Đối tác)"]
+        PM["Program Management Service\\n(Cấu hình, Chiến dịch, Duyệt kép)"]
+        AR["Analytics & Reporting Service\\n(Kho phân tích, 7 Báo cáo chuẩn)"]
+    end
+
+    subgraph EventBus["Message Broker (Apache Kafka)"]
+        direction LR
+        K_TXN["topic: settled_transactions"]
+        K_TIER["topic: tier_event / tier_change"]
+        K_RED["topic: redemption_event"]
+        K_CDC["topic: cdc_stream (Debezium)"]
+    end
+
+    CLI_MOB --> GW
+    CLI_WEB --> GW
+    CLI_PART --> GW
+    CLI_CORE --> K_TXN
+
+    GW --> EE
+    GW --> TS
+    GW --> RE
+    GW --> PM
+    GW --> AR
+
+    K_TXN --> EE
+    EE <--> K_TIER
+    K_TIER <--> TS
+    RE <--> K_RED
+    K_RED --> EE
+
+    EE -.-> K_CDC
+    TS -.-> K_CDC
+    RE -.-> K_CDC
+    PM -.-> K_CDC
+    K_CDC --> AR
+
+    style Gateway fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#000
+    style Microservices fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#000
+    style EventBus fill:#f1f5f9,stroke:#475569,stroke-width:1px,color:#000`,
+
+            'd-technology': `flowchart TD
+    subgraph Edge["1. Khối Cổng Tiếp nhận (Edge & Security)"]
+        INGRESS["API Gateway / Ingress Controller\\n(Xác thực Token JWT, Định tuyến REST/gRPC, Rate Limit 1.000 req/min)"]
+    end
+
+    subgraph Compute["2. Khối Tính toán & Dịch vụ (Kubernetes Cluster)"]
+        direction LR
+        P_EE["Earning Engine Pod"]
+        P_TS["Tiering System Pod"]
+        P_RE["Redemption Engine Pod"]
+        P_PM["Program Mgmt Pod"]
+        P_AR["Analytics Pod"]
+    end
+
+    subgraph Middleware["3. Khối Truyền thông & Bộ nhớ đệm (Middleware Tier)"]
+        direction LR
+        KAFKA[("Apache Kafka\\n(Event Streaming Broker)")]
+        REDIS[("Redis Cluster\\n(Khóa Redlock & Idempotency)")]
+    end
+
+    subgraph Storage["4. Khối CSDL Phân lập (Database-per-Service)"]
+        direction LR
+        DB_EE[("Earning DB\\n(PostgreSQL)")]
+        DB_TS[("Tiering DB\\n(PostgreSQL)")]
+        DB_RED[("Redemption DB\\n(PostgreSQL)")]
+        DB_PM[("Program DB\\n(PostgreSQL)")]
+        DB_DW[("Analytics DW\\n(ClickHouse Star Schema)")]
+    end
+
+    INGRESS --> Compute
+
+    Compute <-->|Pub / Sub Events| KAFKA
+    P_EE <-->|Idempotency Lock| REDIS
+    P_RE <-->|FIFO Lock| REDIS
+
+    P_EE --- DB_EE
+    P_TS --- DB_TS
+    P_RE --- DB_RED
+    P_PM --- DB_PM
+    P_AR --- DB_DW
+
+    DB_EE -.->|CDC| KAFKA
+    DB_TS -.->|CDC| KAFKA
+    DB_RED -.->|CDC| KAFKA
+    DB_PM -.->|CDC| KAFKA
+    KAFKA -->|CDC Stream| P_AR
+
+    style Edge fill:#e8f4f8,stroke:#007acc,stroke-width:2px,color:#000
+    style Compute fill:#e8f8f5,stroke:#2ecc71,stroke-width:2px,color:#000
+    style Middleware fill:#fef9e7,stroke:#f1c40f,stroke-width:2px,color:#000
+    style Storage fill:#fdedec,stroke:#e74c3c,stroke-width:2px,color:#000`,
+
+            'd-implementation': `flowchart LR
+    subgraph Plateaus["4 Chặng Chuyển giao Kiến trúc (Architecture Plateaus)"]
+        PL0["Plateau 0: Thiết kế Cơ sở & Specs"]
+        PL1["Plateau 1: MVP Tích điểm & Hạng thẻ"]
+        PL2["Plateau 2: Đổi quà & Tích hợp Đối tác"]
+        PL3["Plateau 3: Hệ thống Doanh nghiệp Hoàn chỉnh"]
+    end
+
+    subgraph Packages["6 Gói Công việc (Work Packages)"]
+        direction TB
+        WP1["WP 1: Thiết lập Hạ tầng K8s & Kafka Bus"]
+        WP2["WP 2: Sổ cái Bất biến & Khóa Idempotency"]
+        WP3["WP 3: Xét hạng Động & Ân hạn 30 ngày"]
+        WP4["WP 4: Đổi quà FIFO & Cổng OAuth Đối tác"]
+        WP5["WP 5: Kho Dữ liệu Star Schema & CDC Stream"]
+        WP6["WP 6: Kiểm soát Kép & Kiểm thử 500 TPS"]
+    end
+
+    subgraph Deliverables["Sản phẩm Đồ án (Deliverables)"]
+        direction TB
+        D1["Tài liệu Kiến trúc & OpenAPI Specs"]
+        D2["5 Microservices Docker Containers"]
+        D3["CSDL PostgreSQL & ClickHouse DW"]
+        D4["Mobile App & Web Portals"]
+        D5["Báo cáo Quality Gates (≥ 500 TPS, 0 Duplication)"]
+    end
+
+    PL0 --> WP1
+    WP1 --> PL1
+    WP2 --> PL1
+    WP3 --> PL1
+    PL1 --> WP4
+    WP4 --> PL2
+    PL2 --> WP5
+    PL2 --> WP6
+    WP5 --> PL3
+    WP6 --> PL3
+
+    PL3 -.-> Deliverables
+
+    style Plateaus fill:#fff7ed,stroke:#ea580c,stroke-width:2px,color:#000
+    style Packages fill:#f8fafc,stroke:#64748b,stroke-width:1px,color:#000
+    style Deliverables fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#000`,
+
+            'd-traceability': `flowchart TB
+    subgraph L1["1. Motivation & Strategy Layer"]
+        G1["Mục tiêu: Sổ cái Bất biến & Không trùng lặp Bút toán"]
+        G2["Mục tiêu: Thông lượng ≥ 500 sự kiện/giây (p95 < 2s)"]
+        CAP["Năng lực: Tích điểm Thời gian thực Quy mô lớn"]
+        G1 -.-> CAP
+        G2 -.-> CAP
+    end
+
+    subgraph L2["2. Business Layer"]
+        BS["Dịch vụ Nghiệp vụ: Dịch vụ Tích điểm Giao dịch"]
+        BP["Quy trình Nghiệp vụ: Tiếp nhận GD & Ghi Sổ cái Bất biến"]
+        BO[("Thực thể: Bút toán Sổ cái (point_transaction)")]
+        CAP ==> BS
+        BS --> BP
+        BP --> BO
+    end
+
+    subgraph L3["3. Application Layer"]
+        AS["Dịch vụ Ứng dụng: Earn Ingestion & Rule Evaluator API"]
+        AC["Thành phần Ứng dụng: Earning Engine Service (Microservice)"]
+        DO["Thực thể Dữ liệu: point_transaction & point_balance"]
+        BP -.->|Hiện thực hóa| AS
+        AS --> AC
+        AC --> DO
+    end
+
+    subgraph L4["4. Technology Layer"]
+        T_KAFKA["Dịch vụ Công nghệ: Apache Kafka (settled_transactions)"]
+        T_REDIS["Dịch vụ Công nghệ: Redis Cluster (Khóa Idempotency)"]
+        T_PG["CSDL Vật lý: PostgreSQL (Partitioned Ledger)"]
+        T_K8S["Hạ tầng Tính toán: Kubernetes Worker Pods (HPA)"]
+
+        AC -.->|Vận hành trên| T_K8S
+        AC -.->|Tiêu thụ từ| T_KAFKA
+        AC -.->|Khóa giao dịch với| T_REDIS
+        DO -.->|Lưu trữ tại| T_PG
+    end
+
+    L1 ==> L2
+    L2 ==> L3
+    L3 ==> L4
+
+    style L1 fill:#fdf2f8,stroke:#db2777,stroke-width:2px,color:#000
+    style L2 fill:#fffbeb,stroke:#d97706,stroke-width:2px,color:#000
+    style L3 fill:#eff6ff,stroke:#2563eb,stroke-width:2px,color:#000
+    style L4 fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#000`
+        };
+
+        // Tab titles and descriptions
+        const tabInfo = {
+            'overview': {
+                title: '<i class="fa-solid fa-compass" style="color: var(--accent-blue);"></i> Tổng quan Khung Kiến trúc ArchiMate 3.2',
+                desc: 'Khung phân tầng kiến trúc tổng thể cho hệ thống Khách hàng Thân thiết Ngân hàng (Loyalty Banking Platform)'
+            },
+            'motivation': {
+                title: '<i class="fa-solid fa-bullseye" style="color: var(--accent-purple);"></i> Motivation & Strategy Layer',
+                desc: 'Bên liên quan, Mục tiêu thông lượng ≥ 500 TPS, 3 Nguyên tắc ADRs và Chuỗi giá trị Loyalty'
+            },
+            'business': {
+                title: '<i class="fa-solid fa-briefcase" style="color: var(--accent-yellow);"></i> Business Layer (Tầng Nghiệp vụ)',
+                desc: 'Tác nhân, Dịch vụ nghiệp vụ, 5 Quy trình cốt lõi và Thực thể Sổ cái / Điểm xét hạng (QP)'
+            },
+            'application': {
+                title: '<i class="fa-solid fa-cubes" style="color: var(--accent-blue);"></i> Application Layer (Tầng Ứng dụng & Microservices)',
+                desc: '5 Microservices độc lập, API Gateway, Hàng đợi Kafka Choreography và Cấu trúc dữ liệu'
+            },
+            'technology': {
+                title: '<i class="fa-solid fa-server" style="color: var(--accent-green);"></i> Technology Layer (Tầng Công nghệ & Hạ tầng Tinh gọn)',
+                desc: '4 Khối hạ tầng logic: Edge Ingress, Kubernetes Pods, Kafka/Redis Middleware, và Polyglot Database Tier'
+            },
+            'implementation': {
+                title: '<i class="fa-solid fa-road" style="color: var(--accent-orange);"></i> Implementation & Migration Layer',
+                desc: '4 Chặng bàn giao (Plateaus), 6 Gói công việc (Work Packages) và Sản phẩm bàn giao Đồ án'
+            },
+            'traceability': {
+                title: '<i class="fa-solid fa-link" style="color: var(--accent-cyan);"></i> Cross-Layer Traceability View',
+                desc: 'Sơ đồ tích hợp dọc thể hiện sự hiện thực hóa từ Chiến lược xuống Nghiệp vụ, Ứng dụng và CSDL'
+            },
+            'matrix': {
+                title: '<i class="fa-solid fa-table-cells" style="color: var(--accent-blue);"></i> Traceability Matrix (Bảng Ánh xạ Ma trận)',
+                desc: 'Bảng tổng hợp đối chiếu toàn bộ các phần tử kiến trúc ArchiMate theo chuẩn The Open Group'
+            }
+        };
+
+        // Render Mermaid Diagram Async
+        async function renderDiagram(id) {
+            const vp = document.getElementById('vp-' + id);
+            if (!vp || vp.getAttribute('data-rendered') === 'true') return;
+            const code = diagrams[id];
+            if (!code) return;
+            
+            try {
+                const uniqueId = 'svg_' + id.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Math.floor(Math.random()*10000);
+                const { svg } = await mermaid.render(uniqueId, code);
+                vp.innerHTML = svg;
+                vp.setAttribute('data-rendered', 'true');
+                resetZoom(id);
+            } catch (err) {
+                console.error('Mermaid render error for ' + id, err);
+                vp.innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center;"><i class="fa-solid fa-triangle-exclamation"></i> Lỗi vẽ sơ đồ: ${err.message}</div>`;
+            }
+        }
+
+        // Switch Tab Function
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            const targetPane = document.getElementById('tab-' + tabId);
+            if (targetPane) targetPane.classList.add('active');
+
+            if (element) {
+                element.classList.add('active');
+            }
+
+            // Update Header
+            if (tabInfo[tabId]) {
+                document.getElementById('header-title').innerHTML = tabInfo[tabId].title;
+                document.getElementById('header-desc').innerText = tabInfo[tabId].desc;
+            }
+
+            // Render diagram if needed
+            const diagramId = 'd-' + tabId;
+            if (diagrams[diagramId]) {
+                renderDiagram(diagramId);
+            }
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+
+            if (newTheme === 'light') {
+                icon.className = 'fa-solid fa-sun';
+                text.innerText = 'Chế độ Sáng';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+                text.innerText = 'Chế độ Tối';
+            }
+
+            // Re-render all diagrams
+            document.querySelectorAll('.svg-viewport').forEach(vp => {
+                vp.removeAttribute('data-rendered');
+            });
+            const activePane = document.querySelector('.tab-pane.active');
+            if (activePane) {
+                const container = activePane.querySelector('.diagram-container');
+                if (container) renderDiagram(container.id);
+            }
+        }
+
+        // ================= ZOOM & PAN ENGINE =================
+        const zoomStates = {};
+
+        function getZoomState(id) {
+            if (!zoomStates[id]) {
+                zoomStates[id] = { scale: 1, x: 0, y: 0, isDragging: false, startX: 0, startY: 0 };
+            }
+            return zoomStates[id];
+        }
+
+        function updateTransform(id, isSmooth = true) {
+            const state = getZoomState(id);
+            const vp = document.getElementById('vp-' + id);
+            if (vp) {
+                const svg = vp.querySelector('svg');
+                if (svg) {
+                    svg.style.transition = (isSmooth && !state.isDragging) ? 'transform 0.15s ease-out' : 'none';
+                    svg.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+                    svg.style.transformOrigin = 'center center';
+                }
+            }
+        }
+
+        function zoomIn(id) {
+            const state = getZoomState(id);
+            state.scale = Math.min(state.scale * 1.25, 6.0);
+            updateTransform(id);
+        }
+
+        function zoomOut(id) {
+            const state = getZoomState(id);
+            state.scale = Math.max(state.scale / 1.25, 0.25);
+            updateTransform(id);
+        }
+
+        function resetZoom(id) {
+            const state = getZoomState(id);
+            state.scale = 1;
+            state.x = 0;
+            state.y = 0;
+            updateTransform(id);
+        }
+
+        function resetCurrentZoom() {
+            const activePane = document.querySelector('.tab-pane.active');
+            if (activePane) {
+                const container = activePane.querySelector('.diagram-container');
+                if (container) {
+                    resetZoom(container.id);
+                }
+            }
+        }
+
+        function handleWheel(e, id) {
+            e.preventDefault();
+            const state = getZoomState(id);
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+            state.scale = Math.min(Math.max(state.scale * zoomFactor, 0.25), 6.0);
+            updateTransform(id);
+        }
+
+        function toggleFullscreen(id) {
+            const container = document.getElementById(id);
+            if (container) {
+                container.classList.toggle('fullscreen');
+                resetZoom(id);
+            }
+        }
+
+        function printDoc() {
+            window.print();
+        }
+
+        // INITIALIZATION ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDiagram('d-overview');
+
+            const containers = document.querySelectorAll('.diagram-container');
+            containers.forEach(container => {
+                const id = container.id;
+
+                container.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    const state = getZoomState(id);
+                    state.isDragging = true;
+                    state.startX = e.clientX - state.x;
+                    state.startY = e.clientY - state.y;
+                });
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                for (const [id, state] of Object.entries(zoomStates)) {
+                    if (state.isDragging) {
+                        state.x = e.clientX - state.startX;
+                        state.y = e.clientY - state.startY;
+                        updateTransform(id, false);
+                    }
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                for (const [id, state] of Object.entries(zoomStates)) {
+                    state.isDragging = false;
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.diagram-container.fullscreen').forEach(el => {
+                        el.classList.remove('fullscreen');
+                        resetZoom(el.id);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

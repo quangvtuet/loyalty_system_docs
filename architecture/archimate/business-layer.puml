@@ -1,0 +1,79 @@
+@startuml
+!include <archimate/Archimate>
+
+title Business Layer - Banking Loyalty Platform
+left to right direction
+
+rectangle "Active Structure - Business Actors" as ActorBoundary {
+    Business_Actor(Member, "Bank Customer / Member\nUses mobile and online channels")
+    Business_Actor(CoreBanking, "Core Banking System\nSource of settled transactions")
+    Business_Actor(ProgramAdmin, "Program Administrator\nManages programs and campaigns")
+    Business_Actor(FinanceTeam, "Finance & Accounting\nMonitors liability and reconciliation")
+    Business_Actor(AlliancePartner, "Alliance Merchant Partner\nExternal earn/redeem partner")
+    Business_Actor(SupportAgent, "Support Agent\nInitiates manual adjustments")
+}
+
+rectangle "Behavior - Business Services" as ServiceBoundary {
+    Business_Service(PointEarningService, "Point Earning Service\nAccrue confirmed loyalty points")
+    Business_Service(TierManagementService, "Tier Management Service\nEvaluate member tier lifecycle")
+    Business_Service(RewardRedemptionService, "Reward Redemption Service\nRedeem catalog rewards")
+    Business_Service(DualControlAdjustmentService, "Dual-Control Adjustment Service\nGovern high-value manual changes")
+    Business_Service(LiabilityReportingService, "Liability Reporting Service\nReport liability and breakage")
+}
+
+rectangle "Behavior - Business Processes" as ProcessBoundary {
+    Business_Process(BP01, "BP-01 Settlement Ingestion & Ledger Accrual\nValidate event, calculate points, append ledger")
+    Business_Process(BP02, "BP-02 Tier Progression & 30-Day Grace\nAccrue QP, upgrade, evaluate grace")
+    Business_Process(BP03, "BP-03 FIFO Redemption & Saga Reversal\nDebit oldest points and handle failures")
+    Business_Process(BP04, "BP-04 Dual-Control Approval\nManual adjustment approval >500 pts")
+    Business_Process(BP05, "BP-05 Financial Liability & Breakage Audit\nReconcile ledger and forecast liability")
+}
+
+rectangle "Passive Structure - Business Objects" as ObjectBoundary {
+    Business_Object(PointTransactionLedger, "Point Transaction Ledger\nAppend-only financial history")
+    Business_Object(PointBalanceSnapshot, "Available Balance Snapshot\nFast confirmed balance read")
+    Business_Object(TierInfoQpBalance, "Tier Info & QP Balance\nMember tier status and QP")
+    Business_Object(RedemptionOrder, "Redemption Order\nReward order and fulfillment state")
+    Business_Object(LiabilityReport, "Liability Report\nBreakage and reconciliation output")
+    Business_Object(ManualAdjustmentLog, "Manual Adjustment Log\nWORM approval audit trail")
+}
+
+Rel_Serving(PointEarningService, Member, "earn history")
+Rel_Serving(PointEarningService, AlliancePartner, "partner earn")
+Rel_Serving(TierManagementService, Member, "tier status")
+Rel_Serving(RewardRedemptionService, Member, "redeem rewards")
+Rel_Serving(RewardRedemptionService, AlliancePartner, "fulfillment")
+Rel_Serving(DualControlAdjustmentService, ProgramAdmin, "approve")
+Rel_Serving(DualControlAdjustmentService, SupportAgent, "submit")
+Rel_Serving(LiabilityReportingService, FinanceTeam, "reports")
+
+Rel_Triggering(CoreBanking, BP01, "settled transaction")
+Rel_Triggering(AlliancePartner, BP01, "partner earn event")
+Rel_Assignment(ProgramAdmin, BP04, "approver role")
+Rel_Assignment(SupportAgent, BP04, "operator role")
+Rel_Assignment(FinanceTeam, BP05, "owner")
+
+Rel_Realization(BP01, PointEarningService, "realizes")
+Rel_Realization(BP02, TierManagementService, "realizes")
+Rel_Realization(BP03, RewardRedemptionService, "realizes")
+Rel_Realization(BP04, DualControlAdjustmentService, "realizes")
+Rel_Realization(BP05, LiabilityReportingService, "realizes")
+
+Rel_Triggering(BP01, BP02, "QP accrued")
+Rel_Triggering(BP02, BP03, "tier benefits")
+Rel_Triggering(BP03, BP05, "redemption facts")
+Rel_Triggering(BP04, BP01, "approved adjustment")
+
+Rel_Access(BP01, PointTransactionLedger, "append")
+Rel_Access(BP01, PointBalanceSnapshot, "update")
+Rel_Access(BP02, TierInfoQpBalance, "read/write")
+Rel_Access(BP03, PointTransactionLedger, "FIFO read/debit")
+Rel_Access(BP03, PointBalanceSnapshot, "validate")
+Rel_Access(BP03, RedemptionOrder, "create/update")
+Rel_Access(BP04, PointTransactionLedger, "adjust")
+Rel_Access(BP04, ManualAdjustmentLog, "audit")
+Rel_Access(BP05, PointTransactionLedger, "reconcile")
+Rel_Access(BP05, RedemptionOrder, "aggregate")
+Rel_Access(BP05, LiabilityReport, "produce")
+
+@enduml

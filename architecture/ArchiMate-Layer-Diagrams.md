@@ -1,21 +1,31 @@
-# Loyalty Banking — Kiến trúc Phân tầng ArchiMate 3.2 (ArchiMate Layer Diagrams)
+# Banking Loyalty System — ArchiMate 3.2 Enterprise Architecture Specification
 
-**Domain**: Loyalty Banking Platform (Hệ thống Khách hàng Thân thiết Ngân hàng)  
-**Tiêu chuẩn Kiến trúc**: The Open Group ArchiMate® 3.2 Specification & C4 Model Container Layout  
-**Phiên bản**: 3.2  
-**Tài liệu tham chiếu**:
-- [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) — Tổng quan nghiệp vụ Loyalty
-- [Architecture-Overview.md](file:///d:/learn/loyalty/architecture/Architecture-Overview.md) — Kiến trúc tổng thể hệ thống
-- [Data-Architecture-and-Schema.md](file:///d:/learn/loyalty/architecture/Data-Architecture-and-Schema.md) — Kiến trúc dữ liệu & Star Schema
-- [Security-and-Integration-Architecture.md](file:///d:/learn/loyalty/architecture/Security-and-Integration-Architecture.md) — Bảo mật & Tích hợp Đối tác
-- [domain-event-catalog.md](file:///d:/learn/loyalty/architecture/domain-event-catalog.md) — Danh mục sự kiện Kafka
+**Domain**: Banking Loyalty Platform (Enterprise Financial Customer Engagement System)  
+**Standard**: The Open Group ArchiMate® 3.2 Specification & C4 Model Container Layout  
+**Version**: 3.2 (Production Release)  
 
 ---
 
-## 🎨 Quy chuẩn Bảng màu & Icon Chuẩn ArchiMate 3.2
+## 📚 1. Architecture References & Documentation Catalog
 
-### 1. Bảng màu Chuẩn (Archi Tool Standard)
-| Tầng / Khía cạnh (Layer / Aspect) | Màu Nền (Fill) | Màu Viền (Stroke) | Hex Code | Ý nghĩa & Phân loại |
+| Document / Asset | Category | Key Contents & Architecture Scope | Repository Link |
+|---|---|---|---|
+| **C4 Level 1: System Context Diagram** | *C4 Model* | High-level system context diagram showing customer channels, core banking, partners, and external services. | [context.png](file:///d:/learn/loyalty/architecture/C4/context.png) |
+| **C4 Level 2: Container Diagram** | *C4 Model* | Container architecture decomposition into API Gateway, 5 microservices, Kafka event bus, and polyglot DBs. | [container.png](file:///d:/learn/loyalty/architecture/C4/container.png) |
+| **C4 Level 3: Component Diagram** | *C4 Model* | Internal component diagram showing Spring Boot controllers, domain rules, Kafka listeners, and Redlock managers. | [component.png](file:///d:/learn/loyalty/architecture/C4/component.png) |
+| **Loyalty Domain Specification** | *Domain Rules* | Base earn rates, tier multipliers (Silver 1.0x, Gold 1.5x, Platinum 2.0x), 30-day grace period, FIFO debiting, and breakage liability rules. | [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) |
+| **Architecture Overview** | *C4 Model* | C4 System Context & Container diagrams, 5 domain microservices decomposition, synchronous vs asynchronous communication patterns. | [Architecture-Overview.md](file:///d:/learn/loyalty/architecture/Architecture-Overview.md) |
+| **Data Architecture & Schema** | *Database & DW* | PostgreSQL Database-per-Service schemas, immutable point ledger, mutable snapshot tables, Redis Redlock configurations, and ClickHouse Star Schema. | [Data-Architecture-and-Schema.md](file:///d:/learn/loyalty/architecture/Data-Architecture-and-Schema.md) |
+| **Security & Integration** | *Security & Ingress* | OAuth 2.0 Client Credentials flow for partners, API rate limiting policies (1,000 req/min/partner), and supervisor Dual-Control threshold approval (> 500 pts). | [Security-and-Integration-Architecture.md](file:///d:/learn/loyalty/architecture/Security-and-Integration-Architecture.md) |
+| **Domain Event Catalog** | *Kafka Messaging* | Apache Kafka topic taxonomy, Avro/JSON event schemas, partition key strategy (`member_id`), consumer groups, and dead-letter queues (DLQ). | [domain-event-catalog.md](file:///d:/learn/loyalty/architecture/domain-event-catalog.md) |
+| **The Open Group ArchiMate 3.2** | *Standard Spec* | Official Enterprise Architecture Modeling Language standard defining Motivation, Strategy, Business, Application, and Technology metamodels. | [ArchiMate Specification](https://www.opengroup.org/archimate-forum/archimate-overview) |
+
+---
+
+## 🎨 2. ArchiMate 3.2 Official Color Palette & Canonical Notation
+
+### Color Palette (The Open Group & Archi Tool Standard)
+| Layer / Aspect | Fill Color | Stroke Color | Hex Code | Visual Classification |
 |---|:---:|:---:|:---:|---|
 | **Motivation Aspect** | Lavender Purple | `#8888CC` | `#CCCCFF` | Stakeholders, Drivers, Goals, Principles, Requirements |
 | **Strategy Layer** | Cream Tan | `#C4A055` | `#F5DEAA` | Capabilities, Resources, Courses of Action, Value Streams |
@@ -24,17 +34,17 @@
 | **Technology Layer** | Mint Green | `#7CB342` | `#C9E7B7` | Nodes, System Software, Technology Services, Artifacts |
 | **Implementation Layer** | Salmon Pink | `#CC6666` | `#FFB5B5` | Work Packages, Deliverables, Plateaus, Gaps |
 
-### 2. Danh mục Icon & Stereotype Chuẩn ArchiMate 3.2
-- **Motivation**: `👤 «Stakeholder»`, `🧭 «Driver»`, `🎯 «Goal»`, `📜 «Principle»`
-- **Strategy**: `▦ «Capability»`, `⏩ «Value Stream»`
-- **Business**: `👤 «Business Actor»`, `◖ «Business Service»`, `⚙ «Business Process»`, `📄 «Business Object»`
-- **Application**: `▣ «Application Component»`, `⊸ «Application Interface»`, `⊞ «Application Service»`, `⇄ «Application Event Bus»`, `💾 «Data Object»`
-- **Technology**: `🧊 «Node»`, `⚙ «System Software»`, `🔄 «Technology Service»`, `🔒 «Technology Service»`, `💾 «Artifact»`
+### Canonical Stereotypes & Visual Cues
+- **Motivation Elements**: `👤 «Stakeholder»`, `🧭 «Driver»`, `🎯 «Goal»`, `📜 «Principle»`
+- **Strategy Elements**: `▦ «Capability»`, `⏩ «Value Stream»`
+- **Business Elements**: `👤 «Business Actor»`, `◖ «Business Service»`, `⚙ «Business Process»`, `📄 «Business Object»`
+- **Application Elements**: `▣ «Application Component»`, `⊸ «Application Interface»`, `⊞ «Application Service»`, `⇄ «Application Event Bus»`, `💾 «Data Object»`
+- **Technology Elements**: `🧊 «Node»`, `⚙ «System Software»`, `🔄 «Technology Service»`, `🔒 «Technology Service»`, `💾 «Artifact»`
 - **Implementation & Migration**: `🏁 «Plateau»`, `📋 «Work Package»`, `📦 «Deliverable»`
 
 ---
 
-## 1. Tổng quan Khung Phân tầng Kiến trúc (ArchiMate Core Stack)
+## 3. Architecture Overview (ArchiMate Core Stack)
 
 ```mermaid
 flowchart TD
@@ -55,30 +65,30 @@ flowchart TD
 
 ---
 
-## 2. Motivation & Strategy Layer (Tầng Động lực & Chiến lược)
+## 4. Motivation & Strategy Layer
 
 ```mermaid
 flowchart TB
     subgraph MOT["MOTIVATION ASPECT"]
         direction TB
-        SH["👤 «Stakeholder»\nLãnh đạo, Marketing,\nKế toán, Chủ thẻ, Đối tác"]
-        DR["🧭 «Driver»\nGiữ chân KH, Mở rộng\nliên minh, Tránh thất thoát"]
-        G1["🎯 «Goal»\nThông lượng ≥ 500 TPS\np95 < 2s, SLA ≤ 60s"]
-        G2["🎯 «Goal»\n100% Sổ cái Bất biến\nKhông trùng lặp bút toán"]
-        PR1["📜 «Principle»\nADR-001 Cô lập DB per Service"]
+        SH["👤 «Stakeholder»\nExecutive Board, Marketing,\nFinance, Cardholders, Partners"]
+        DR["🧭 «Driver»\nCustomer Retention, Coalition\nEcosystem, Zero Financial Leakage"]
+        G1["🎯 «Goal»\nIngestion Throughput ≥ 500 TPS\np95 < 2s, SLA ≤ 60s"]
+        G2["🎯 «Goal»\n100% Immutable Ledger\nZero Duplicate Postings"]
+        PR1["📜 «Principle»\nADR-001 Database-per-Service"]
         PR2["📜 «Principle»\nADR-002 Event-Driven & Idempotency"]
-        PR3["📜 «Principle»\nADR-003 Tách biệt OLTP / OLAP CDC"]
+        PR3["📜 «Principle»\nADR-003 OLTP / OLAP CDC Separation"]
     end
 
     subgraph STR["STRATEGY LAYER"]
         direction TB
-        C1("▦ «Capability»\nTích điểm Tốc độ cao")
-        C2("▦ «Capability»\nXét hạng Tự động")
-        C3("▦ «Capability»\nĐổi quà FIFO Đa kênh")
-        C4("▦ «Capability»\nPhân tích Nợ điểm")
-        VS1("⏩ «Value Stream»\n1. Chi tiêu Thẻ") --> VS2("⏩ «Value Stream»\n2. Tích điểm & Nâng hạng")
-        VS2 --> VS3("⏩ «Value Stream»\n3. Đổi Quà & Voucher")
-        VS3 --> VS4("⏩ «Value Stream»\n4. Gắn kết & Duy trì")
+        C1("▦ «Capability»\nHigh-Speed Real-Time Earning")
+        C2("▦ «Capability»\nAutomated Tier Lifecycle")
+        C3("▦ «Capability»\nMulti-Channel FIFO Redemption")
+        C4("▦ «Capability»\nFinancial Liability Analytics")
+        VS1("⏩ «Value Stream»\n1. Card Spending") --> VS2("⏩ «Value Stream»\n2. Point Accrual & Tier Upgrade")
+        VS2 --> VS3("⏩ «Value Stream»\n3. Reward & Voucher Redemption")
+        VS3 --> VS4("⏩ «Value Stream»\n4. Retention & Re-Engagement")
     end
 
     SH -->|influences| DR
@@ -116,44 +126,44 @@ flowchart TB
 
 ---
 
-## 3. Business Layer (Tầng Nghiệp vụ Loyalty)
+## 5. Business Layer
 
 ```mermaid
 flowchart TD
     subgraph ACTORS["ACTIVE STRUCTURE — Business Actors"]
         direction LR
-        A1["👤 «Business Actor»\nKhách hàng (Member)"]
+        A1["👤 «Business Actor»\nBank Customer (Member)"]
         A2["🏦 «Business Actor»\nCore Banking System"]
-        A3["👤 «Business Actor»\nQuản trị viên (Admin)"]
-        A4["👤 «Business Actor»\nKế toán (Finance)"]
-        A5["🤝 «Business Actor»\nĐối tác Liên minh (Partner)"]
+        A3["👤 «Business Actor»\nProgram Administrator"]
+        A4["👤 «Business Actor»\nFinance & Accounting"]
+        A5["🤝 «Business Actor»\nAlliance Merchant Partner"]
     end
 
     subgraph SERVICES["BEHAVIOR — Business Services"]
         direction LR
-        S1("◖ «Business Service»\nDịch vụ Tích điểm")
-        S2("◖ «Business Service»\nDịch vụ Xét hạng")
-        S3("◖ «Business Service»\nDịch vụ Đổi quà")
-        S4("◖ «Business Service»\nDịch vụ Duyệt kép")
-        S5("◖ «Business Service»\nDịch vụ Báo cáo Nợ")
+        S1("◖ «Business Service»\nPoint Earning Service")
+        S2("◖ «Business Service»\nTier Management Service")
+        S3("◖ «Business Service»\nReward Redemption Service")
+        S4("◖ «Business Service»\nDual-Control Adjustment Service")
+        S5("◖ «Business Service»\nLiability Reporting Service")
     end
 
     subgraph PROCESSES["BEHAVIOR — Business Processes"]
         direction TB
-        P1("⚙ «Business Process» BP-01\nTích điểm GD & Ghi Sổ cái")
-        P2("⚙ «Business Process» BP-02\nXét hạng & Ân hạn 30 ngày")
-        P3("⚙ «Business Process» BP-03\nĐổi quà FIFO & Saga Reversal")
-        P4("⚙ «Business Process» BP-04\nĐiều chỉnh Điểm Dual-Control")
-        P5("⚙ «Business Process» BP-05\nBáo cáo Nợ điểm & Breakage")
+        P1("⚙ «Business Process» BP-01\nSettlement Ingestion & Ledger Accrual")
+        P2("⚙ «Business Process» BP-02\nTier Progression & 30-Day Grace Period")
+        P3("⚙ «Business Process» BP-03\nFIFO Redemption & Saga Reversal")
+        P4("⚙ «Business Process» BP-04\nDual-Control Approval (> 500 pts)")
+        P5("⚙ «Business Process» BP-05\nFinancial Liability & Breakage Audit")
     end
 
     subgraph OBJECTS["PASSIVE STRUCTURE — Business Objects"]
         direction LR
-        O1[("📄 «Business Object»\nSổ cái Điểm (Ledger)")]
-        O2[("📄 «Business Object»\nSố dư Khả dụng")]
-        O3[("📄 «Business Object»\nHạng thẻ & QP")]
-        O4[("📄 «Business Object»\nĐơn Đổi quà")]
-        O5[("📄 «Business Object»\nBáo cáo Nợ")]
+        O1[("📄 «Business Object»\nPoint Transaction Ledger")]
+        O2[("📄 «Business Object»\nAvailable Balance Snapshot")]
+        O3[("📄 «Business Object»\nTier Info & QP Balance")]
+        O4[("📄 «Business Object»\nRedemption Order")]
+        O5[("📄 «Business Object»\nLiability Report")]
     end
 
     A1 -->|accesses| S1
@@ -205,7 +215,7 @@ flowchart TD
 
 ---
 
-## 4. Application Layer — C4 Container Architecture Layout
+## 6. Application Layer — C4 Container Architecture Layout
 
 ```mermaid
 flowchart TB
@@ -296,7 +306,7 @@ flowchart TB
 
 ---
 
-## 5. Technology & Infrastructure Layer (Tầng Công nghệ & Hạ tầng)
+## 7. Technology & Infrastructure Layer
 
 ```mermaid
 flowchart TB
@@ -304,7 +314,7 @@ flowchart TB
         direction TB
 
         subgraph T_GATEWAY["1. EDGE INGRESS & SECURITY TIER"]
-            INGRESS["⊸ «Technology Interface»\nIngress Controller / API Gateway\nJWT Verification · SSL Termination · Rate Limiter (1.000 req/min)"]
+            INGRESS["⊸ «Technology Interface»\nIngress Controller / API Gateway\nJWT Verification · SSL Termination · Rate Limiter (1,000 req/min)"]
         end
 
         subgraph T_COMPUTE["2. KUBERNETES CONTAINER COMPUTE TIER"]
@@ -384,34 +394,34 @@ flowchart TB
 
 ---
 
-## 6. Implementation & Migration Layer (Lộ trình Triển khai Capstone)
+## 8. Implementation & Migration Layer
 
 ```mermaid
 flowchart LR
     subgraph PL["PLATEAUS — Architecture Transition States"]
-        P0["🏁 «Plateau» P0\nThiết kế Cơ sở & Specs"]
-        P1["🏁 «Plateau» P1\nMVP Tích điểm & Hạng thẻ"]
-        P2["🏁 «Plateau» P2\nĐổi quà & Đối tác"]
-        P3["🏁 «Plateau» P3\nHệ thống Hoàn chỉnh"]
+        P0["🏁 «Plateau» P0\nBaseline Architecture & Specs"]
+        P1["🏁 «Plateau» P1\nMVP Core Earning & Tiering"]
+        P2["🏁 «Plateau» P2\nRedemption & Partner Gateway"]
+        P3["🏁 «Plateau» P3\nEnterprise Target State"]
     end
 
     subgraph WP["WORK PACKAGES — Implementation Tasks"]
         direction TB
-        W1["📋 «Work Package» WP-1\nHạ tầng K8s & Kafka"]
-        W2["📋 «Work Package» WP-2\nSổ cái & Idempotency"]
-        W3["📋 «Work Package» WP-3\nXét hạng & Ân hạn 30d"]
-        W4["📋 «Work Package» WP-4\nĐổi quà FIFO & OAuth"]
-        W5["📋 «Work Package» WP-5\nStar Schema & CDC"]
-        W6["📋 «Work Package» WP-6\nDual-Control & 500 TPS"]
+        W1["📋 «Work Package» WP-1\nK8s Infra & Kafka Bus Setup"]
+        W2["📋 «Work Package» WP-2\nImmutable Ledger & Idempotency"]
+        W3["📋 «Work Package» WP-3\nTiering Engine & 30d Grace"]
+        W4["📋 «Work Package» WP-4\nFIFO Redemption & OAuth API"]
+        W5["📋 «Work Package» WP-5\nStar Schema DW & CDC Stream"]
+        W6["📋 «Work Package» WP-6\nDual-Control & 500 TPS Gate"]
     end
 
     subgraph DEL["DELIVERABLES"]
         direction TB
-        D1[("📦 «Deliverable»\nKiến trúc & API Specs")]
-        D2[("📦 «Deliverable»\n5 Docker Containers")]
-        D3[("📦 «Deliverable»\nCSDL & Data Warehouse")]
-        D4[("📦 «Deliverable»\nMobile App & Portals")]
-        D5[("📦 «Deliverable»\nQuality Gate Report")]
+        D1[("📦 «Deliverable»\nArchitecture & OpenAPI Specs")]
+        D2[("📦 «Deliverable»\n5 Microservice Docker Images")]
+        D3[("📦 «Deliverable»\nPostgreSQL & ClickHouse DW")]
+        D4[("📦 «Deliverable»\nMobile App & Web Portals")]
+        D5[("📦 «Deliverable»\nQuality Gate Test Audit Report")]
     end
 
     P0 -->|triggers| W1
@@ -452,31 +462,31 @@ flowchart LR
 
 ---
 
-## 7. Cross-Layer Traceability View (Sơ đồ Tích hợp Đa tầng)
+## 9. Cross-Layer Traceability View
 
 ```mermaid
 flowchart TB
     subgraph L1["MOTIVATION & STRATEGY"]
-        G1["🎯 «Goal»\nSổ cái Bất biến 100%\n0 Trùng lặp Bút toán"]
-        G2["🎯 «Goal»\nThông lượng ≥ 500 TPS\np95 < 2s, SLA ≤ 60s"]
-        CAP("▦ «Capability»\nTích điểm Tốc độ cao")
+        G1["🎯 «Goal»\n100% Immutable Ledger\nZero Duplicate Postings"]
+        G2["🎯 «Goal»\nThroughput ≥ 500 TPS\np95 < 2s, SLA ≤ 60s"]
+        CAP("▦ «Capability»\nHigh-Speed Real-Time Earning")
         G1 -.->|realizes| CAP
         G2 -.->|realizes| CAP
     end
 
     subgraph L2["BUSINESS LAYER"]
-        BS("◖ «Business Service»\nDịch vụ Tích điểm GD")
-        BP("⚙ «Business Process»\nTiếp nhận GD & Ghi Sổ cái")
-        BO[("📄 «Business Object»\nBút toán point_transaction")]
+        BS("◖ «Business Service»\nPoint Earning Business Service")
+        BP("⚙ «Business Process»\nSettlement Ingestion & Ledger Accrual")
+        BO[("📄 «Business Object»\nPoint Transaction Ledger Entry")]
         CAP ==>|serves| BS
         BS -->|triggers| BP
         BP -->|accesses| BO
     end
 
     subgraph L3["APPLICATION LAYER"]
-        AS("⊞ «Application Service»\nEarn Ingestion API")
+        AS("⊞ «Application Service»\nEarn Ingestion & Evaluation API")
         AC["▣ «Application Component»\nEarning Engine Service"]
-        DO[("💾 «Data Object»\npoint_transaction\npoint_balance")]
+        DO[("💾 «Data Object»\npoint_transaction & point_balance")]
         BP -.->|realized by| AS
         AS -->|serves| AC
         AC -->|accesses| DO
@@ -485,8 +495,8 @@ flowchart TB
     subgraph L4["TECHNOLOGY LAYER"]
         TK["🔄 «Technology Service»\nApache Kafka (settled_transactions)"]
         TR["🔒 «Technology Service»\nRedis Cluster (Idempotency Lock)"]
-        TP[("💾 «Artifact»\nPostgreSQL (Partitioned Ledger)")]
-        TN["🧊 «Node»\nKubernetes Pods (HPA)"]
+        TP[("💾 «Artifact»\nPostgreSQL (Partitioned Ledger DB)")]
+        TN["🧊 «Node»\nKubernetes Worker Pods (HPA)"]
 
         AC -.->|deployed on| TN
         AC -.->|consumes from| TK
@@ -519,22 +529,22 @@ flowchart TB
 
 ---
 
-## 8. Bảng Ma trận Ánh xạ Truy vết Phần tử ArchiMate (Traceability Matrix)
+## 10. Traceability Matrix
 
-| STT | ArchiMate Layer | Loại Phần tử (Element Type) | Tên Phần tử trong Dự án Loyalty | Trách nhiệm & Ý nghĩa Nghiệp vụ / Kỹ thuật |
+| # | Layer | Element Type | Loyalty System Element Name | Business / Technical Responsibility |
 |:---:|---|---|---|---|
-| 1 | **Motivation** | `👤 «Stakeholder»` | Ban Lãnh đạo, Marketing, Kế toán, Chủ thẻ, Đối tác | Các bên tham gia trực tiếp vào chuỗi giá trị Loyalty |
-| 2 | **Motivation** | `🎯 «Goal»` | Thông lượng $\ge 500$ TPS, SLA $\le 60$s, Sổ cái Bất biến | Chỉ số đo lường hiệu năng và cam kết dịch vụ tài chính |
-| 3 | **Motivation** | `📜 «Principle»` | ADR-001 (Cô lập DB), ADR-002 (Sự kiện/Idempotency), ADR-003 (CDC) | 3 quyết định kiến trúc cốt lõi định hình nền tảng |
-| 4 | **Strategy** | `▦ «Capability»` | Tích điểm tốc độ cao, Quản lý Hạng thẻ động, Đổi quà FIFO | Năng lực cốt lõi phục vụ hệ sinh thái Loyalty Ngân hàng |
-| 5 | **Business** | `👤 «Business Actor»` | Khách hàng (Member), Core Banking, Support Agent, Kế toán | Con người và hệ thống nguồn tham gia luồng nghiệp vụ |
-| 6 | **Business** | `◖ «Business Service»` | Tích điểm, Nâng hạng Silver/Gold/Platinum, Đổi thưởng, Báo cáo Nợ | Gói dịch vụ cung cấp ra người dùng và nội bộ ngân hàng |
-| 7 | **Business** | `⚙ «Business Process»` | Tích điểm từ Core Banking, Chu kỳ Hạng 30d Grace, Lệnh Duyệt kép | Các quy trình kinh doanh và luồng nghiệp vụ chuẩn |
-| 8 | **Business** | `📄 «Business Object»` | Sổ cái Điểm (`point_transaction`), Số dư Điểm, QP, Đơn Đổi quà | Thực thể thông tin và dữ liệu kinh doanh tài chính |
-| 9 | **Application** | `▣ «Application Component»` | Earning Engine, Tiering, Redemption, Program Mgmt, Analytics DW | 5 Microservices độc lập theo nguyên tắc Domain-Driven Design |
-| 10 | **Application** | `⊸ «Application Interface»` | `settled_transactions`, `tier_event`, `cdc_stream`, REST Gateway | Giao diện API và hàng đợi điều phối sự kiện phân tán Kafka |
-| 11 | **Application** | `💾 «Data Object»` | `point_transaction`, `point_balance`, `qp_ledger`, `fact_*` | Mô hình dữ liệu quan hệ và Star Schema Data Warehouse |
-| 12 | **Technology** | `🧊 «Node»` / `⚙ «System SW»` | Kubernetes Cluster, Kafka, Redis Cluster, PostgreSQL, ClickHouse | Nền tảng hạ tầng tính toán, bộ nhớ đệm và CSDL phân tán |
-| 13 | **Technology** | `💾 «Artifact»` | `earning-engine.jar`, Docker Containers, `*.sql` Migration Scripts | Các tệp nhị phân đóng gói triển khai thực tế trên K8s |
-| 14 | **Implementation** | `📋 «Work Package»` | WP1 (Hạ tầng) $\rightarrow$ WP6 (Dual-Control & Quality Gates 500 TPS) | Các gói công việc triển khai thực tế cho đồ án Capstone |
-| 15 | **Implementation** | `🏁 «Plateau»` | Plateau 0 (Baseline) $\rightarrow$ Plateau 3 (Target State Hoàn chỉnh) | Các giai đoạn bàn giao kiến trúc qua từng chặng đồ án |
+| 1 | **Motivation** | `👤 «Stakeholder»` | Executive Board, Marketing, Finance/Accounting, Cardholder, Partners | Direct participants and beneficiaries in the Loyalty value chain |
+| 2 | **Motivation** | `🎯 «Goal»` | Ingestion $\ge 500$ TPS, SLA $\le 60$s, 100% Immutable Ledger | Core performance SLA and financial non-repudiation targets |
+| 3 | **Motivation** | `📜 «Principle»` | ADR-001 (DB Isolation), ADR-002 (Event/Idempotency), ADR-003 (CDC) | Foundational architectural invariant decisions |
+| 4 | **Strategy** | `▦ «Capability»` | High-Speed Earning, Automated Tier Lifecycle, Multi-Channel FIFO Redemption | Core strategic enterprise capabilities |
+| 5 | **Business** | `👤 «Business Actor»` | Cardholder (Member), Core Banking System, Program Admin, Finance, Partner | Human actors and external source banking systems |
+| 6 | **Business** | `◖ «Business Service»` | Earning Service, Tier Evaluation Service, Reward Redemption, Liability Audit | Business services delivered to members and internal stakeholders |
+| 7 | **Business** | `⚙ «Business Process»` | Core Banking Earning (BP01), Tiering Grace Period (BP02), FIFO Redemption (BP03), Dual-Control (BP04) | Standard enterprise business workflows and rules |
+| 8 | **Business** | `📄 «Business Object»` | Point Transaction Ledger, Point Balance Snapshot, QP Ledger, Redemption Order | Passive informational and financial state business entities |
+| 9 | **Application** | `▣ «Application Component»` | Earning Engine, Tiering System, Redemption Engine, Program Mgmt, Analytics Service | 5 autonomous Domain-Driven microservices |
+| 10 | **Application** | `⊸ «Application Interface»` | `settled_transactions`, `tier_event`, `cdc_stream`, REST API Gateway | APIs and Kafka choreography event streams |
+| 11 | **Application** | `💾 «Data Object»` | `point_transaction`, `point_balance`, `qp_ledger`, `fact_*` | Relational transactional data models and OLAP Star Schema |
+| 12 | **Technology** | `🧊 «Node»` / `⚙ «System SW»` | Kubernetes Cluster, Kafka 3-Brokers, Redis Sentinel, PostgreSQL, ClickHouse | Distributed compute, caching, messaging, and storage nodes |
+| 13 | **Technology** | `💾 «Artifact»` | `earning-engine.jar`, Docker Containers, `*.sql` Migration Scripts | Physical deployed binaries and database schema definitions |
+| 14 | **Implementation** | `📋 «Work Package»` | WP1 (Infra Setup) $\rightarrow$ WP6 (Dual-Control & Quality Gates 500 TPS) | Capstone engineering implementation work packages |
+| 15 | **Implementation** | `🏁 «Plateau»` | Plateau 0 (Baseline Specs) $\rightarrow$ Plateau 3 (Enterprise Target State) | Target architecture deliverables and handover states |

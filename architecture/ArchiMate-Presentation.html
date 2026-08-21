@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loyalty Banking — ArchiMate 3.2 Enterprise Architecture Presentation</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+    <style>
+        /* ======================================================================
+           ArchiMate 3.2 Official Color Palette (The Open Group & Archi Tool Standard)
+           Motivation   = #CCCCFF (Lavender Purple)
+           Strategy     = #F5DEAA (Cream Tan)
+           Business     = #FFFFB5 (Pale Yellow)
+           Application  = #B5FFFF (Light Cyan)
+           Technology   = #C9E7B7 (Mint Green)
+           Impl & Migr  = #FFB5B5 (Salmon Pink)
+           ====================================================================== */
+
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151d30;
+            --bg-sidebar: #070a12;
+            --border-color: #263352;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-cyan: #06b6d4;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+            
+            --am-mot: #CCCCFF;
+            --am-str: #F5DEAA;
+            --am-bus: #FFFFB5;
+            --am-app: #B5FFFF;
+            --am-tec: #C9E7B7;
+            --am-imp: #FFB5B5;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-blue: #0284c7;
+            --accent-cyan: #0891b2;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 50;
+        }
+        .sidebar-header {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-header i {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-header h2 { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; }
+        .sidebar-header span { font-size: 11px; color: var(--accent-cyan); display: block; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 13.5px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; user-select: none;
+        }
+        .nav-item i { font-size: 15px; width: 20px; text-align: center; }
+        .nav-item:hover { background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); }
+        .nav-item.active { background: linear-gradient(90deg, rgba(56,189,248,0.14), rgba(6,182,212,0.05)); color: var(--accent-blue); border-color: rgba(56,189,248,0.3); }
+        .nav-item.active i { color: var(--accent-blue); }
+        .nav-badge { margin-left: auto; font-size: 10px; padding: 2px 7px; border-radius: 12px; font-weight: 700; }
+        .nb-mot { background: rgba(204,204,255,0.25); color: #a78bfa; border: 1px solid rgba(204,204,255,0.5); }
+        .nb-bus { background: rgba(255,255,181,0.25); color: #facc15; border: 1px solid rgba(255,255,181,0.5); }
+        .nb-app { background: rgba(181,255,255,0.25); color: #22d3ee; border: 1px solid rgba(181,255,255,0.5); }
+        .nb-tec { background: rgba(201,231,183,0.25); color: #4ade80; border: 1px solid rgba(201,231,183,0.5); }
+        .nb-imp { background: rgba(255,181,181,0.25); color: #f87171; border: 1px solid rgba(255,181,181,0.5); }
+        .nb-ref { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+        .nb-c4 { background: rgba(250,204,21,0.15); color: #facc15; border: 1px solid rgba(250,204,21,0.3); }
+
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .theme-toggle-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; transition: all 0.2s ease; }
+        .theme-toggle-btn:hover { color: var(--text-primary); border-color: var(--accent-blue); }
+
+        /* MAIN CONTENT */
+        main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { height: 68px; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; flex-shrink: 0; }
+        .header-title-box h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .header-title-box p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-action { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); transition: all 0.2s ease; }
+        .btn-action:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); color: #04101e; border: none; font-weight: 700; }
+        .btn-primary:hover { opacity: 0.95; color: #04101e; box-shadow: 0 0 15px rgba(56,189,248,0.4); }
+        .content-area { flex: 1; overflow-y: auto; padding: 24px 28px; position: relative; }
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeIn 0.25s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* DIAGRAM CARD */
+        .diagram-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 24px; overflow: hidden; display: flex; flex-direction: column; }
+        .diagram-header { padding: 14px 18px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; user-select: none; }
+        .diagram-title { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .diagram-title .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+        .badge-mot { background: var(--am-mot); color: #333; border: 1px solid #9999CC; }
+        .badge-bus { background: var(--am-bus); color: #333; border: 1px solid #CCCC66; }
+        .badge-app { background: var(--am-app); color: #333; border: 1px solid #66CCCC; }
+        .badge-tec { background: var(--am-tec); color: #333; border: 1px solid #7CB342; }
+        .badge-imp { background: var(--am-imp); color: #333; border: 1px solid #CC6666; }
+        .badge-ref { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+        .badge-c4 { background: rgba(250,204,21,0.15); color: #facc15; border: 1px solid rgba(250,204,21,0.3); }
+
+        .diagram-controls { display: flex; align-items: center; gap: 6px; }
+        .control-btn { background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; transition: all 0.2s ease; }
+        .control-btn:hover { color: var(--text-primary); border-color: var(--accent-blue); }
+        .diagram-container { min-height: 520px; height: 580px; overflow: hidden; position: relative; cursor: grab; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(56,189,248,0.03) 0%, transparent 70%); }
+        .diagram-container:active { cursor: grabbing; }
+        .svg-viewport { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .svg-viewport svg { width: 100% !important; height: 100% !important; max-width: 95%; max-height: 95%; }
+        .diagram-container.fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background-color: var(--bg-main); min-height: 100vh; }
+        .zoom-hint { position: absolute; bottom: 12px; right: 14px; font-size: 11px; color: var(--text-secondary); background-color: rgba(11,15,25,0.8); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); pointer-events: none; display: flex; align-items: center; gap: 6px; z-index: 10; }
+        .loading-spinner { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 13px; }
+
+        /* EXPLANATION CARDS */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+        .info-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px 18px; }
+        .info-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .info-card p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+
+        /* REFERENCE CARDS */
+        .ref-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 16px; }
+        .ref-card {
+            background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px;
+            display: flex; flex-direction: column; gap: 12px; transition: all 0.2s ease;
+        }
+        .ref-card:hover { border-color: var(--accent-blue); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .ref-card-header { display: flex; align-items: center; justify-content: space-between; }
+        .ref-card-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+        .ref-card-header .ref-type { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; background: rgba(56,189,248,0.12); color: var(--accent-blue); }
+        .ref-card p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+        .ref-card-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+        .ref-link { color: var(--accent-blue); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .ref-link:hover { text-decoration: underline; color: var(--accent-cyan); }
+
+        /* C4 IMAGE GALLERY */
+        .c4-gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-top: 16px; }
+        .c4-card {
+            background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+            overflow: hidden; display: flex; flex-direction: column; transition: all 0.25s ease;
+        }
+        .c4-card:hover { border-color: var(--accent-blue); transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.4); }
+        .c4-img-wrapper {
+            width: 100%; height: 220px; background-color: #050811; overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .c4-img-wrapper img {
+            width: 100%; height: 100%; object-fit: contain; padding: 12px; transition: transform 0.3s ease;
+        }
+        .c4-img-wrapper:hover img { transform: scale(1.04); }
+        .c4-img-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,15,25,0.6);
+            display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
+            color: #fff; font-size: 14px; font-weight: 700; gap: 8px;
+        }
+        .c4-img-wrapper:hover .c4-img-overlay { opacity: 1; }
+        .c4-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .c4-body h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+        .c4-body p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+        .c4-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+
+        /* LIGHTBOX MODAL */
+        .lightbox-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(4, 7, 15, 0.94); z-index: 10000; backdrop-filter: blur(8px);
+            flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 30px;
+        }
+        .lightbox-modal.active { display: flex; animation: fadeIn 0.2s ease-out; }
+        .lightbox-header {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            color: var(--text-primary); z-index: 10001;
+        }
+        .lightbox-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .lightbox-controls { display: flex; align-items: center; gap: 8px; }
+        .lightbox-btn {
+            background-color: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-primary); width: 36px; height: 36px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .lightbox-btn:hover { background-color: var(--accent-blue); color: #04101e; border-color: var(--accent-blue); }
+        .lightbox-body {
+            flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; position: relative; cursor: grab;
+        }
+        .lightbox-body:active { cursor: grabbing; }
+        .lightbox-img {
+            max-width: 95%; max-height: 90vh; object-fit: contain; border-radius: 6px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8); user-select: none; transition: transform 0.15s ease-out;
+        }
+        .lightbox-footer {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            color: var(--text-secondary); font-size: 12.5px; z-index: 10001;
+        }
+
+        /* TABLE */
+        .matrix-table { width: 100%; border-collapse: collapse; font-size: 12.5px; background-color: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .matrix-table th, .matrix-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .matrix-table th { background-color: rgba(255,255,255,0.03); font-weight: 700; color: var(--text-primary); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        .matrix-table tr:hover td { background-color: rgba(56,189,248,0.02); }
+        .layer-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #333; }
+
+        /* OFFICIAL ARCHIMATE LEGEND BAR */
+        .legend-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 14px 18px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 18px; font-size: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-weight: 500; }
+        .legend-box { width: 18px; height: 14px; border-radius: 3px; border: 1.5px solid; }
+
+        /* NOTATION & ICON LEGEND */
+        .notation-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 12px 18px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 18px; font-size: 11.5px; color: var(--text-secondary); }
+        .notation-item { display: flex; align-items: center; gap: 5px; }
+        .icon-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: rgba(255,255,255,0.06); border-radius: 4px; border: 1px solid var(--border-color); font-size: 12px; }
+
+        @media (max-width: 900px) {
+            aside { width: 70px; }
+            .sidebar-header h2, .sidebar-header span, .nav-item span, .nav-badge, .sidebar-footer span { display: none; }
+            .nav-item { justify-content: center; padding: 12px 0; }
+            .nav-item i { font-size: 18px; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <aside>
+        <div class="sidebar-header">
+            <i class="fa-solid fa-layer-group"></i>
+            <div><h2>Loyalty Banking</h2><span>ArchiMate 3.2 Architecture</span></div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchTab(this, 'overview')"><i class="fa-solid fa-compass"></i><span>1. Architecture Overview</span></div>
+            <div class="nav-item" onclick="switchTab(this, 'motivation')"><i class="fa-solid fa-bullseye" style="color:#a78bfa"></i><span>2. Motivation & Strategy</span><div class="nav-badge nb-mot">Motivation</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'business')"><i class="fa-solid fa-briefcase" style="color:#facc15"></i><span>3. Business Layer</span><div class="nav-badge nb-bus">Business</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'application')"><i class="fa-solid fa-cubes" style="color:#22d3ee"></i><span>4. Application Layer</span><div class="nav-badge nb-app">Application</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'technology')"><i class="fa-solid fa-server" style="color:#4ade80"></i><span>5. Technology & Infrastructure</span><div class="nav-badge nb-tec">Technology</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'implementation')"><i class="fa-solid fa-road" style="color:#f87171"></i><span>6. Implementation Roadmap</span><div class="nav-badge nb-imp">Roadmap</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'traceability')"><i class="fa-solid fa-link" style="color:var(--accent-cyan)"></i><span>7. Cross-Layer Traceability</span></div>
+            <div class="nav-item" onclick="switchTab(this, 'matrix')"><i class="fa-solid fa-table-cells"></i><span>8. Traceability Matrix</span></div>
+            <div class="nav-item" onclick="switchTab(this, 'c4gallery')"><i class="fa-solid fa-images" style="color:#facc15"></i><span>9. C4 Diagram Gallery</span><div class="nav-badge nb-c4">C4 Models</div></div>
+            <div class="nav-item" onclick="switchTab(this, 'references')"><i class="fa-solid fa-book-bookmark" style="color:#38bdf8"></i><span>10. Architecture References</span><div class="nav-badge nb-ref">Docs</div></div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i><span id="theme-text">Dark Mode</span></button>
+            <span style="font-size:11px;color:var(--text-secondary);">v3.2 Spec</span>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="header-title-box">
+                <h1 id="header-title"><i class="fa-solid fa-compass" style="color:var(--accent-blue)"></i> ArchiMate 3.2 Core Framework Stack</h1>
+                <p id="header-desc">Overall Multi-Layer Enterprise Architecture — Banking Loyalty Platform</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-action" onclick="resetCurrentZoom()"><i class="fa-solid fa-arrows-rotate"></i> Reset Zoom</button>
+                <button class="btn-action btn-primary" onclick="printDoc()"><i class="fa-solid fa-print"></i> Export / Print</button>
+            </div>
+        </header>
+
+        <div class="content-area">
+
+            <!-- OFFICIAL ARCHIMATE COLOR LEGEND -->
+            <div class="legend-bar">
+                <span style="font-weight:700;color:var(--text-primary)">Official ArchiMate Color Palette (Archi Tool):</span>
+                <div class="legend-item"><div class="legend-box" style="background:#CCCCFF;border-color:#8888CC"></div> Motivation (#CCCCFF)</div>
+                <div class="legend-item"><div class="legend-box" style="background:#F5DEAA;border-color:#C4A055"></div> Strategy (#F5DEAA)</div>
+                <div class="legend-item"><div class="legend-box" style="background:#FFFFB5;border-color:#CCCC66"></div> Business (#FFFFB5)</div>
+                <div class="legend-item"><div class="legend-box" style="background:#B5FFFF;border-color:#66CCCC"></div> Application (#B5FFFF)</div>
+                <div class="legend-item"><div class="legend-box" style="background:#C9E7B7;border-color:#7CB342"></div> Technology (#C9E7B7)</div>
+                <div class="legend-item"><div class="legend-box" style="background:#FFB5B5;border-color:#CC6666"></div> Implementation (#FFB5B5)</div>
+            </div>
+
+            <!-- CANONICAL ARCHIMATE ICONS & STEREOTYPES LEGEND -->
+            <div class="notation-bar">
+                <span style="font-weight:700;color:var(--text-primary)">Canonical ArchiMate Stereotypes & Icons:</span>
+                <div class="notation-item"><span class="icon-badge">👤</span> Actor / Stakeholder</div>
+                <div class="notation-item"><span class="icon-badge">🧭</span> Driver</div>
+                <div class="notation-item"><span class="icon-badge">🎯</span> Goal</div>
+                <div class="notation-item"><span class="icon-badge">📜</span> Principle</div>
+                <div class="notation-item"><span class="icon-badge">▦</span> Capability</div>
+                <div class="notation-item"><span class="icon-badge">◖</span> Service</div>
+                <div class="notation-item"><span class="icon-badge">⚙</span> Process / SW</div>
+                <div class="notation-item"><span class="icon-badge">📄</span> Business Object</div>
+                <div class="notation-item"><span class="icon-badge">▣</span> App Component</div>
+                <div class="notation-item"><span class="icon-badge">⊸</span> Interface</div>
+                <div class="notation-item"><span class="icon-badge">🧊</span> Node</div>
+                <div class="notation-item"><span class="icon-badge">💾</span> Artifact / DB</div>
+                <div class="notation-item"><span class="icon-badge">🏁</span> Plateau</div>
+                <div class="notation-item"><span class="icon-badge">📋</span> Work Package</div>
+            </div>
+
+            <!-- ======================== TAB PANES ======================== -->
+
+            <!-- TAB 1: OVERVIEW -->
+            <div class="tab-pane active" id="tab-overview">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>ArchiMate 3.2 Core Framework Stack</span><span class="badge badge-app">Overview</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-overview')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-overview')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-overview')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-overview')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-overview" onwheel="handleWheel(event,'d-overview')">
+                        <div class="svg-viewport" id="vp-d-overview"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card"><h4 style="color:#a78bfa"><i class="fa-solid fa-bolt"></i> Core Performance Goals</h4><p>High-throughput real-time earning & redemption (≥ 500 TPS), immutable single source of truth ledger, and p95 latency < 2s.</p></div>
+                    <div class="info-card"><h4 style="color:#facc15"><i class="fa-solid fa-shield-halved"></i> 3 Invariant ADR Principles</h4><p><strong>ADR-001</strong>: Database-per-Service Isolation<br><strong>ADR-002</strong>: Event-Driven Kafka & Redis Idempotency<br><strong>ADR-003</strong>: OLTP/OLAP Separation via Debezium CDC</p></div>
+                    <div class="info-card"><h4 style="color:#22d3ee"><i class="fa-solid fa-diagram-project"></i> 5 Domain Microservices</h4><p>Earning Engine, Tiering System, Redemption Engine, Program Management, Analytics & Reporting</p></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MOTIVATION & STRATEGY -->
+            <div class="tab-pane" id="tab-motivation">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Motivation & Strategy Layer</span><span class="badge badge-mot">Motivation & Strategy</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-motivation')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-motivation')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-motivation')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-motivation')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-motivation" onwheel="handleWheel(event,'d-motivation')">
+                        <div class="svg-viewport" id="vp-d-motivation"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: BUSINESS -->
+            <div class="tab-pane" id="tab-business">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Business Layer — Actors, Services, Processes, Objects</span><span class="badge badge-bus">Business Architecture</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-business')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-business')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-business')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-business')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-business" onwheel="handleWheel(event,'d-business')">
+                        <div class="svg-viewport" id="vp-d-business"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: APPLICATION -->
+            <div class="tab-pane" id="tab-application">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Application Layer — C4 Container Architecture Layout</span><span class="badge badge-app">Application Architecture</span></div>
+                        <div class="diagram-controls">
+                            <button class="btn-action" style="padding: 4px 10px; font-size: 11.5px;" onclick="openLightbox('C4/container.png', 'C4 Level 2: Container Diagram')"><i class="fa-solid fa-image"></i> View PNG</button>
+                            <button class="control-btn" onclick="zoomIn('d-application')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-application')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-application')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-application')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-application" onwheel="handleWheel(event,'d-application')">
+                        <div class="svg-viewport" id="vp-d-application"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card"><h4 style="color:#22d3ee"><i class="fa-solid fa-network-wired"></i> Unified API Gateway</h4><p>Central ingress endpoint for Mobile, Web, and Admin traffic with JWT Token verification and rate limiting.</p></div>
+                    <div class="info-card"><h4 style="color:#22d3ee"><i class="fa-solid fa-cubes"></i> 5 Domain Microservices</h4><p>Earning Service, Tiering Service, Redemption Service, Program Management, and Analytics operate autonomously.</p></div>
+                    <div class="info-card"><h4 style="color:#22d3ee"><i class="fa-solid fa-database"></i> Kafka Bus & Polyglot Database</h4><p>Kafka coordinates TransactionEvent and RedemptionEvent streams; PostgreSQL provides isolated transactional stores.</p></div>
+                </div>
+            </div>
+
+            <!-- TAB 5: TECHNOLOGY -->
+            <div class="tab-pane" id="tab-technology">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Technology & Infrastructure Layer (Simplified 4-Tier View)</span><span class="badge badge-tec">Technology & Infrastructure</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-technology')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-technology')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-technology')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-technology')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-technology" onwheel="handleWheel(event,'d-technology')">
+                        <div class="svg-viewport" id="vp-d-technology"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card"><h4 style="color:#4ade80"><i class="fa-solid fa-server"></i> 1. Edge Ingress & Gateway</h4><p>Ingress Controller validates JWT, enforces OAuth 2.0 rate limits (1,000 req/min/partner), and routes traffic.</p></div>
+                    <div class="info-card"><h4 style="color:#4ade80"><i class="fa-solid fa-cubes-stacked"></i> 2. Kubernetes Pods Platform</h4><p>5 Microservices containerized on K8s cluster with Horizontal Pod Autoscaler (HPA) scaling up to ≥ 500 TPS.</p></div>
+                    <div class="info-card"><h4 style="color:#4ade80"><i class="fa-solid fa-network-wired"></i> 3. Middleware Kafka & Redis</h4><p>Kafka 3-Broker Cluster partitioned by member_id; Redis Sentinel provides Redlock and 72-hour idempotency cache.</p></div>
+                    <div class="info-card"><h4 style="color:#4ade80"><i class="fa-solid fa-database"></i> 4. Polyglot Storage & CDC</h4><p>4 isolated PostgreSQL DBs for transactional integrity + ClickHouse Star Schema synced via Debezium CDC.</p></div>
+                </div>
+            </div>
+
+            <!-- TAB 6: IMPLEMENTATION -->
+            <div class="tab-pane" id="tab-implementation">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Implementation & Migration Layer — Plateaus & Work Packages</span><span class="badge badge-imp">Roadmap</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-implementation')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-implementation')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-implementation')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-implementation')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-implementation" onwheel="handleWheel(event,'d-implementation')">
+                        <div class="svg-viewport" id="vp-d-implementation"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: TRACEABILITY -->
+            <div class="tab-pane" id="tab-traceability">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Cross-Layer Traceability View (Vertical Alignment)</span></div>
+                        <div class="diagram-controls">
+                            <button class="control-btn" onclick="zoomIn('d-traceability')"><i class="fa-solid fa-plus"></i></button>
+                            <button class="control-btn" onclick="zoomOut('d-traceability')"><i class="fa-solid fa-minus"></i></button>
+                            <button class="control-btn" onclick="resetZoom('d-traceability')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="control-btn" onclick="toggleFullscreen('d-traceability')"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="diagram-container" id="d-traceability" onwheel="handleWheel(event,'d-traceability')">
+                        <div class="svg-viewport" id="vp-d-traceability"><div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading diagram...</div></div>
+                        <div class="zoom-hint"><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Drag to Pan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: MATRIX -->
+            <div class="tab-pane" id="tab-matrix">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>ArchiMate 3.2 Traceability & Element Mapping Matrix</span></div>
+                    </div>
+                    <div style="padding:20px;">
+                        <table class="matrix-table">
+                            <thead><tr><th>#</th><th>Layer</th><th>Element Type</th><th>Loyalty System Element Name</th><th>Business / Technical Responsibility</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td><span class="layer-tag" style="background:#CCCCFF">Motivation</span></td><td>«Stakeholder»</td><td>Executive Board, Marketing, Finance/Accounting, Cardholder, Partners</td><td>Direct participants and beneficiaries in the Loyalty value chain</td></tr>
+                                <tr><td>2</td><td><span class="layer-tag" style="background:#CCCCFF">Motivation</span></td><td>«Goal»</td><td>Ingestion ≥ 500 TPS, SLA ≤ 60s, 100% Immutable Ledger</td><td>Core performance SLA and financial non-repudiation targets</td></tr>
+                                <tr><td>3</td><td><span class="layer-tag" style="background:#CCCCFF">Motivation</span></td><td>«Principle»</td><td>ADR-001 (DB Isolation), ADR-002 (Event/Idempotency), ADR-003 (CDC)</td><td>Foundational architectural invariant decisions</td></tr>
+                                <tr><td>4</td><td><span class="layer-tag" style="background:#F5DEAA">Strategy</span></td><td>«Capability»</td><td>High-Speed Earning, Automated Tier Lifecycle, Multi-Channel FIFO Redemption</td><td>Core strategic enterprise capabilities</td></tr>
+                                <tr><td>5</td><td><span class="layer-tag" style="background:#FFFFB5">Business</span></td><td>«Business Actor»</td><td>Cardholder (Member), Core Banking System, Program Admin, Finance, Partner</td><td>Human actors and external source banking systems</td></tr>
+                                <tr><td>6</td><td><span class="layer-tag" style="background:#FFFFB5">Business</span></td><td>«Business Service»</td><td>Earning Service, Tier Evaluation Service, Reward Redemption, Liability Audit</td><td>Business services delivered to members and internal stakeholders</td></tr>
+                                <tr><td>7</td><td><span class="layer-tag" style="background:#FFFFB5">Business</span></td><td>«Business Process»</td><td>Core Banking Earning (BP01), Tiering Grace Period (BP02), FIFO Redemption (BP03), Dual-Control (BP04)</td><td>Standard enterprise business workflows and rules</td></tr>
+                                <tr><td>8</td><td><span class="layer-tag" style="background:#FFFFB5">Business</span></td><td>«Business Object»</td><td>Point Transaction Ledger, Point Balance Snapshot, QP Ledger, Redemption Order</td><td>Passive informational and financial state business entities</td></tr>
+                                <tr><td>9</td><td><span class="layer-tag" style="background:#B5FFFF">Application</span></td><td>«App Component»</td><td>Earning Engine, Tiering System, Redemption Engine, Program Mgmt, Analytics Service</td><td>5 autonomous Domain-Driven microservices</td></tr>
+                                <tr><td>10</td><td><span class="layer-tag" style="background:#B5FFFF">Application</span></td><td>«App Interface»</td><td>settled_transactions, tier_event, cdc_stream, REST API Gateway</td><td>APIs and Kafka choreography event streams</td></tr>
+                                <tr><td>11</td><td><span class="layer-tag" style="background:#B5FFFF">Application</span></td><td>«Data Object»</td><td>point_transaction, point_balance, qp_ledger, fact_*</td><td>Relational transactional data models and OLAP Star Schema</td></tr>
+                                <tr><td>12</td><td><span class="layer-tag" style="background:#C9E7B7">Technology</span></td><td>«Node» / «System SW»</td><td>Kubernetes Cluster, Kafka 3-Brokers, Redis Sentinel, PostgreSQL, ClickHouse</td><td>Distributed compute, caching, messaging, and storage nodes</td></tr>
+                                <tr><td>13</td><td><span class="layer-tag" style="background:#C9E7B7">Technology</span></td><td>«Artifact»</td><td>earning-engine.jar, Docker Containers, *.sql Migration Scripts</td><td>Physical deployed binaries and database schema definitions</td></tr>
+                                <tr><td>14</td><td><span class="layer-tag" style="background:#FFB5B5">Implementation</span></td><td>«Work Package»</td><td>WP1 (Infra Setup) → WP6 (Dual-Control & Quality Gates 500 TPS)</td><td>Capstone engineering implementation work packages</td></tr>
+                                <tr><td>15</td><td><span class="layer-tag" style="background:#FFB5B5">Implementation</span></td><td>«Plateau»</td><td>Plateau 0 (Baseline Specs) → Plateau 3 (Enterprise Target State)</td><td>Target architecture deliverables and handover states</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 9: C4 DIAGRAM GALLERY & IMAGE PREVIEW (NEW!) -->
+            <div class="tab-pane" id="tab-c4gallery">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>C4 Architecture Model Diagrams — High Resolution Visual Gallery</span><span class="badge badge-c4">C4 Models</span></div>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
+                            Explore the official C4 model architecture diagrams from the <code style="color: var(--accent-blue); background: rgba(56,189,248,0.1); padding: 2px 6px; border-radius: 4px;">architecture/C4/</code> directory. Click on any diagram to open the interactive high-resolution Lightbox Viewer with zoom and pan support.
+                        </p>
+
+                        <div class="c4-gallery-grid">
+                            <!-- C4 Card 1: Context -->
+                            <div class="c4-card">
+                                <div class="c4-img-wrapper" onclick="openLightbox('C4/context.png', 'C4 Level 1: System Context Diagram')">
+                                    <img src="C4/context.png" alt="C4 Level 1: System Context Diagram" onerror="this.src='https://via.placeholder.com/600x400?text=C4+Context+Diagram'">
+                                    <div class="c4-img-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i> Open Fullscreen Preview</div>
+                                </div>
+                                <div class="c4-body">
+                                    <h3><i class="fa-solid fa-layer-group" style="color: #38bdf8;"></i> C4 Level 1: System Context</h3>
+                                    <p>High-level enterprise view showing how customers, bank administrators, core banking systems, merchant partners, and CRM interact with the Loyalty Platform.</p>
+                                </div>
+                                <div class="c4-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-image"></i> architecture/C4/context.png</span>
+                                    <span class="ref-link" onclick="openLightbox('C4/context.png', 'C4 Level 1: System Context Diagram')">Preview <i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- C4 Card 2: Container -->
+                            <div class="c4-card">
+                                <div class="c4-img-wrapper" onclick="openLightbox('C4/container.png', 'C4 Level 2: Container Diagram')">
+                                    <img src="C4/container.png" alt="C4 Level 2: Container Diagram" onerror="this.src='https://via.placeholder.com/600x400?text=C4+Container+Diagram'">
+                                    <div class="c4-img-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i> Open Fullscreen Preview</div>
+                                </div>
+                                <div class="c4-body">
+                                    <h3><i class="fa-solid fa-cubes" style="color: #facc15;"></i> C4 Level 2: Container Diagram</h3>
+                                    <p>Decomposition of the Loyalty Platform into API Gateway, 5 microservice containers (Earning, Tiering, Redemption, Program, Analytics), Kafka Bus, and Polyglot DBs.</p>
+                                </div>
+                                <div class="c4-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-image"></i> architecture/C4/container.png</span>
+                                    <span class="ref-link" onclick="openLightbox('C4/container.png', 'C4 Level 2: Container Diagram')">Preview <i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- C4 Card 3: Component -->
+                            <div class="c4-card">
+                                <div class="c4-img-wrapper" onclick="openLightbox('C4/component.png', 'C4 Level 3: Component Diagram')">
+                                    <img src="C4/component.png" alt="C4 Level 3: Component Diagram" onerror="this.src='https://via.placeholder.com/600x400?text=C4+Component+Diagram'">
+                                    <div class="c4-img-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i> Open Fullscreen Preview</div>
+                                </div>
+                                <div class="c4-body">
+                                    <h3><i class="fa-solid fa-microchip" style="color: #4ade80;"></i> C4 Level 3: Component Diagram</h3>
+                                    <p>Internal structural breakdown of individual microservices showing Spring Boot controllers, domain rule evaluators, repositories, Kafka listeners, and Redlock managers.</p>
+                                </div>
+                                <div class="c4-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-image"></i> architecture/C4/component.png</span>
+                                    <span class="ref-link" onclick="openLightbox('C4/component.png', 'C4 Level 3: Component Diagram')">Preview <i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 10: REFERENCES -->
+            <div class="tab-pane" id="tab-references">
+                <div class="diagram-card">
+                    <div class="diagram-header">
+                        <div class="diagram-title"><span>Architecture References & Technical Documentation Catalog</span><span class="badge badge-ref">References</span></div>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
+                            This section catalogs all foundational architecture documents, domain specification rules, architectural decision records (ADRs), and standards referenced throughout the Banking Loyalty Platform.
+                        </p>
+
+                        <div class="ref-card-grid">
+                            <!-- Reference Card 1 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-book" style="color: #facc15;"></i> Loyalty Domain Specification</h3>
+                                    <span class="ref-type">Domain Rules</span>
+                                </div>
+                                <p>Comprehensive specification of loyalty mechanics: base earning rates, tier multipliers (Silver 1.0x, Gold 1.5x, Platinum 2.0x), 30-day grace period, FIFO debit allocation, and breakage calculations.</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-file-lines"></i> loyalty_domain.md</span>
+                                    <span class="ref-link">Core Domain Reference <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Card 2 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-sitemap" style="color: #38bdf8;"></i> Architecture Overview & C4 Model</h3>
+                                    <span class="ref-type">Architecture</span>
+                                </div>
+                                <p>System context and container specifications across 5 domain microservices, asynchronous Kafka choreography, API routing, and event stream topologies.</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-file-lines"></i> Architecture-Overview.md</span>
+                                    <span class="ref-link" onclick="switchTab(document.querySelector('.nav-item:nth-child(9)'), 'c4gallery')">Open C4 Gallery <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Card 3 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-database" style="color: #4ade80;"></i> Data Architecture & Star Schema</h3>
+                                    <span class="ref-type">Database</span>
+                                </div>
+                                <p>Database-per-Service schemas, immutable point transaction ledger, mutable snapshot tables, Redis Redlock configurations, and Debezium CDC Star Schema warehouse.</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-file-lines"></i> Data-Architecture-and-Schema.md</span>
+                                    <span class="ref-link">Schema Specifications <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Card 4 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-shield-halved" style="color: #c084fc;"></i> Security & Partner Integration</h3>
+                                    <span class="ref-type">Security</span>
+                                </div>
+                                <p>OAuth 2.0 Client Credentials flow for partner integration, API rate limiting policies (1,000 req/min), and supervisor Dual-Control threshold workflow (> 500 points).</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-file-lines"></i> Security-and-Integration-Architecture.md</span>
+                                    <span class="ref-link">Security Policies <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Card 5 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-bolt" style="color: #fb923c;"></i> Domain Event Catalog</h3>
+                                    <span class="ref-type">Messaging</span>
+                                </div>
+                                <p>Detailed Apache Kafka topic specifications, Avro/JSON event schemas, partition key strategies (member_id), retry policies, and dead-letter queues (DLQ).</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-regular fa-file-lines"></i> domain-event-catalog.md</span>
+                                    <span class="ref-link">Kafka Topic Schemas <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Reference Card 6 -->
+                            <div class="ref-card">
+                                <div class="ref-card-header">
+                                    <h3><i class="fa-solid fa-globe" style="color: #38bdf8;"></i> The Open Group ArchiMate® 3.2</h3>
+                                    <span class="ref-type">Standard</span>
+                                </div>
+                                <p>Official international standard for enterprise architecture modeling by The Open Group, defining structural, behavioral, and motivational metamodel elements.</p>
+                                <div class="ref-card-footer">
+                                    <span style="color: var(--text-secondary);"><i class="fa-solid fa-up-right-from-square"></i> opengroup.org / Cheat Sheet</span>
+                                    <span class="ref-link">Standard Specification <i class="fa-solid fa-arrow-right"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ===================== INTERACTIVE LIGHTBOX MODAL ===================== -->
+    <div class="lightbox-modal" id="lightboxModal" onclick="handleLightboxBackdropClick(event)">
+        <div class="lightbox-header">
+            <div class="lightbox-title" id="lightboxTitle">
+                <i class="fa-solid fa-image" style="color: var(--accent-blue);"></i>
+                <span id="lightboxCaption">C4 Diagram Preview</span>
+            </div>
+            <div class="lightbox-controls">
+                <button class="lightbox-btn" title="Zoom In" onclick="zoomLightbox(1.25)"><i class="fa-solid fa-plus"></i></button>
+                <button class="lightbox-btn" title="Zoom Out" onclick="zoomLightbox(0.8)"><i class="fa-solid fa-minus"></i></button>
+                <button class="lightbox-btn" title="Reset Zoom" onclick="resetLightboxZoom()"><i class="fa-solid fa-rotate-left"></i></button>
+                <button class="lightbox-btn" title="Close (Esc)" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+
+        <div class="lightbox-body" id="lightboxBody" onwheel="handleLightboxWheel(event)">
+            <img class="lightbox-img" id="lightboxImg" src="" alt="C4 Diagram">
+        </div>
+
+        <div class="lightbox-footer">
+            <span><i class="fa-solid fa-mouse"></i> Scroll to Zoom · Click & Drag to Pan image</span>
+            <span id="lightboxPath" style="font-family: var(--font-code); font-size: 11.5px;">architecture/C4/...</span>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            themeVariables: {
+                darkMode: false,
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                fontSize: '13px',
+                primaryColor: '#B5FFFF',
+                primaryBorderColor: '#66CCCC',
+                primaryTextColor: '#1a1a2e',
+                lineColor: '#666666',
+                secondaryColor: '#FFFFB5',
+                tertiaryColor: '#C9E7B7'
+            },
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+        });
+
+        // ===================== DIAGRAM DEFINITIONS (ENGLISH) =====================
+
+        const diagrams = {
+
+// ── 1. OVERVIEW: ArchiMate Core Stack ──────────────────────────
+'d-overview': `flowchart TD
+    M["🎯 1. MOTIVATION & STRATEGY\\n─────────────────────\\n👤 Stakeholders · 🧭 Drivers · 🎯 Goals · 📜 Principles\\n▦ Capabilities · ⏩ Value Stream"] --> B["👤 2. BUSINESS LAYER\\n─────────────────────\\n👤 Actors · ◖ Services · ⚙ 5 Processes\\n📄 Business Objects"]
+    B --> A["▣ 3. APPLICATION LAYER\\n─────────────────────\\n▣ 5 Microservices · ⊸ API Gateway\\n⇄ Kafka Topics · 💾 Data Objects"]
+    A --> T["🧊 4. TECHNOLOGY LAYER\\n─────────────────────\\n🧊 K8s · 🔄 Kafka · 🔒 Redis · 💾 PostgreSQL\\n💾 ClickHouse · 🔄 Debezium CDC"]
+    I["🏁 5. IMPLEMENTATION & MIGRATION\\n─────────────────────\\n🏁 4 Plateaus · 📋 6 Work Packages\\n📦 Deliverables"] -.-> M
+    I -.-> B
+    I -.-> A
+    I -.-> T
+
+    style M fill:#CCCCFF,stroke:#8888CC,stroke-width:2px,color:#1a1a2e
+    style B fill:#FFFFB5,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style A fill:#B5FFFF,stroke:#66CCCC,stroke-width:2px,color:#1a1a2e
+    style T fill:#C9E7B7,stroke:#7CB342,stroke-width:2px,color:#1a1a2e
+    style I fill:#FFB5B5,stroke:#CC6666,stroke-width:2px,color:#1a1a2e`,
+
+// ── 2. MOTIVATION & STRATEGY ───────────────────────────────────
+'d-motivation': `flowchart TB
+    subgraph MOT["MOTIVATION ASPECT"]
+        direction TB
+        SH["👤 «Stakeholder»\\nExecutive Board, Marketing,\\nFinance, Cardholders, Partners"]
+        DR["🧭 «Driver»\\nCustomer Retention, Coalition\\nEcosystem, Zero Financial Leakage"]
+        G1["🎯 «Goal»\\nIngestion Throughput ≥ 500 TPS\\np95 < 2s, SLA ≤ 60s"]
+        G2["🎯 «Goal»\\n100% Immutable Ledger\\nZero Duplicate Postings"]
+        PR1["📜 «Principle»\\nADR-001 Database-per-Service"]
+        PR2["📜 «Principle»\\nADR-002 Event-Driven & Idempotency"]
+        PR3["📜 «Principle»\\nADR-003 OLTP / OLAP CDC Separation"]
+    end
+
+    subgraph STR["STRATEGY LAYER"]
+        direction TB
+        C1("▦ «Capability»\\nHigh-Speed Real-Time Earning")
+        C2("▦ «Capability»\\nAutomated Tier Lifecycle")
+        C3("▦ «Capability»\\nMulti-Channel FIFO Redemption")
+        C4("▦ «Capability»\\nFinancial Liability Analytics")
+        VS1("⏩ «Value Stream»\\n1. Card Spending") --> VS2("⏩ «Value Stream»\\n2. Point Accrual & Tier Upgrade")
+        VS2 --> VS3("⏩ «Value Stream»\\n3. Reward & Voucher Redemption")
+        VS3 --> VS4("⏩ «Value Stream»\\n4. Retention & Re-Engagement")
+    end
+
+    SH -->|influences| DR
+    DR -->|motivates| G1
+    DR -->|motivates| G2
+    PR1 -.->|realizes| G2
+    PR2 -.->|realizes| G1
+    PR3 -.->|realizes| G1
+    G1 ==>|realizes| C1
+    G2 ==>|realizes| C1
+    G1 -.->|realizes| C2
+    G2 -.->|realizes| C3
+    G1 -.->|realizes| C4
+    C1 --> VS2
+    C3 --> VS3
+
+    style MOT fill:#EEDDFF,stroke:#8888CC,stroke-width:2px,color:#1a1a2e
+    style STR fill:#FBF0D4,stroke:#C4A055,stroke-width:2px,color:#1a1a2e
+    style SH fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style DR fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style G1 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style G2 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style PR1 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style PR2 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style PR3 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style C1 fill:#F5DEAA,stroke:#C4A055,stroke-width:1.5px,color:#1a1a2e
+    style C2 fill:#F5DEAA,stroke:#C4A055,stroke-width:1.5px,color:#1a1a2e
+    style C3 fill:#F5DEAA,stroke:#C4A055,stroke-width:1.5px,color:#1a1a2e
+    style C4 fill:#F5DEAA,stroke:#C4A055,stroke-width:1.5px,color:#1a1a2e
+    style VS1 fill:#F5DEAA,stroke:#C4A055,stroke-width:1px,color:#1a1a2e
+    style VS2 fill:#F5DEAA,stroke:#C4A055,stroke-width:1px,color:#1a1a2e
+    style VS3 fill:#F5DEAA,stroke:#C4A055,stroke-width:1px,color:#1a1a2e
+    style VS4 fill:#F5DEAA,stroke:#C4A055,stroke-width:1px,color:#1a1a2e`,
+
+// ── 3. BUSINESS LAYER ──────────────────────────────────────────
+'d-business': `flowchart TD
+    subgraph ACTORS["ACTIVE STRUCTURE — Business Actors"]
+        direction LR
+        A1["👤 «Business Actor»\\nBank Customer (Member)"]
+        A2["🏦 «Business Actor»\\nCore Banking System"]
+        A3["👤 «Business Actor»\\nProgram Administrator"]
+        A4["👤 «Business Actor»\\nFinance & Accounting"]
+        A5["🤝 «Business Actor»\\nAlliance Merchant Partner"]
+    end
+
+    subgraph SERVICES["BEHAVIOR — Business Services"]
+        direction LR
+        S1("◖ «Business Service»\\nPoint Earning Service")
+        S2("◖ «Business Service»\\nTier Management Service")
+        S3("◖ «Business Service»\\nReward Redemption Service")
+        S4("◖ «Business Service»\\nDual-Control Adjustment Service")
+        S5("◖ «Business Service»\\nLiability Reporting Service")
+    end
+
+    subgraph PROCESSES["BEHAVIOR — Business Processes"]
+        direction TB
+        P1("⚙ «Business Process» BP-01\\nSettlement Ingestion & Ledger Accrual")
+        P2("⚙ «Business Process» BP-02\\nTier Progression & 30-Day Grace Period")
+        P3("⚙ «Business Process» BP-03\\nFIFO Redemption & Saga Reversal")
+        P4("⚙ «Business Process» BP-04\\nDual-Control Approval (> 500 pts)")
+        P5("⚙ «Business Process» BP-05\\nFinancial Liability & Breakage Audit")
+    end
+
+    subgraph OBJECTS["PASSIVE STRUCTURE — Business Objects"]
+        direction LR
+        O1[("📄 «Business Object»\\nPoint Transaction Ledger")]
+        O2[("📄 «Business Object»\\nAvailable Balance Snapshot")]
+        O3[("📄 «Business Object»\\nTier Info & QP Balance")]
+        O4[("📄 «Business Object»\\nRedemption Order")]
+        O5[("📄 «Business Object»\\nLiability Report")]
+    end
+
+    A1 -->|accesses| S1
+    A1 -->|accesses| S3
+    A2 -->|serves| S1
+    A3 -->|accesses| S4
+    A4 -->|accesses| S5
+    A5 -->|serves| S1
+    A5 -->|serves| S3
+
+    S1 -->|triggers| P1
+    S2 -->|triggers| P2
+    S3 -->|triggers| P3
+    S4 -->|triggers| P4
+    S5 -->|triggers| P5
+
+    P1 -->|accesses| O1
+    P1 -->|accesses| O2
+    P2 -->|accesses| O3
+    P3 -->|accesses| O4
+    P4 -->|accesses| O1
+    P5 -->|accesses| O5
+
+    style ACTORS fill:#FFFFF0,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style SERVICES fill:#FFFFF0,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style PROCESSES fill:#FFFFF0,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style OBJECTS fill:#FFFFF0,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style A1 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style A2 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style A3 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style A4 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style A5 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style S1 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style S2 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style S3 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style S4 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style S5 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style P1 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style P2 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style P3 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style P4 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style P5 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style O1 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style O2 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style O3 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style O4 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style O5 fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e`,
+
+// ── 4. APPLICATION LAYER (C4 CONTAINER CLEAN STYLE) ────────────
+'d-application': `flowchart TB
+    subgraph EXT_LEFT["EXTERNALS (LEFT)"]
+        direction TB
+        CUST["👤 «Business Actor»\\nBank Customer\\n(Mobile / Online Banking)"]
+        CORE["🏦 «External System»\\nCore Banking System\\n(Settlement Transactions)"]
+        PART["✈ «Partner System»\\nPartner Systems\\n(Merchant POS / Airlines)"]
+    end
+
+    subgraph LOYALTY_SYSTEM["LOYALTY SYSTEM (CONTAINER BOUNDARY)"]
+        direction TB
+        
+        GW["⊸ «Application Interface»\\nAPI Gateway & OAuth 2.0 Server\\n(Authentication, Rate Limiting, Routing)"]
+
+        subgraph SERVICES_ROW["5 DOMAIN APPLICATION COMPONENTS"]
+            direction LR
+            EE["▣ «Application Component»\\nEarning Service\\nManages earning rules &\\nprocesses transactions"]
+            TS["▣ «Application Component»\\nTiering Service\\nCalculates tiers &\\ntriggers benefits"]
+            RE["▣ «Application Component»\\nRedemption Service\\nReward redemption\\nworkflows & Saga"]
+            PM["▣ «Application Component»\\nProgram Management\\nAdmin interface for\\nrules & catalog"]
+            AR["▣ «Application Component»\\nAnalytics Service\\nProcesses data for\\nreports & liability"]
+        end
+
+        BUS[("⇄ «Application Event Bus»\\nCommunication Bus (Apache Kafka)\\nTopics: TransactionEvent · TierEvent · RedemptionEvent · cdc_stream")]
+        
+        DB[("💾 «Data Object»\\nCentral Loyalty Database (Polyglot)\\nMember Profiles · Point Ledger · Rule Configurations · Tiers & Audits")]
+    end
+
+    subgraph EXT_RIGHT["EXTERNALS (RIGHT)"]
+        direction TB
+        ADMIN["👤 «Business Actor»\\nBank Administrator\\n(Admin Web Portal)"]
+        IDP["🔑 «External Service»\\nIdentity Provider\\n(OAuth 2.0 / JWT Auth)"]
+        NOTIF["✉ «External Service»\\nNotification System\\n(SMS, Push, Email)"]
+    end
+
+    %% External Connections
+    CUST -->|calls| GW
+    ADMIN -->|calls| GW
+    IDP <-->|authenticates| GW
+    CORE -->|Webhooks| EE
+    PART -->|Webhooks| EE
+
+    %% Gateway Routing
+    GW -->|calls| EE
+    GW -->|calls| TS
+    GW -->|calls| RE
+    GW -->|calls| PM
+    GW -->|calls| AR
+
+    %% Service to Database
+    EE <-->|reads/writes| DB
+    TS <-->|reads/writes| DB
+    RE <-->|reads/writes| DB
+    PM <-->|reads/writes| DB
+    AR <-->|reads/writes| DB
+
+    %% Service to Event Bus
+    EE <-->|publishes/subscribes| BUS
+    TS <-->|publishes/subscribes| BUS
+    RE <-->|publishes/subscribes| BUS
+    PM -->|publishes CDC| BUS
+    BUS -->|reads/writes| AR
+    BUS -->|subscribes| NOTIF
+
+    %% Styling with ArchiMate Application Cyan Palette
+    style LOYALTY_SYSTEM fill:#EAF7F9,stroke:#2980B9,stroke-width:2px,color:#1a1a2e
+    style SERVICES_ROW fill:#D8F2F7,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style EXT_LEFT fill:#F4F6F7,stroke:#BDC3C7,stroke-width:1.5px,color:#1a1a2e
+    style EXT_RIGHT fill:#F4F6F7,stroke:#BDC3C7,stroke-width:1.5px,color:#1a1a2e
+
+    style GW fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style EE fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style TS fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style RE fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style PM fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style AR fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style BUS fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+    style DB fill:#B5FFFF,stroke:#2980B9,stroke-width:1.5px,color:#1a1a2e
+
+    style CUST fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e
+    style CORE fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e
+    style PART fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e
+    style ADMIN fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e
+    style IDP fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e
+    style NOTIF fill:#FFFFFF,stroke:#7F8C8D,stroke-width:1px,color:#1a1a2e`,
+
+// ── 5. TECHNOLOGY LAYER (CLEAN 4-BLOCK STYLE) ──────────────────
+'d-technology': `flowchart TB
+    subgraph INFRA_STACK["TECHNOLOGY & INFRASTRUCTURE PLATFORM"]
+        direction TB
+
+        subgraph T_GATEWAY["1. EDGE INGRESS & SECURITY TIER"]
+            INGRESS["⊸ «Technology Interface»\\nIngress Controller / API Gateway\\nJWT Verification · SSL Termination · Rate Limiter (1,000 req/min)"]
+        end
+
+        subgraph T_COMPUTE["2. KUBERNETES CONTAINER COMPUTE TIER"]
+            direction LR
+            K_EE["⚙ «System Software»\\nEarning Pod"]
+            K_TS["⚙ «System Software»\\nTiering Pod"]
+            K_RE["⚙ «System Software»\\nRedemption Pod"]
+            K_PM["⚙ «System Software»\\nProgram Pod"]
+            K_AR["⚙ «System Software»\\nAnalytics Pod"]
+        end
+
+        subgraph T_MIDDLEWARE["3. MIDDLEWARE & COMMUNICATION BUS"]
+            direction LR
+            KF[("🔄 «Technology Service»\\nApache Kafka Cluster\\nPartitioned Message Broker")]
+            RD[("🔒 «Technology Service»\\nRedis Sentinel Cluster\\nDistributed Redlock & Idempotency Key")]
+        end
+
+        subgraph T_STORAGE["4. POLYGLOT DATA STORAGE TIER"]
+            direction LR
+            P_EE[("💾 «Artifact»\\nEarning DB\\nPostgreSQL (Ledger)")]
+            P_TS[("💾 «Artifact»\\nTiering DB\\nPostgreSQL (QP)")]
+            P_RED[("💾 «Artifact»\\nRedemption DB\\nPostgreSQL (Orders)")]
+            P_PM[("💾 «Artifact»\\nProgram DB\\nPostgreSQL (Rules)")]
+            P_DW[("💾 «Artifact»\\nAnalytics DW\\nClickHouse (Star Schema)")]
+        end
+    end
+
+    %% Routing
+    INGRESS -->|routes to| T_COMPUTE
+
+    %% Compute with Middleware
+    K_EE <-->|pub/sub| KF
+    K_TS <-->|pub/sub| KF
+    K_RE <-->|pub/sub| KF
+    K_PM -->|publishes CDC| KF
+    KF -->|consumes CDC| K_AR
+
+    K_EE <-->|Idempotency Lock| RD
+    K_RE <-->|FIFO Debit Lock| RD
+
+    %% Compute with Storage
+    K_EE --- P_EE
+    K_TS --- P_TS
+    K_RE --- P_RED
+    K_PM --- P_PM
+    K_AR --- P_DW
+
+    %% CDC Stream from Databases
+    P_EE -.->|CDC Stream| KF
+    P_TS -.->|CDC Stream| KF
+    P_RED -.->|CDC Stream| KF
+    P_PM -.->|CDC Stream| KF
+
+    %% Styling with ArchiMate Technology Mint Green Palette
+    style INFRA_STACK fill:#EAF7EC,stroke:#27AE60,stroke-width:2px,color:#1a1a2e
+    style T_GATEWAY fill:#DCF4E0,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style T_COMPUTE fill:#DCF4E0,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style T_MIDDLEWARE fill:#DCF4E0,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style T_STORAGE fill:#DCF4E0,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+
+    style INGRESS fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style K_EE fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style K_TS fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style K_RE fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style K_PM fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style K_AR fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+
+    style KF fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style RD fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+
+    style P_EE fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style P_TS fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style P_RED fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style P_PM fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e
+    style P_DW fill:#C9E7B7,stroke:#27AE60,stroke-width:1.5px,color:#1a1a2e`,
+
+// ── 6. IMPLEMENTATION & MIGRATION ──────────────────────────────
+'d-implementation': `flowchart LR
+    subgraph PL["PLATEAUS — Architecture Transition States"]
+        P0["🏁 «Plateau» P0\\nBaseline Architecture & Specs"]
+        P1["🏁 «Plateau» P1\\nMVP Core Earning & Tiering"]
+        P2["🏁 «Plateau» P2\\nRedemption & Partner Gateway"]
+        P3["🏁 «Plateau» P3\\nEnterprise Target State"]
+    end
+
+    subgraph WP["WORK PACKAGES — Implementation Tasks"]
+        direction TB
+        W1["📋 «Work Package» WP-1\\nK8s Infra & Kafka Bus Setup"]
+        W2["📋 «Work Package» WP-2\\nImmutable Ledger & Idempotency"]
+        W3["📋 «Work Package» WP-3\\nTiering Engine & 30d Grace"]
+        W4["📋 «Work Package» WP-4\\nFIFO Redemption & OAuth API"]
+        W5["📋 «Work Package» WP-5\\nStar Schema DW & CDC Stream"]
+        W6["📋 «Work Package» WP-6\\nDual-Control & 500 TPS Gate"]
+    end
+
+    subgraph DEL["DELIVERABLES"]
+        direction TB
+        D1[("📦 «Deliverable»\\nArchitecture & OpenAPI Specs")]
+        D2[("📦 «Deliverable»\\n5 Microservice Docker Images")]
+        D3[("📦 «Deliverable»\\nPostgreSQL & ClickHouse DW")]
+        D4[("📦 «Deliverable»\\nMobile App & Web Portals")]
+        D5[("📦 «Deliverable»\\nQuality Gate Test Audit Report")]
+    end
+
+    P0 -->|triggers| W1
+    W1 -->|realizes| P1
+    W2 -->|realizes| P1
+    W3 -->|realizes| P1
+    P1 -->|triggers| W4
+    W4 -->|realizes| P2
+    P2 -->|triggers| W5
+    P2 -->|triggers| W6
+    W5 -->|realizes| P3
+    W6 -->|realizes| P3
+    P3 -.->|delivers| D1
+    P3 -.->|delivers| D2
+    P3 -.->|delivers| D3
+    P3 -.->|delivers| D4
+    P3 -.->|delivers| D5
+
+    style PL fill:#FFE0E0,stroke:#CC6666,stroke-width:2px,color:#1a1a2e
+    style WP fill:#FFE0E0,stroke:#CC6666,stroke-width:2px,color:#1a1a2e
+    style DEL fill:#FFE0E0,stroke:#CC6666,stroke-width:2px,color:#1a1a2e
+    style P0 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style P1 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style P2 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style P3 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W1 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W2 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W3 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W4 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W5 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style W6 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style D1 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style D2 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style D3 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style D4 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e
+    style D5 fill:#FFB5B5,stroke:#CC6666,stroke-width:1.5px,color:#1a1a2e`,
+
+// ── 7. CROSS-LAYER TRACEABILITY ────────────────────────────────
+'d-traceability': `flowchart TB
+    subgraph L1["MOTIVATION & STRATEGY"]
+        G1["🎯 «Goal»\\n100% Immutable Ledger\\nZero Duplicate Postings"]
+        G2["🎯 «Goal»\\nThroughput ≥ 500 TPS\\np95 < 2s, SLA ≤ 60s"]
+        CAP("▦ «Capability»\\nHigh-Speed Real-Time Earning")
+        G1 -.->|realizes| CAP
+        G2 -.->|realizes| CAP
+    end
+
+    subgraph L2["BUSINESS LAYER"]
+        BS("◖ «Business Service»\\nPoint Earning Business Service")
+        BP("⚙ «Business Process»\\nSettlement Ingestion & Ledger Accrual")
+        BO[("📄 «Business Object»\\nPoint Transaction Ledger Entry")]
+        CAP ==>|serves| BS
+        BS -->|triggers| BP
+        BP -->|accesses| BO
+    end
+
+    subgraph L3["APPLICATION LAYER"]
+        AS("⊞ «Application Service»\\nEarn Ingestion & Evaluation API")
+        AC["▣ «Application Component»\\nEarning Engine Service"]
+        DO[("💾 «Data Object»\\npoint_transaction & point_balance")]
+        BP -.->|realized by| AS
+        AS -->|serves| AC
+        AC -->|accesses| DO
+    end
+
+    subgraph L4["TECHNOLOGY LAYER"]
+        TK["🔄 «Technology Service»\\nApache Kafka (settled_transactions)"]
+        TR["🔒 «Technology Service»\\nRedis Cluster (Idempotency Lock)"]
+        TP[("💾 «Artifact»\\nPostgreSQL (Partitioned Ledger DB)")]
+        TN["🧊 «Node»\\nKubernetes Worker Pods (HPA)"]
+
+        AC -.->|deployed on| TN
+        AC -.->|consumes from| TK
+        AC -.->|accesses| TR
+        DO -.->|stored in| TP
+    end
+
+    L1 ==> L2
+    L2 ==> L3
+    L3 ==> L4
+
+    style L1 fill:#EEDDFF,stroke:#8888CC,stroke-width:2px,color:#1a1a2e
+    style L2 fill:#FFFFF0,stroke:#CCCC66,stroke-width:2px,color:#1a1a2e
+    style L3 fill:#E5FFFF,stroke:#66CCCC,stroke-width:2px,color:#1a1a2e
+    style L4 fill:#E0F2E0,stroke:#7CB342,stroke-width:2px,color:#1a1a2e
+    style G1 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style G2 fill:#CCCCFF,stroke:#8888CC,stroke-width:1.5px,color:#1a1a2e
+    style CAP fill:#F5DEAA,stroke:#C4A055,stroke-width:1.5px,color:#1a1a2e
+    style BS fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style BP fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style BO fill:#FFFFB5,stroke:#CCCC66,stroke-width:1.5px,color:#1a1a2e
+    style AS fill:#B5FFFF,stroke:#66CCCC,stroke-width:1.5px,color:#1a1a2e
+    style AC fill:#B5FFFF,stroke:#66CCCC,stroke-width:1.5px,color:#1a1a2e
+    style DO fill:#B5FFFF,stroke:#66CCCC,stroke-width:1.5px,color:#1a1a2e
+    style TK fill:#C9E7B7,stroke:#7CB342,stroke-width:1.5px,color:#1a1a2e
+    style TR fill:#C9E7B7,stroke:#7CB342,stroke-width:1.5px,color:#1a1a2e
+    style TP fill:#C9E7B7,stroke:#7CB342,stroke-width:1.5px,color:#1a1a2e
+    style TN fill:#C9E7B7,stroke:#7CB342,stroke-width:1.5px,color:#1a1a2e`
+        };
+
+        // Tab metadata
+        const tabInfo = {
+            'overview': { title: '<i class="fa-solid fa-compass" style="color:var(--accent-blue)"></i> ArchiMate 3.2 Core Framework Stack', desc: 'Overall Multi-Layer Enterprise Architecture — Banking Loyalty Platform' },
+            'motivation': { title: '<i class="fa-solid fa-bullseye" style="color:#a78bfa"></i> Motivation & Strategy Layer', desc: 'Stakeholders, Drivers, Goals (≥ 500 TPS, Immutable Ledger), Principles (3 ADRs), Capabilities, Value Stream' },
+            'business': { title: '<i class="fa-solid fa-briefcase" style="color:#facc15"></i> Business Layer', desc: 'Active Structure (Actors) → Behavior (Services, 5 Processes) → Passive Structure (Business Objects)' },
+            'application': { title: '<i class="fa-solid fa-cubes" style="color:#22d3ee"></i> Application Layer (C4 Container Architecture View)', desc: 'C4 Container Layout: External Systems → API Gateway → 5 Autonomous Microservices → Kafka Event Bus & Database' },
+            'technology': { title: '<i class="fa-solid fa-server" style="color:#4ade80"></i> Technology & Infrastructure Layer', desc: '4-Tier Platform: Edge Ingress → K8s Cluster Compute → Kafka & Redis Middleware → Polyglot Storage & CDC' },
+            'implementation': { title: '<i class="fa-solid fa-road" style="color:#f87171"></i> Implementation & Migration Layer', desc: '4 Plateaus (Architecture Transitions) → 6 Work Packages → 5 Core Deliverables' },
+            'traceability': { title: '<i class="fa-solid fa-link" style="color:var(--accent-cyan)"></i> Cross-Layer Traceability View', desc: 'End-to-End Vertical Alignment: Motivation → Business → Application → Technology' },
+            'matrix': { title: '<i class="fa-solid fa-table-cells" style="color:var(--accent-blue)"></i> Traceability Matrix', desc: 'Complete ArchiMate 3.2 Element Mapping Table matching The Open Group standard' },
+            'c4gallery': { title: '<i class="fa-solid fa-images" style="color:#facc15"></i> C4 Architecture Model Diagrams Gallery', desc: 'High-Resolution visual diagrams from architecture/C4/ (Context, Container, Component)' },
+            'references': { title: '<i class="fa-solid fa-book-bookmark" style="color:#38bdf8"></i> Architecture References & Documentation Catalog', desc: 'Foundational domain rules, ADRs, schema designs, and external architecture standards' }
+        };
+
+        // ─── Render Engine ─────────────────────────────────────────
+        async function renderDiagram(id) {
+            const vp = document.getElementById('vp-' + id);
+            if (!vp || vp.getAttribute('data-rendered') === 'true') return;
+            const code = diagrams[id];
+            if (!code) return;
+            try {
+                const uid = 'svg_' + id.replace(/[^a-zA-Z0-9]/g,'_') + '_' + Math.floor(Math.random()*10000);
+                const { svg } = await mermaid.render(uid, code);
+                vp.innerHTML = svg;
+                vp.setAttribute('data-rendered', 'true');
+                resetZoom(id);
+            } catch (err) {
+                console.error('Mermaid render error for ' + id, err);
+                vp.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center"><i class="fa-solid fa-triangle-exclamation"></i> Render error: ' + err.message + '</div>';
+            }
+        }
+
+        function switchTab(el, tabId) {
+            document.querySelectorAll('.tab-pane').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            const pane = document.getElementById('tab-' + tabId);
+            if (pane) pane.classList.add('active');
+            if (el) el.classList.add('active');
+            if (tabInfo[tabId]) {
+                document.getElementById('header-title').innerHTML = tabInfo[tabId].title;
+                document.getElementById('header-desc').innerText = tabInfo[tabId].desc;
+            }
+            const dId = 'd-' + tabId;
+            if (diagrams[dId]) renderDiagram(dId);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const nt = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', nt);
+            document.getElementById('theme-icon').className = nt === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            document.getElementById('theme-text').innerText = nt === 'light' ? 'Light Mode' : 'Dark Mode';
+            document.querySelectorAll('.svg-viewport').forEach(v => v.removeAttribute('data-rendered'));
+            const ap = document.querySelector('.tab-pane.active');
+            if (ap) { const c = ap.querySelector('.diagram-container'); if (c) renderDiagram(c.id); }
+        }
+
+        // ─── Zoom & Pan Engine for Mermaid Diagrams ────────────────
+        const zs = {};
+        function gz(id) { if (!zs[id]) zs[id] = {s:1,x:0,y:0,d:false,sx:0,sy:0}; return zs[id]; }
+        function ut(id, sm=true) { const st=gz(id), vp=document.getElementById('vp-'+id); if(vp){const svg=vp.querySelector('svg'); if(svg){svg.style.transition=(sm&&!st.d)?'transform 0.15s ease-out':'none'; svg.style.transform=`translate(${st.x}px,${st.y}px) scale(${st.s})`; svg.style.transformOrigin='center center';}} }
+        function zoomIn(id) { const st=gz(id); st.s=Math.min(st.s*1.25,6); ut(id); }
+        function zoomOut(id) { const st=gz(id); st.s=Math.max(st.s/1.25,0.25); ut(id); }
+        function resetZoom(id) { const st=gz(id); st.s=1; st.x=0; st.y=0; ut(id); }
+        function resetCurrentZoom() { const ap=document.querySelector('.tab-pane.active'); if(ap){const c=ap.querySelector('.diagram-container'); if(c) resetZoom(c.id);} }
+        function handleWheel(e,id) { e.preventDefault(); const st=gz(id); st.s=Math.min(Math.max(st.s*(e.deltaY<0?1.15:0.87),0.25),6); ut(id); }
+        function toggleFullscreen(id) { const c=document.getElementById(id); if(c){c.classList.toggle('fullscreen'); resetZoom(id);} }
+        function printDoc() { window.print(); }
+
+        // ─── Interactive Lightbox Image Viewer Engine ──────────────
+        const lbState = { scale: 1, x: 0, y: 0, isDragging: false, startX: 0, startY: 0 };
+
+        function openLightbox(src, caption) {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            const cap = document.getElementById('lightboxCaption');
+            const path = document.getElementById('lightboxPath');
+            
+            img.src = src;
+            cap.innerText = caption;
+            path.innerText = 'architecture/' + src;
+            
+            resetLightboxZoom();
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightboxModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function handleLightboxBackdropClick(e) {
+            if (e.target.id === 'lightboxModal' || e.target.id === 'lightboxBody') {
+                closeLightbox();
+            }
+        }
+
+        function updateLightboxTransform() {
+            const img = document.getElementById('lightboxImg');
+            if (img) {
+                img.style.transform = `translate(${lbState.x}px, ${lbState.y}px) scale(${lbState.scale})`;
+            }
+        }
+
+        function zoomLightbox(factor) {
+            lbState.scale = Math.min(Math.max(lbState.scale * factor, 0.4), 5.0);
+            updateLightboxTransform();
+        }
+
+        function resetLightboxZoom() {
+            lbState.scale = 1;
+            lbState.x = 0;
+            lbState.y = 0;
+            updateLightboxTransform();
+        }
+
+        function handleLightboxWheel(e) {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.15 : 0.85;
+            zoomLightbox(factor);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDiagram('d-overview');
+            document.querySelectorAll('.diagram-container').forEach(c => {
+                c.addEventListener('mousedown', e => { if(e.button!==0) return; const st=gz(c.id); st.d=true; st.sx=e.clientX-st.x; st.sy=e.clientY-st.y; });
+            });
+            window.addEventListener('mousemove', e => { 
+                for(const[id,st] of Object.entries(zs)) if(st.d){st.x=e.clientX-st.sx; st.y=e.clientY-st.sy; ut(id,false);} 
+                if (lbState.isDragging) {
+                    lbState.x = e.clientX - lbState.startX;
+                    lbState.y = e.clientY - lbState.startY;
+                    updateLightboxTransform();
+                }
+            });
+            window.addEventListener('mouseup', () => { 
+                for(const st of Object.values(zs)) st.d=false; 
+                lbState.isDragging = false;
+            });
+
+            // Lightbox Image Drag
+            const lbBody = document.getElementById('lightboxBody');
+            if (lbBody) {
+                lbBody.addEventListener('mousedown', e => {
+                    if (e.button !== 0) return;
+                    lbState.isDragging = true;
+                    lbState.startX = e.clientX - lbState.x;
+                    lbState.startY = e.clientY - lbState.y;
+                });
+            }
+
+            window.addEventListener('keydown', e => { 
+                if(e.key==='Escape') {
+                    const lb = document.getElementById('lightboxModal');
+                    if (lb && lb.classList.contains('active')) {
+                        closeLightbox();
+                        return;
+                    }
+                    document.querySelectorAll('.diagram-container.fullscreen').forEach(el=>{el.classList.remove('fullscreen'); resetZoom(el.id);}); 
+                }
+            });
+        });
+    </script>
+</body>
+</html>

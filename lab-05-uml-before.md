@@ -1,8 +1,8 @@
 # Lab 5 — UML Before Pack
 
-**Status:** Done | **Phase:** Messy current style | **R:** Dev / Test | **A:** SA / BA
+**Status:** Done | **Phase:** Before pack, messy current style
 
-No Guide header, RACI template, or implementation evidence is applied.
+This is a before-pack sitting. No Guide, no header template, no RACI, no implementation evidence.
 
 ## UC-LB-01 Process settled earn event
 

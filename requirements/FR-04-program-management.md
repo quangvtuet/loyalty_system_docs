@@ -1,15 +1,15 @@
 # FR-04: Program Management — Functional Requirements
 
 **Module**: Program Management
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md)
 
 ---
 
 ## 1. Overview
 
-The Program Management module is the **foundational configuration layer** of the Loyalty Banking platform. It governs the lifecycle of loyalty programs, campaigns, rules, partner integrations, and member enrollments. All other modules (Earning, Tiering, Redemption, Analytics) depend on entities configured here.
+The Program Management module is the **foundational configuration layer** of the Loyalty Banking platform. It governs the lifecycle of loyalty programs (e.g., **"BankRewards 2025"**), campaigns (e.g., **"Double Points August"** — 2× earn multiplier, 1 Aug–31 Aug), rules, partner integrations, and member enrollments. All other modules (Earning, Tiering, Redemption, Analytics) depend on entities configured here.
 
 ---
 
@@ -72,9 +72,9 @@ The Program Management module is the **foundational configuration layer** of the
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-04-020 | The system **SHALL** allow configuration of `EarnRule` records specifying: earn rate (points per $), eligible transaction types, eligible channels, and validity dates. | Must | Domain §4 |
-| FR-04-021 | The system **SHALL** allow configuration of `TierRule` records specifying: tier name, QP threshold, tier period type (calendar year / rolling), evaluation frequency, and grace period (days). | Must | Domain §4 |
-| FR-04-022 | The system **SHALL** allow configuration of `RedemptionRule` records specifying: redemption rate, minimum points per redemption, eligible reward categories, and tier restrictions. | Must | Domain §4 |
+| FR-04-020 | The system **SHALL** allow configuration of `EarnRule` records specifying: earn rate (points per $), eligible transaction types, eligible channels, and validity dates. **Default earn rate: 1 point per $1 spent.** | Must | Domain §4 |
+| FR-04-021 | The system **SHALL** allow configuration of `TierRule` records specifying: tier name, QP threshold, tier period type (calendar year / rolling), evaluation frequency, and grace period (days). **Default thresholds: Silver: 0 QP, Gold: 1,000 QP, Platinum: 3,000 QP. Default grace period: 30 days. Default tier period: calendar year (1 Jan – 31 Dec).** | Must | Domain §4 |
+| FR-04-022 | The system **SHALL** allow configuration of `RedemptionRule` records specifying: redemption rate, minimum points per redemption, eligible reward categories, and tier restrictions. **Default redemption rate: 100 points = $1. Default minimum redemption: 100 points.** | Must | Domain §4 |
 | FR-04-023 | The system **SHALL** validate rule configurations for logical consistency (e.g., tier thresholds must be strictly ascending). | Must | Domain §4 |
 | FR-04-024 | The system **SHALL** apply rules in a versioned manner — new rule versions take effect only from their activation date forward. | Must | BR: Rule versioning |
 
@@ -98,7 +98,7 @@ The Program Management module is the **foundational configuration layer** of the
 |----|-------------|----------|-------------|
 | FR-04-040 | The system **SHALL** maintain a Partner registry with: partner name, type (earn-only / redeem-only / both), API credentials, status, and onboarding date. | Must | Domain §4 |
 | FR-04-041 | The system **SHALL** provide standardized API endpoints for partners to submit earn events and query redemption status. | Must | BR: Standardized partner APIs |
-| FR-04-042 | The system **SHALL** authenticate partner API calls using OAuth 2.0 client credentials. | Must | Domain §4 |
+| FR-04-042 | The system **SHALL** authenticate partner API calls using **OAuth 2.0 client credentials** flow. | Must | Domain §4 |
 | FR-04-043 | The system **SHALL** log all partner API calls with timestamp, payload hash, and response status for audit purposes. | Must | Domain §4 |
 | FR-04-044 | The system **SHOULD** support partner-specific earn rate overrides within a program. | Should | Domain §4 |
 
@@ -129,7 +129,7 @@ The Program Management module is the **foundational configuration layer** of the
 
 - A program must have at least one active `EarnRule` before it can be set to `ACTIVE` status.
 - Campaign dates must fall within the parent program's active date range.
-- Partner API rate limits are configurable per partner (default: 1,000 req/min).
+- Partner API rate limits are configurable per partner (**default: 1,000 req/min per partner**).
 - Rule configuration is managed by bank staff only; members have no access to rule configuration.
 
 ---

@@ -1,8 +1,8 @@
 # FR-02: Tiering System — Functional Requirements
 
 **Module**: Tiering System
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md)
 **Depends On**: [FR-04 Program Management](file:///d:/learn/loyalty/requirements/FR-04-program-management.md), [FR-01 Earning Engine](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md)
 
@@ -10,7 +10,7 @@
 
 ## 1. Overview
 
-The Tiering System **segments members into loyalty tiers** (e.g., Silver, Gold, Platinum) based on cumulative Qualifying Points (QP) earned over a defined tier period. Tiers control benefit eligibility, earn rate multipliers, and catalog access restrictions in other modules. Tier status changes trigger benefit activation/deactivation and member notifications.
+The Tiering System **segments members into loyalty tiers** — **Silver, Gold, Platinum** — based on cumulative Qualifying Points (QP) earned over a defined tier period. Default tier thresholds: **Silver: 0 QP** (base), **Gold: 1,000 QP**, **Platinum: 3,000 QP**. Tiers control benefit eligibility, earn rate multipliers, and catalog access restrictions in other modules. Tier status changes trigger benefit activation/deactivation and member notifications.
 
 ---
 
@@ -68,7 +68,7 @@ The Tiering System **segments members into loyalty tiers** (e.g., Silver, Gold, 
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-02-020 | The system **SHALL** run a scheduled tier evaluation job at the end of each tier period (as configured per program: calendar year-end or rolling 12-month anniversary). | Must | BR: Tier downgrades after evaluation cycle |
+| FR-02-020 | The system **SHALL** run a scheduled tier evaluation job at the end of each tier period (default: **calendar year-end, 31 December**; configurable per program to rolling 12-month anniversary). | Must | BR: Tier downgrades after evaluation cycle |
 | FR-02-021 | During the evaluation job, the system **SHALL** compare each member's cumulative QP for the period against the threshold required to maintain their current tier. | Must | Domain §2 |
 | FR-02-022 | If a member's QP falls below the maintenance threshold of their current tier, the system **SHALL** initiate a downgrade at the end of the grace period. | Must | BR: Tier downgrades after evaluation cycle |
 | FR-02-023 | A member **SHALL** downgrade by exactly one tier level per evaluation cycle (e.g., Platinum → Gold, not Platinum → Silver in one step), unless the program config explicitly allows multi-level downgrade. | Must | BR: Cannot skip tiers downward |
@@ -80,7 +80,7 @@ The Tiering System **segments members into loyalty tiers** (e.g., Silver, Gold, 
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-02-030 | The system **SHALL** apply a configurable grace period (in days) after the tier evaluation date before a downgrade takes effect. The grace period is defined in the program's `TierRule`. | Must | BR: Grace period |
+| FR-02-030 | The system **SHALL** apply a configurable grace period (in days) after the tier evaluation date before a downgrade takes effect. The grace period is defined in the program's `TierRule`. **Default grace period: 30 days.** | Must | BR: Grace period |
 | FR-02-031 | During the grace period, the member **SHALL** retain all benefits of their current (higher) tier. | Must | BR: Grace period |
 | FR-02-032 | The system **SHALL** notify the member at the start of the grace period, stating: current tier, new tier after grace period, grace period end date, and QP shortfall. | Must | Domain §2 |
 | FR-02-033 | If a member earns sufficient QP to meet the threshold before the grace period expires, the downgrade **SHALL** be cancelled and the member retains their current tier. | Must | Domain §2 |
@@ -93,7 +93,7 @@ The Tiering System **segments members into loyalty tiers** (e.g., Silver, Gold, 
 |----|-------------|----------|-------------|
 | FR-02-040 | Upon tier upgrade, the system **SHALL** immediately activate all benefits associated with the new tier. | Must | Domain §2 |
 | FR-02-041 | Upon confirmed tier downgrade (grace period expired), the system **SHALL** deactivate benefits exclusive to the previous tier and activate benefits of the new tier. | Must | Domain §2 |
-| FR-02-042 | Tier benefits **SHALL** include, but are not limited to: earn rate multiplier override, access to tier-restricted catalog items, and service-level flag (e.g., priority support). | Must | Domain §2 |
+| FR-02-042 | Tier benefits **SHALL** include, but are not limited to: earn rate multiplier override (Silver: **1×**, Gold: **1.5×**, Platinum: **2×**), access to tier-restricted catalog items, and service-level flag (e.g., priority support). | Must | Domain §2 |
 | FR-02-043 | The system **SHALL** notify relevant downstream systems (Earning Engine, Redemption Engine) of tier changes in real time via an internal event. | Must | Domain §2 |
 
 ---
@@ -130,10 +130,11 @@ The Tiering System **segments members into loyalty tiers** (e.g., Silver, Gold, 
 
 ## 6. Constraints & Assumptions
 
-- Tier thresholds must be strictly ascending (Silver < Gold < Platinum); the system validates this at rule config time.
+- Tier thresholds must be strictly ascending (Silver < Gold < Platinum); the system validates this at rule config time. **Default thresholds: Silver: 0 QP, Gold: 1,000 QP, Platinum: 3,000 QP.**
 - QP accrual rate and earn point rate may differ; both are defined in `TierRule` and `EarnRule` respectively.
-- The first tier (base tier) has no threshold requirement — all enrolled members start at the base tier by default.
+- The first tier (base tier, Silver) has no threshold requirement — all enrolled members start at Silver by default.
 - QP reset does not affect the member's redeemable point balance.
+- Default grace period is **30 days**; configurable per program in `TierRule`.
 
 ---
 

@@ -1,8 +1,8 @@
 # FR-01: Earning Engine — Functional Requirements
 
 **Module**: Earning Engine
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md)
 **Depends On**: [FR-04 Program Management](file:///d:/learn/loyalty/requirements/FR-04-program-management.md)
 
@@ -45,7 +45,7 @@ The Earning Engine is responsible for **automatically calculating and crediting 
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-01-001 | The system **SHALL** consume transaction events from the core banking feed in real time (or near real time, within 60 seconds of settlement). | Must | Domain §1 |
+| FR-01-001 | The system **SHALL** consume transaction events from the core banking feed in real time (or near real time, **≤ 60 seconds** of settlement). **[SLA: 60 s]** | Must | Domain §1 |
 | FR-01-002 | The system **SHALL** accept earn events from partner systems via the standardized Partner Earn API defined in FR-04-041. | Must | Domain §1 |
 | FR-01-003 | The system **SHALL** validate each earn event for required fields: source transaction ID, member ID, transaction amount, transaction type, channel, timestamp, and currency. | Must | Domain §1 |
 | FR-01-004 | The system **SHALL** reject events with missing or invalid required fields and return a structured error response to the caller. | Must | Domain §1 |
@@ -58,7 +58,7 @@ The Earning Engine is responsible for **automatically calculating and crediting 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-01-010 | The system **SHALL** identify all active `EarnRule` records applicable to the event based on: program membership, transaction type, channel, and event timestamp. | Must | Domain §1 |
-| FR-01-011 | The system **SHALL** calculate base points as: `FLOOR(transaction_amount × earn_rate)`. | Must | BR: Points rounded down |
+| FR-01-011 | The system **SHALL** calculate base points as: `FLOOR(transaction_amount × earn_rate)`. Default earn rate: **1 point per $1 spent** (configurable per program via `EarnRule`). | Must | BR: Points rounded down |
 | FR-01-012 | The system **SHALL** apply the earn rule with the highest specificity when multiple base earn rules match the same event (e.g., a channel-specific rule overrides the default rule). | Must | Domain §1 |
 | FR-01-013 | The system **SHALL** assign zero points when no applicable earn rule is found for an event; the event **SHALL** still be logged. | Must | Domain §1 |
 
@@ -101,9 +101,9 @@ The Earning Engine is responsible for **automatically calculating and crediting 
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-01-050 | Upon crediting `CONFIRMED` points, the system **SHALL** schedule an expiry date according to the program's expiry policy: rolling (N months from earn date) or fixed (specific calendar date). | Must | Domain §1 |
+| FR-01-050 | Upon crediting `CONFIRMED` points, the system **SHALL** schedule an expiry date according to the program's expiry policy: **rolling** (default: **12 months** from earn date) or **fixed** (default: **31 December** of the earn year). | Must | Domain §1 |
 | FR-01-051 | The system **SHALL** expire points automatically on their scheduled expiry date by creating a debit `EXPIRED` transaction in the point ledger. | Must | Domain §1 |
-| FR-01-052 | The system **SHALL** send a member notification at configurable advance notice periods before point expiry (e.g., 30 days, 7 days before). | Should | Domain §1 |
+| FR-01-052 | The system **SHALL** send a member notification at configurable advance notice periods before point expiry. Default notice periods: **30 days** and **7 days** before the expiry date. | Should | Domain §1 |
 | FR-01-053 | The system **SHALL** apply FIFO ordering when consuming points — oldest-earned points are consumed first during redemption and expiry debit. | Must | Glossary: FIFO Expiry |
 
 ---

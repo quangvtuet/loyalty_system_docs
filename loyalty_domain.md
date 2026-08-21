@@ -24,10 +24,10 @@
 Automatically calculates and credits loyalty points to a customer's account based on qualifying transactions or activities.
 
 ### Key Concepts
-- **Earn Rate**: Points awarded per unit of spend (e.g., 1 point per $1 spent).
-- **Earn Event**: Any qualifying activity that triggers point accrual (purchase, transfer, bill payment, login milestone, etc.).
-- **Bonus Campaign**: A time-limited multiplier or flat bonus applied on top of the base earn rate (e.g., 3x points on weekends).
-- **Expiry**: Points may carry an expiry date, either rolling (e.g., 12 months from earn date) or fixed (e.g., end of calendar year).
+- **Earn Rate**: Points awarded per unit of spend: **1 point per $1 spent** (base rate; tier multipliers apply on top).
+- **Earn Event**: Any qualifying activity that triggers point accrual (purchase, transfer, bill payment, login milestone, etc.). Events must be received and processed within **60 seconds** of transaction settlement.
+- **Bonus Campaign**: A time-limited multiplier or flat bonus applied on top of the base earn rate (e.g., the **"Double Points August"** campaign awards **2× points** on all eligible spend from 1 Aug – 31 Aug).
+- **Expiry**: Points carry an expiry date set at credit time. Two policies supported: **rolling** (12 months from earn date) or **fixed** (31 December of the earn year). Members are notified **30 days** and **7 days** before their points expire.
 - **Pending vs. Confirmed Points**: Points may be held in a pending state until a transaction is fully settled, then confirmed/credited.
 
 ### Key Entities
@@ -56,15 +56,15 @@ Transaction Event -> Earn Rule Evaluation -> Bonus Rule Evaluation
 ## 2. Tiering System
 
 ### Purpose
-Segments customers into loyalty tiers (e.g., Silver, Gold, Platinum) based on their cumulative qualifying activity over a defined period. Tiers unlock benefits and influence earn rates.
+Segments customers into loyalty tiers — **Silver, Gold, Platinum** — based on their cumulative qualifying activity over a defined period. Tiers unlock benefits and influence earn rates.
 
 ### Key Concepts
 - **Qualifying Points (QP)**: A separate metric used solely for tier calculation — not the same as redeemable points.
-- **Tier Period**: The window (e.g., calendar year or rolling 12 months) over which QP are accumulated.
-- **Tier Threshold**: The minimum QP required to reach or maintain a tier.
-- **Tier Upgrade**: When a member crosses the threshold for a higher tier.
-- **Tier Downgrade**: When a member fails to maintain the QP required for their current tier at evaluation time.
-- **Grace Period**: A buffer period after the tier period ends during which a member retains their current tier before downgrade takes effect.
+- **Tier Period**: The window over which QP are accumulated. Default: **calendar year (1 Jan – 31 Dec)**; configurable to rolling 12-month anniversary per program.
+- **Tier Threshold**: The minimum QP required to reach or maintain a tier. Thresholds for the standard program: **Silver: 0 QP** (base tier, all enrolled members), **Gold: 1,000 QP**, **Platinum: 3,000 QP**.
+- **Tier Upgrade**: When a member crosses the threshold for a higher tier. Upgrades take effect **immediately**.
+- **Tier Downgrade**: When a member fails to maintain the QP required for their current tier at evaluation time. A member downgrades **one tier per evaluation cycle** (default; configurable).
+- **Grace Period**: A buffer period after the tier period ends during which a member retains their current tier before downgrade takes effect. Default: **30 days**.
 
 ### Key Entities
 | Entity | Description |
@@ -102,12 +102,12 @@ Qualifying Transaction -> QP Accrual -> Periodic Tier Evaluation
 Enables members to exchange their confirmed loyalty points for rewards — cash back, vouchers, merchandise, travel, charity donations, or statement credits.
 
 ### Key Concepts
-- **Redemption Rate**: Points required per reward unit (e.g., 100 points = $1 value).
-- **Redemption Catalog**: The collection of available reward options (items, partners, categories).
+- **Redemption Rate**: Points required per reward unit: **100 points = $1 redemption value** (program-level `cost_per_point` defines the reverse for liability calculations).
+- **Redemption Catalog**: The collection of available reward options (items, partners, categories). Catalog items may carry a minimum tier requirement (e.g., Platinum-only items).
 - **Redemption Request**: A member-initiated request to exchange points for a specific reward.
-- **Fulfillment**: The actual delivery of the reward to the member (digital code, physical shipment, account credit).
-- **Minimum Redemption**: The lowest number of points that can be redeemed in a single transaction.
-- **Reversal**: Cancellation of a redemption and re-crediting of points to the member's account.
+- **Fulfillment**: The actual delivery of the reward to the member (digital voucher, physical shipment, or account credit within 1 business day for cash-back).
+- **Minimum Redemption**: The lowest number of points that can be redeemed in a single transaction: **100 points**.
+- **Reversal**: Cancellation of a redemption and re-crediting of points to the member's account, restoring the original FIFO earn date and expiry date.
 
 ### Key Entities
 | Entity | Description |
@@ -139,11 +139,11 @@ Redemption Request -> Balance Validation -> Point Debit (Pending)
 Provides the administrative layer for configuring, launching, and maintaining loyalty programs, including campaign setup, rule management, partner integration, and member enrollment.
 
 ### Key Concepts
-- **Loyalty Program**: The top-level container defining the overall structure, currency, and rules (e.g., "BankRewards 2025").
-- **Campaign**: A time-bound promotional configuration that modifies earn/redeem behavior (e.g., "Double Points in August").
-- **Enrollment**: The process by which a customer opts into a loyalty program.
-- **Partner Integration**: Third-party merchants or service providers that participate in the ecosystem (earn at partner, redeem with partner).
-- **Rule Engine**: The configurable logic layer that evaluates earn/tier/redeem rules without code changes.
+- **Loyalty Program**: The top-level container defining the overall structure, currency, and rules (e.g., **"BankRewards 2025"**).
+- **Campaign**: A time-bound promotional configuration that modifies earn/redeem behavior (e.g., **"Double Points August"** — 2× earn multiplier on all eligible spend, 1 Aug – 31 Aug). Campaigns carry a numeric priority to resolve conflicts.
+- **Enrollment**: The process by which a customer opts into a loyalty program. A member may be enrolled in multiple programs simultaneously.
+- **Partner Integration**: Third-party merchants or service providers that participate in the ecosystem (earn at partner, redeem with partner). Partner API calls are authenticated via **OAuth 2.0 client credentials**; default rate limit is **1,000 requests/minute per partner**.
+- **Rule Engine**: The configurable logic layer that evaluates earn/tier/redeem rules without code changes. All rule changes are **versioned** and applied prospectively — existing balances and tier statuses are never retroactively affected.
 
 ### Key Entities
 | Entity | Description |
@@ -175,11 +175,11 @@ Provides the administrative layer for configuring, launching, and maintaining lo
 Delivers data-driven insights into loyalty program performance, member behavior, point liability, and business impact. Supports both operational monitoring and strategic decision-making.
 
 ### Key Concepts
-- **Point Liability**: The financial obligation represented by unspent points on the balance sheet (outstanding points x redemption value).
-- **Breakage Rate**: The percentage of earned points that expire without being redeemed (a source of program revenue).
-- **Redemption Rate**: The percentage of earned points that are redeemed by members.
-- **Active Members**: Members who have performed at least one qualifying activity in the reporting period.
-- **Tier Distribution**: Breakdown of the member base across each tier level.
+- **Point Liability**: The financial obligation represented by unspent points on the balance sheet. Formula: **`SUM(confirmed_unspent_points) × cost_per_point`** where `cost_per_point` is defined per program in the base currency.
+- **Breakage Rate**: The percentage of earned points that expire without being redeemed (a source of program revenue). Formula: **`expired points / issued points × 100`**.
+- **Redemption Rate**: The percentage of earned points that are redeemed by members. Formula: **`redeemed points / issued points × 100`**.
+- **Active Members**: Members who have performed **at least 1 qualifying activity** in the reporting period. Members with no activity for >90 days are classified as dormant.
+- **Tier Distribution**: Breakdown of the member base across each tier level (Silver / Gold / Platinum), reported as count and percentage of total enrolled.
 
 ### Key Reports
 | Report | Description |

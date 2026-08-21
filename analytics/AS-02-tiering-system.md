@@ -1,8 +1,8 @@
 # AS-02: Tiering System — Analytics Specification
 
 **Module**: Tiering System
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-02](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md)
 
 ---
@@ -30,7 +30,7 @@ This specification defines **metrics, data lineage, and reporting** for the Tier
 
 | Metric | Definition | Formula | Source Fields | Refresh |
 |--------|-----------|---------|--------------|---------|
-| **Tier Distribution** | Count and % of members in each tier | `COUNT(m.member_id) GROUP BY m.current_tier` | `member_tier.current_tier` | Daily |
+| **Tier Distribution** | Count and % of members in each tier (Silver / Gold / Platinum) | `COUNT(m.member_id) GROUP BY m.current_tier` | `member_tier.current_tier` | Daily |
 | **Upgrade Rate** | % of members who upgraded in the period | `COUNT(te) WHERE te.event_type='UPGRADE' / enrolled_members × 100` | `tier_event.event_type`, `enrollment` | Monthly |
 | **Downgrade Rate** | % of members who downgraded in the period | `COUNT(te) WHERE te.event_type='DOWNGRADE' / enrolled_members × 100` | `tier_event.event_type`, `enrollment` | Monthly |
 | **Grace Period Utilization Rate** | % of downgrades that used the grace period | `COUNT(grace_used) / COUNT(downgrades) × 100` | `tier_event.grace_period_used` | Monthly |
@@ -75,7 +75,7 @@ This specification defines **metrics, data lineage, and reporting** for the Tier
 |-----------|---------|-------------|---------|
 | Period, Program, Current Tier | Avg QP, Median QP, QP at P25 / P75 / P90, Members Near Threshold (within 10%) | Monthly | Program, Tier, Date Range |
 
-**Purpose**: Identify members near upgrade thresholds for targeted campaigns.
+**Purpose**: Identify members near upgrade thresholds for targeted campaigns. Canonical thresholds: **Gold: 1,000 QP** (near = within 100 QP), **Platinum: 3,000 QP** (near = within 300 QP).
 **Output**: Box plot distribution + "near threshold" segment list (CSV)
 
 ---
@@ -130,5 +130,5 @@ End of Tier Period Batch Job
 |-------|-----------|----------|--------|
 | Tier Pyramid Dilution | Platinum members > 10% of enrolled base | Medium | Review tier thresholds with Program Admin |
 | High Downgrade Rate | Period downgrade rate > 20% | High | Investigate QP accrual issues or threshold misconfiguration |
-| Grace Rescue Rate Anomaly | Grace rescue rate drops below 5% | Low | Marketing opportunity: targeted earn campaign for grace period members |
+| Grace Rescue Rate Anomaly | Grace rescue rate drops below 5% | Low | Marketing opportunity: targeted earn campaign for members in **30-day** grace period |
 | Batch Evaluation Failure | Batch run exits with error count > 0 | High | Page on-call; no tier changes committed until re-run succeeds |

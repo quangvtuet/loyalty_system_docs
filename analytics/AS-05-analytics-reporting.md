@@ -1,8 +1,8 @@
 # AS-05: Analytics & Reporting — Analytics Specification
 
 **Module**: Analytics & Reporting (Platform-Wide)
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-05](file:///d:/learn/loyalty/requirements/FR-05-analytics-reporting.md)
 
 ---
@@ -42,8 +42,8 @@ This specification defines the **cross-module, platform-level analytics** for Lo
 | **Outstanding Point Balance** | Confirmed unspent points | `Total Issued - Total Redeemed - Total Expired - Total Adjusted` | Derived | Daily |
 | **Redemption Rate** | % of issued points redeemed | `Total Points Redeemed / Total Points Issued × 100` | Derived | Monthly |
 | **Breakage Rate** | % of issued points expired unredeemed | `Total Points Expired / Total Points Issued × 100` | Derived | Monthly |
-| **Active Member Rate** | % of enrolled members who had qualifying activity | `COUNT(active_members) / COUNT(enrolled_members) × 100` | `dim_member`, `fact_enrollment` | Monthly |
-| **Point Liability (Currency)** | Financial obligation of outstanding points | `Outstanding Point Balance × dp.cost_per_point` | `fact_point_transaction`, `dim_program` | Daily |
+| **Active Member Rate** | % of enrolled members with qualifying activity (active = ≥1 activity; dormant = >90 days inactive) | `COUNT(active_members) / COUNT(enrolled_members) × 100` | `dim_member`, `fact_enrollment` | Monthly |
+| **Point Liability (Currency)** | Financial obligation of outstanding points | `Outstanding Point Balance × dp.cost_per_point` (Default: **$0.01 per point**) | `fact_point_transaction`, `dim_program` | Daily |
 | **Program ROI** | Incremental return on loyalty investment | `(incremental_revenue - program_cost) / program_cost × 100` | `revenue_attribution`, `fact_point_transaction` (cost proxy) | Monthly |
 
 ---
@@ -79,6 +79,7 @@ This specification defines the **cross-module, platform-level analytics** for Lo
 | KPI Tile | Value | Trend |
 |----------|-------|-------|
 | Total Enrolled Members | Current count | vs. prior month |
+| Tier Distribution | Silver / Gold / Platinum count & % | vs. prior month |
 | Active Member Rate | % | vs. prior month |
 | Total Points Issued (MTD) | Volume | vs. prior MTD |
 | Redemption Rate | % | vs. prior month |

@@ -1,8 +1,8 @@
 # AS-03: Redemption Engine — Analytics Specification
 
 **Module**: Redemption Engine
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-03](file:///d:/learn/loyalty/requirements/FR-03-redemption-engine.md)
 
 ---
@@ -36,7 +36,7 @@ This specification defines **metrics, data lineage, and reporting** for the Rede
 | **Fulfillment Success Rate** | % of orders successfully fulfilled | `COUNT(fr.status='FULFILLED') / COUNT(ro.order_id) × 100` | `fulfillment_record.status`, `redemption_order` | Daily |
 | **Reversal Rate** | % of orders reversed | `COUNT(ro.status='REVERSED') / COUNT(ro.order_id) × 100` | `redemption_order.status` | Daily |
 | **Avg Points per Redemption** | Average points consumed per order | `Total Points Redeemed / Total Redemption Orders` | Derived | Daily |
-| **Avg Redemption Value** | Average monetary value of redemptions | `AVG(ro.points_redeemed × program.cost_per_point)` | `redemption_order`, `loyalty_program` | Monthly |
+| **Avg Redemption Value** | Average monetary value of redemptions | `AVG(ro.points_redeemed × program.cost_per_point)` — at default rate: **100 pts = $1 → $0.01 per point** | `redemption_order`, `loyalty_program` | Monthly |
 | **Fulfillment SLA Compliance** | % of orders fulfilled within SLA window | `COUNT(on_time_fulfillments) / COUNT(fulfilled_orders) × 100` | `fulfillment_record.fulfilled_ts`, `redemption_order.created_ts` | Daily |
 | **Avg Fulfillment Time** | Average hours from order creation to fulfillment | `AVG(fr.fulfilled_ts - ro.created_ts)` | `fulfillment_record`, `redemption_order` | Daily |
 | **Catalog Utilization Rate** | % of active catalog items with at least 1 redemption in period | `COUNT(DISTINCT ro.reward_item_id) / COUNT(ri.item_id WHERE ri.status='ACTIVE') × 100` | `redemption_order`, `reward_item` | Monthly |
@@ -87,7 +87,7 @@ This specification defines **metrics, data lineage, and reporting** for the Rede
 |-----------|---------|-------------|---------|
 | Month, Program | Avg Age of Points Consumed (days), % from <3m batch, % from 3–6m, % from >6m | Monthly | Program, Date Range |
 
-**Purpose**: Understand how old points are when consumed — indicates engagement urgency. Older consumption = more dormant members redeeming.
+**Purpose**: Understand how old points are when consumed — indicates engagement urgency. Older consumption = more dormant members redeeming. Note: reversed redemptions restore original earn date (FIFO position preserved — FR-03-041).
 **Output**: Age distribution stacked bar
 **Delivery**: Quarterly
 

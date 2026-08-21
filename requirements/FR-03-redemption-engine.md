@@ -1,8 +1,8 @@
 # FR-03: Redemption Engine — Functional Requirements
 
 **Module**: Redemption Engine
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md)
 **Depends On**: [FR-04 Program Management](file:///d:/learn/loyalty/requirements/FR-04-program-management.md), [FR-01 Earning Engine](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md), [FR-02 Tiering System](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md)
 
@@ -10,7 +10,7 @@
 
 ## 1. Overview
 
-The Redemption Engine allows members to **exchange confirmed loyalty points for rewards** from a published catalog. It handles balance validation, FIFO point consumption, catalog item eligibility checks, fulfillment orchestration, and automatic reversal of points when fulfillment fails.
+The Redemption Engine allows members to **exchange confirmed loyalty points for rewards** from a published catalog. Redemption rate: **100 points = $1 redemption value**. Minimum redemption: **100 points** per transaction. It handles balance validation, FIFO point consumption, catalog item eligibility checks (including tier restrictions), fulfillment orchestration, and automatic reversal of points (with original FIFO earn date restored) when fulfillment fails.
 
 ---
 
@@ -62,7 +62,7 @@ The Redemption Engine allows members to **exchange confirmed loyalty points for 
 | FR-03-010 | The system **SHALL** accept a redemption request containing: member ID, program ID, reward item ID, quantity, and delivery details (for physical rewards). | Must | Domain §3 |
 | FR-03-011 | The system **SHALL** validate that the requested reward item is in `ACTIVE` status and the member meets the minimum tier requirement before proceeding. | Must | BR: Tier-restricted catalog items |
 | FR-03-012 | The system **SHALL** validate that the total points required (item points cost × quantity) does not exceed the member's confirmed available balance. | Must | BR: Cannot redeem more than confirmed balance |
-| FR-03-013 | The system **SHALL** enforce the minimum redemption threshold defined in the program's `RedemptionRule`; requests below the minimum **SHALL** be rejected. | Must | Domain §3 Key Concepts: Minimum Redemption |
+| FR-03-013 | The system **SHALL** enforce the minimum redemption threshold defined in the program's `RedemptionRule`; requests below the minimum **SHALL** be rejected. **Default minimum: 100 points per redemption transaction.** | Must | Domain §3 Key Concepts: Minimum Redemption |
 | FR-03-014 | The system **SHALL** generate a unique `RedemptionOrder` ID for each accepted request and return it to the caller. | Must | Domain §3 |
 
 ---
@@ -87,7 +87,7 @@ The Redemption Engine allows members to **exchange confirmed loyalty points for 
 | FR-03-031 | The system **SHALL** track fulfillment status through the following states: `PENDING` → `IN_PROGRESS` → `FULFILLED` / `FAILED`. | Must | Domain §3 |
 | FR-03-032 | Upon `FULFILLED` status, the system **SHALL** confirm the point debit from `PENDING_DEBIT` to `CONFIRMED_DEBIT` in the ledger. | Must | Domain §3 Lifecycle |
 | FR-03-033 | The system **SHALL** send the member a fulfillment confirmation notification containing: reward name, redemption order ID, delivery details (if applicable), and remaining point balance. | Must | Domain §3 |
-| FR-03-034 | For account credit fulfillment, the system **SHALL** initiate the credit to the member's linked bank account within 1 business day of the fulfilled status. | Should | Domain §3 |
+| FR-03-034 | For account credit fulfillment, the system **SHALL** initiate the credit to the member's linked bank account **within 1 business day** of the fulfilled status. | Should | Domain §3 |
 
 ---
 
@@ -96,7 +96,7 @@ The Redemption Engine allows members to **exchange confirmed loyalty points for 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
 | FR-03-040 | If the fulfillment status transitions to `FAILED`, the system **SHALL** automatically reverse the point debit by re-crediting the consumed points to the member's balance. | Must | BR: Reversal on fulfillment failure |
-| FR-03-041 | Reversed points **SHALL** restore their original FIFO position (original earn date and expiry date) in the ledger. | Must | Domain §3 |
+| FR-03-041 | Reversed points **SHALL** restore their **original FIFO position** (original earn date and original expiry date) in the ledger, as if the redemption had not occurred. | Must | Domain §3 |
 | FR-03-042 | The system **SHALL** send a reversal notification to the member containing: reason for failure, reversed point amount, and updated balance. | Must | Domain §3 |
 | FR-03-043 | A member **SHALL** be able to cancel a redemption order only while the order is in `PENDING` fulfillment status. Once `IN_PROGRESS` or `FULFILLED`, cancellation is not permitted. | Must | Domain §3 |
 | FR-03-044 | A Support Agent **SHALL** be able to initiate a manual reversal for orders in any non-`FULFILLED` status, with a mandatory reason code and approval workflow. | Should | Domain §3 |

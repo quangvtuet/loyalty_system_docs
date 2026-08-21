@@ -1,7 +1,7 @@
 # Quality Gates — Architecture
 **Domain**: Loyalty Banking
-**Version**: 1.0
-**Date**: 2026-08-13
+**Version**: 1.1
+**Date**: 2026-08-14
 **Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | FR-01..05 | AS-01..05
 
 ---
@@ -59,7 +59,7 @@ Design Approval       Readiness                   Readiness             Readines
 |----|-----------|------------------|--------|
 | G01-02-001 | OpenAPI 3.x specification exists for all synchronous REST/HTTP APIs: Earn Rule Config, Member Enrollment, Redemption Request, Catalog, Report Generation | OpenAPI specs per module | 🔲 |
 | G01-02-002 | AsyncAPI specification exists for event-driven interfaces: Earn Event feed from Core Banking, Partner Earn Event, Tier Change Event, Point Expiry Event | AsyncAPI specs | 🔲 |
-| G01-02-003 | Partner API authentication scheme is defined: OAuth 2.0 client credentials flow (FR-04-042) | Partner API Auth Design Doc | 🔲 |
+| G01-02-003 | Partner API authentication scheme is defined: OAuth 2.0 client credentials flow (FR-04-042), default rate limit: 1,000 req/min per partner | Partner API Auth Design Doc | 🔲 |
 | G01-02-004 | All APIs have versioning strategy documented (URI versioning: `/v1/`, `/v2/`) | API Versioning ADR | 🔲 |
 | G01-02-005 | Error response schemas are standardized across all APIs (error code, message, correlation ID) | API Error Standard Doc | 🔲 |
 
@@ -106,7 +106,7 @@ Design Approval       Readiness                   Readiness             Readines
 | ID | Criterion | Source | Evidence Required | Status |
 |----|-----------|--------|------------------|--------|
 | G02-01-001 | Core Banking transaction event feed is connected to Earning Engine in the integration environment; test events flow through | NFR-01-001 | Event trace log sample | 🔲 |
-| G02-01-002 | Earning Engine acknowledges and processes a settled transaction event within 60 seconds of emission | FR-01-001 | Latency measurement (p95) | 🔲 |
+| G02-01-002 | Earning Engine acknowledges and processes a settled transaction event within **≤ 60 seconds** of emission **[SLA: 60 s]** | FR-01-001 | Latency measurement (p95) | 🔲 |
 | G02-01-003 | Partner Earn API endpoint is deployed; at least one partner integration test completes a round-trip earn event | FR-04-041 | Integration test report | 🔲 |
 | G02-01-004 | OAuth 2.0 client credentials authentication is enforced on the Partner API; unauthenticated requests return HTTP 401 | FR-04-042 | Security test log | 🔲 |
 

@@ -1,6 +1,18 @@
 # Application Layer - Banking Loyalty Platform
 
-```plantuml
+<!--
+Title:      Application Cooperation View — Loyalty Banking Platform
+Viewpoint:  ArchiMate — Application Layer
+Layer(s):   Application
+As-Is | To-Be | Transition:  To-Be
+Owner:      Role SA  Name Loyalty Banking Modeling Team
+RACI:       R SA  A SA  C EA DA Sec Dev  I BA/PO Test Ops Owner
+Version:    v1.0  Date 2026-08-21  Status Review
+Legend:     Serving (-->>), Triggering (→), Realization (..>), Access (~~>), Association (—)
+RACI legend: R = draws · A = approves · C = consulted · I = informed
+Scope:      in-scope: Application Components = I-4 container strings, Kafka topics, Data Objects; out-of-scope: UML messages, C4 notation, mixed languages
+-->
+
 @startuml
 !pragma layout smetana
 !include <archimate/Archimate>

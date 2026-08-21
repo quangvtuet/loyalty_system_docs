@@ -1,6 +1,18 @@
 # Motivation Layer - Banking Loyalty Platform
 
-```plantuml
+<!--
+Title:      Motivation View — Loyalty Banking Platform
+Viewpoint:  ArchiMate — Motivation Aspect
+Layer(s):   Motivation / Strategy
+As-Is | To-Be | Transition:  To-Be
+Owner:      Role EA  Name Loyalty Banking Modeling Team
+RACI:       R EA  A Owner  C SA BA/PO Sec  I DA Dev Test Ops
+Version:    v1.0  Date 2026-08-21  Status Review
+Legend:     Influence (––>), Realization (..>), Association (—)
+RACI legend: R = draws · A = approves · C = consulted · I = informed
+Scope:      in-scope: Stakeholders, Drivers, Goals, Principles (ADR-001–003 = CON.* equivalents); out-of-scope: protocol labels, pods, JDBC
+-->
+
 @startuml
 !pragma layout smetana
 !include <archimate/Archimate>

@@ -1,6 +1,18 @@
 # Technology Layer - Banking Loyalty Platform
 
-```plantuml
+<!--
+Title:      Technology / Deployment View — Loyalty Banking Platform
+Viewpoint:  ArchiMate — Technology Layer
+Layer(s):   Technology
+As-Is | To-Be | Transition:  To-Be
+Owner:      Role SA  Name Loyalty Banking Modeling Team
+RACI:       R Ops  A SA  C Sec Dev  I EA BA/PO DA Test Owner
+Version:    v1.0  Date 2026-08-21  Status Review
+Legend:     Serving (-->>), Assignment (==>), Access (~~>), Flow (⇒)
+RACI legend: R = draws · A = approves · C = consulted · I = informed
+Scope:      in-scope: deployment zones from I-9, pods, middleware, storage; forbidden path: channel must not write core ledger DB directly; out-of-scope: JDBC on Motivation/Process
+-->
+
 @startuml
 !pragma layout smetana
 !include <archimate/Archimate>

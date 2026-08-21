@@ -1,4 +1,9 @@
 # Quality Gates — Design
+
+> **Not a gate for this pack — outside the modeling pack.**
+> The only quality gates for this pack are **G1-G6**, adopted in [`../lab7-adoption.md`](../lab7-adoption.md).
+> This document was written before the pack was re-sequenced. It does not gate, block, or sign off anything, and it still uses the old container names and the old constraint set.
+
 **Domain**: Loyalty Banking
 **Version**: 1.1
 **Date**: 2026-08-14

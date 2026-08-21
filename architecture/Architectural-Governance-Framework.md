@@ -1,4 +1,10 @@
 # Loyalty Banking — Architectural Governance Framework
+
+> **Not a gate and not an adoption record — outside the modeling pack.**
+> The only quality gates for this pack are **G1-G6**, and the only role/RACI adoption is [`../lab7-adoption.md`](../lab7-adoption.md).
+> The five-stage gate lifecycle and the nine-role RACI in this document are **not** used by the pack and do not gate, block, or sign off anything.
+> This document was written before the pack was re-sequenced and still uses the old container names and the old constraint set.
+
 ## Architectural Modeling Hierarchy, Focus Matrix, Quality Gates & RACI Matrix
 
 **Domain**: Loyalty Banking  
@@ -58,72 +64,6 @@ graph TD
     D -->|Defines Controls| H[5-Stage Pass/Fail Gates]
     E -->|Defines Accountabilities| I[9 Roles across Artifacts & Gates]
 ```
-
----
-
-### 1.1 Lab 7 Guide Adoption for the Trainee Modeling Pack
-
-This project adopts the Guide in `template/list.md` as written for the trainee modeling pack. The authoritative modeling gates for the pack are `G1` to `G6` only. The 5-stage enterprise gate lifecycle later in this document is retained as extended engineering governance and does not replace `G1` to `G6`.
-
-| Guide role | Assigned name |
-|---|---|
-| Owner | Business Owner (simulated) |
-| EA | Enterprise Architect (team role) |
-| SA | Solution Architect (team role) |
-| BA / PO | Business Analyst / Product Owner (team role) |
-| DA | Domain / Data Architect (team role) |
-| Sec | Security / Compliance / Risk (team role) |
-| Dev | Software Engineer (team role) |
-| Test | Quality Engineer (team role) |
-| Ops | DevOps Engineer (team role) |
-
-#### Adopted Modeling Hierarchy
-
-| Level | Language | Loyalty Banking evidence |
-|---|---|---|
-| Top - enterprise | ArchiMate | Motivation/Strategy, Business Process, Application Cooperation, Technology views under `architecture/archimate/` |
-| Middle - solution | C4 plus ArchiMate Application / Technology | `architecture/Architecture-Overview.md` C4 Context and Container views |
-| Base - delivery | UML plus one C4 Component | `design/DD-01..05`, `design/entity-lifecycle-models.md`, selected C4 Component for `Redemption Engine Service` |
-
-#### Adopted Modeling Gates: G1 to G6
-
-| Gate | Blocks | Pass rule for Loyalty Banking |
-|---|---|---|
-| G1 | Solution design | Goal, measurable outcome, and `CON.1` to `CON.3` are listed in the Lab 1 index and Motivation/Strategy evidence |
-| G2 | Dev + Test design | `RedemptionOrder` states match the state view and process branch evidence |
-| G3 | Implementation | C4 Context and Container have no unnamed externals; sync/async edges and names match the Lab 1 index |
-| G4 | Coding of integrations | Every C4 Container relationship has a contract row in the Lab 3 contract register |
-| G5 | Production release | Critical fulfillment failure compensation is modeled from `CON.3` |
-| G6 | UAT sign-off | State transitions and sequence alternatives are mapped to planned tests with C4 SUT names |
-
-#### RACI Line Template for After Views
-
-```text
-Title:      <view title>
-Viewpoint:  <ArchiMate / C4 / UML>
-Layer(s):   <Strategy / Business / App / Tech / Delivery>
-As-Is | To-Be | Transition:  To-Be
-Owner:      Role <Owner role>  Name <simulated role name>
-RACI:       R <role>  A <role>  C <role list>  I <role list>
-Version:    v1.0  Date 2026-08-21  Status Review
-Legend:     relationships listed in the diagram or view-specific legend
-RACI legend: R = draws; A = approves; C = consulted; I = informed
-Scope:      in-scope and out-of-scope as defined in Lab 1 I-1
-```
-
-#### RACI by Guide Artifact
-
-| Artifact | R | A | C | I |
-|---|---|---|---|---|
-| Motivation / Strategy | EA | Owner | SA, BA / PO, Sec | DA, Dev, Test, Ops |
-| Business Process | BA / PO | Owner | EA, SA, Sec, Test | DA, Dev, Ops |
-| Application Cooperation | SA | SA | EA, DA, Sec, Dev | BA / PO, Test, Ops, Owner |
-| Technology / Deployment | Ops | SA | Sec, Dev | EA, BA / PO, DA, Test, Owner |
-| C4 Context | SA | Owner | EA, BA / PO, Sec | DA, Dev, Test, Ops |
-| C4 Container | SA | SA | DA, Sec, Dev, Ops | EA, BA / PO, Test, Owner |
-| C4 Component | Dev | SA | DA, Sec, Test | EA, BA / PO, Ops, Owner |
-| UML Sequence | Dev | SA | BA / PO, Sec, Test | EA, DA, Ops, Owner |
-| UML Activity / State | Test | BA / PO | SA, Sec, Dev | EA, DA, Ops, Owner |
 
 ---
 

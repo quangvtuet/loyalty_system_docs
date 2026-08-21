@@ -1,5 +1,10 @@
 # Application Layer - Banking Loyalty Platform
 
+> **Not a Lab 8 view — outside the modeling pack.**
+> The four Lab 8 ArchiMate views are in [`../../lab8-archimate-views.md`](../../lab8-archimate-views.md).
+> This file was drawn before the Guide was adopted. It has no header and no RACI, it uses the old container names, and it is kept only as before-pack material. It is not submitted and not reviewed.
+
+
 <!--
 Title:      Application Cooperation View — Loyalty Banking Platform
 Viewpoint:  ArchiMate — Application Layer

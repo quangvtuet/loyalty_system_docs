@@ -1,5 +1,10 @@
 # Banking Loyalty System — ArchiMate 3.2 Enterprise Architecture Specification
 
+> **Not a Lab 8 view — outside the modeling pack.**
+> The four Lab 8 ArchiMate views are in [`../lab8-archimate-views.md`](../lab8-archimate-views.md).
+> This file was drawn before the Guide was adopted. It has no header and no RACI, it uses the old container names, and it is kept only as before-pack material. It is not submitted and not reviewed.
+
+
 **Domain**: Banking Loyalty Platform (Enterprise Financial Customer Engagement System)  
 **Standard**: The Open Group ArchiMate® 3.2 Specification & C4 Model Container Layout  
 **Version**: 3.2 (Production Release)  

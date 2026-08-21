@@ -17,7 +17,7 @@ This specification defines the **metrics, data lineage, and reporting requiremen
 
 | Source System | Table / Feed | Description | Latency |
 |---------------|-------------|-------------|---------|
-| Earning Engine DB | `point_transaction` | All earn, bonus, expiry, adjustment ledger entries | Real-time |
+| Earning Engine DB | `point_transaction` (Earning Ledger) | All earn, bonus, expiry, adjustment ledger entries | Real-time |
 | Earning Engine DB | `earn_rule` | Base earn rule definitions and validity periods | Config |
 | Program Mgmt DB | `campaign` | Campaign definitions, dates, and multipliers | Config |
 | Core Banking Feed | `transaction_event` | Settled transaction events (source of earn) | **≤ 60 s [SLA]** |
@@ -37,7 +37,7 @@ This specification defines the **metrics, data lineage, and reporting requiremen
 | **Avg Points per Event** | Average earn per qualifying transaction (at default rate: **1 pt/$1**) | `Total Points Issued / Total Earn Events` | Derived | Daily |
 | **Pending Point Volume** | Points in PENDING state (not yet confirmed) | `SUM(pt.amount) WHERE pt.status = 'PENDING'` | `point_transaction.amount`, `.status` | Hourly |
 | **Idempotency Hit Rate** | Rate of duplicate earn event rejections | `COUNT(duplicate_rejects) / COUNT(total_earn_attempts) × 100` | `earn_event_log.is_duplicate` | Daily |
-| **Earn Latency (p95)** | Processing time from event receipt to ledger commit | `PERCENTILE_95(pt.ledger_commit_ts - event.receipt_ts)` | `point_transaction`, `transaction_event` | Real-time |
+| **Earn Latency (p95)** | Processing time from event receipt to Earning Ledger commit | `PERCENTILE_95(pt.ledger_commit_ts - event.receipt_ts)` | `point_transaction`, `transaction_event` | Real-time |
 
 ---
 
@@ -95,7 +95,7 @@ Core Banking Transaction Feed
   └─> transaction_event (raw event, receipt_ts recorded)
         └─> Earn Rule Evaluation
               └─> Campaign Rule Evaluation
-                    └─> point_transaction (EARN / BONUS, status=PENDING or CONFIRMED)
+                    └─> point_transaction (Sổ cái (Earning Ledger): EARN / BONUS, status=PENDING or CONFIRMED)
                           └─> Analytics Aggregation Layer (read replica / DW)
                                 └─> Earn Volume Report, Health Dashboard
 ```

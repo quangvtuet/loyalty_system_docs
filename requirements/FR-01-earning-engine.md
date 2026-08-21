@@ -108,13 +108,13 @@ The Earning Engine is responsible for **automatically calculating and crediting 
 
 ---
 
-### 4.7 Point Ledger
+### 4.7 Sổ cái (Earning Ledger)
 
 | ID | Requirement | Priority | Source Rule |
 |----|-------------|----------|-------------|
-| FR-01-060 | The system **SHALL** record every earn event as an immutable ledger entry containing: member ID, program ID, transaction type, point amount, status, earn date, expiry date, source event ID, and campaign ID (if applicable). | Must | Domain §1 |
-| FR-01-061 | The system **SHALL** maintain a real-time point balance per member per program, derived from the ledger (confirmed credits minus confirmed debits). | Must | Domain §1 |
-| FR-01-062 | The system **SHALL** expose an earn history API for the member to view their point transactions, filterable by date range and transaction type. | Should | Domain §1 |
+| FR-01-060 | The system **SHALL** record every earn event as an immutable Earning Ledger entry (`EarningLedger` or part of `PointTransaction`) containing: member ID, program ID, transaction type, point amount, status, earn date, expiry date, source event ID, and campaign ID (if applicable). | Must | Domain §1 |
+| FR-01-061 | The system **SHALL** maintain a real-time point balance per member per program, derived from the Earning Ledger (confirmed credits minus confirmed debits). | Must | Domain §1 |
+| FR-01-062 | The system **SHALL** expose an earn history API for the member to view their point transactions directly from the Sổ cái (Earning Ledger), filterable by date range and transaction type. | Should | Domain §1 |
 
 ---
 

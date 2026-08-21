@@ -12,7 +12,7 @@
 The Loyalty Banking data architecture is designed for **financial auditability, zero data loss, high write throughput, and strict FIFO lifecycle management**.
 
 ### Core Data Principles
-1. **Append-Only Immutable Ledger**: The `point_transaction` table allows `INSERT` operations only. Modifications or reversals are recorded as offsetting debit/credit entries.
+1. **Append-Only Immutable Sổ cái (Earning Ledger)**: The `point_transaction` table allows `INSERT` operations only. Modifications or reversals are recorded as offsetting debit/credit entries.
 2. **FIFO Expiry & Consumption Indexing**: Indexed on `(member_id, status, earn_date ASC)` to allow sub-millisecond retrieval of oldest confirmed point batches during redemption and expiry.
 3. **Strict Separation of QP & Redeemable Points**: `qp_ledger` and `point_transaction` are distinct physical tables in separate module schemas.
 4. **Temporal Configuration Versioning**: Program rules (`earn_rule`, `tier_rule`, `redemption_rule`) use `valid_from` and `valid_to` timestamps with version numbers to preserve prospective-only execution.
@@ -51,7 +51,18 @@ erDiagram
 ### 3.1 Earning Engine Schema (`earning_db`)
 
 ```sql
--- Point Transaction Ledger (Append-Only)
+-- Bảng Số dư cuối cùng (Point Balance Snapshot)
+CREATE TABLE point_balance (
+    balance_id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id               UUID NOT NULL,
+    program_id              UUID NOT NULL,
+    confirmed_balance       BIGINT NOT NULL DEFAULT 0,
+    pending_balance         BIGINT NOT NULL DEFAULT 0,
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_member_program UNIQUE (member_id, program_id)
+);
+
+-- Sổ cái (Earning Ledger) (Append-Only)
 CREATE TABLE point_transaction (
     transaction_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     member_id               UUID NOT NULL,

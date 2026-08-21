@@ -80,7 +80,7 @@ The target is a model-driven modular platform:
 | REQ-LB-04 | I-5 step 6 | CON.2 | `RedemptionOrder`: PENDING -> IN_PROGRESS |
 | REQ-LB-05 | I-5 step 7 | CON.3 | `RedemptionOrder`: FAILED -> REVERSED |
 | REQ-LB-06 | I-5 step 4 | CON.2 | `MemberTier` update |
-| REQ-LB-07 | I-5 step 8 | CON.2 | `FactPointTransaction` in Data Warehouse - Star Schema |
+| REQ-LB-07 | I-5 step 8 | CON.2 | `FactPointTransaction` in Data Warehouse |
 | REQ-LB-08 | All diagrams and tests | CON.2 | UML lifeline and SUT names match I-4 |
 
 ## Before and After File Policy

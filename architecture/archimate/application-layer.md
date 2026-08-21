@@ -2,6 +2,7 @@
 
 ```plantuml
 @startuml
+!pragma layout smetana
 !include <archimate/Archimate>
 
 title Application Layer - Banking Loyalty Platform

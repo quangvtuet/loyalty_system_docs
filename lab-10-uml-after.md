@@ -1,100 +1,119 @@
-# Lab 10 — Audited UML After Pack
+# Lab 10 — UML Low-Level Design for Named Use Cases
 
-**Language:** UML | **As-Is / To-Be / Transition:** To-Be | **Owner:** Casey Wong | **Version:** 1.0 | **Date:** 2026-08-21 | **Status:** Review
+Title:      Loyalty Banking Platform — UML Named Use Cases and State Audit
+Viewpoint:  UML Sequence / Activity / State
+Layer(s):   Base — delivery behavior
+As-Is | To-Be | Transition:  To-Be
+Owner:      Role Dev         Name Lê Huy Du
+RACI:       R Dev   A SA   C BA/PO Test   I EA DA Sec Ops Owner
+Version:    v1.0  Date 2026-08-21  Status Review
+Legend:     actor lifeline, exact Lab 9 Container participant, module inside `Redemption Engine Service`, `alt` exception branch, state transition
+RACI legend: R = draws · A = approves · C = consulted · I = informed
+Scope:      in-scope the four exact I-11 named use cases, one `RedemptionOrder` state machine, participant-to-SUT mapping, and planned G6 coverage / out-of-scope source code, runtime tests, unnamed lifelines, extra use cases, and components outside the selected container
 
-Legend: actor lifelines are I-2 names; container lifelines are exact I-4/Lab 9 names; modules are allowed only inside `Redemption Engine Service`. `alt` marks exception behavior. **R:** Jordan Kim (Dev) | **A:** Sam Lee (SA) | **C:** Taylor Reed (Test), Priya Shah (BA) | **I:** Casey Wong (Owner)
+The RACI follows the Lab 7 adopted table. UML Sequence is drawn by Dev Lê Huy Du and approved by SA Vũ Trường Quang. UML Activity / State is drawn by Test Lê Huy Du and approved by BA/PO Đặng Duy Hoàng. R and A are different people on each artifact even though Dev and Test are the same roster member.
 
 ## Participant-to-SUT Map
 
-| Lifeline | Exact SUT / participant mapping |
+| Lifeline or actor | Exact mapping and SUT |
 |---|---|
-| Member | Actor `Member`; SUT `API Gateway` for request entry |
-| Core Banking System | External participant `Core Banking System`; SUT `Earning Engine Service` |
-| Program Admin | Actor `Program Admin`; SUT `Program Management Service` |
-| Finance | Actor `Finance`; SUT `Analytics & Reporting Service` |
-| API Gateway | `API Gateway` |
-| Message Broker | `Message Broker` |
-| Earning Engine Service | `Earning Engine Service` |
-| Tiering System Service | `Tiering System Service` |
-| Redemption Engine Service | `Redemption Engine Service` |
-| Idempotency Store | `Idempotency Store` |
-| Earning DB | `Earning DB` |
-| Tiering DB | `Tiering DB` |
-| Redemption DB | `Redemption DB` |
-| Data Warehouse | `Data Warehouse` |
-| Partner Systems | External participant `Partner Systems` |
-| CRM & Notification Gateway | External participant `CRM & Notification Gateway` |
+| Member | I-2 actor; request enters `API Gateway` |
+| Program Admin | I-2 actor; configuration request enters `API Gateway` |
+| Finance | I-2 actor; reporting request enters `API Gateway` |
+| Core Banking System | I-3 external; event is handled by `Earning Engine Service` through `Message Broker` |
+| Partner Systems | I-3 external; fulfillment neighbor of `Redemption Engine Service` |
+| CRM & Notification Gateway | I-3 external; notification neighbor |
+| API Gateway | Exact I-4 participant and request entry SUT |
+| Message Broker | Exact I-4 participant and event transport SUT |
+| Earning Engine Service | Exact I-4 SUT for UC-LB-01 |
+| Tiering System Service | Exact I-4 SUT for UC-LB-03 |
+| Redemption Engine Service | Exact I-4 SUT for UC-LB-02 and selected Component container |
+| Analytics & Reporting Service | Exact I-4 SUT for UC-LB-04 |
+| Idempotency Store | Exact I-4 neighbor used for duplicate check and balance lock |
+| Earning DB | Exact I-4 persistence participant |
+| Tiering DB | Exact I-4 persistence participant |
+| Redemption DB | Exact I-4 persistence participant |
+| Data Warehouse | Exact I-4 persistence participant |
 
-## UC-LB-01 Process settled earn event
+## UML Sequence — UC-LB-01 Process settled earn event
+
+**Artifact RACI:** R Dev — Lê Huy Du | A SA — Vũ Trường Quang | C BA/PO — Đặng Duy Hoàng, Test — Lê Huy Du | I EA/DA/Sec — Khuất Duy Bách, Ops — Đặng Duy Hoàng, Owner — Facilitator
 
 ```plantuml
 @startuml
 actor "Core Banking System" as Core
-participant "API Gateway" as Gateway
+participant "Message Broker" as Broker
 participant "Earning Engine Service" as Earning
-participant "Idempotency Store" as Store
-database "Earning DB" as DB
-Core -> Gateway: settled transaction event
-Gateway -> Earning: route event
-Earning -> Store: check source transaction
+participant "Idempotency Store" as Idempotency
+database "Earning DB" as EarningDB
+Core -> Broker : settled transaction event
+Broker -> Earning : deliver settled event
+Earning -> Idempotency : check source transaction
 alt duplicate event (CON.1)
-  Store --> Earning: duplicate
-  Earning --> Core: retain original result; no second posting
+  Idempotency --> Earning : duplicate key found
+  Earning --> Broker : retain original result; no second posting
 else new event
-  Earning -> DB: write PointTransaction
-  Earning -> Gateway: publish QP accrual request
+  Earning -> EarningDB : write PointTransaction
+  Earning -> Broker : publish QP accrual event
 end
 @enduml
 ```
 
-## UC-LB-02 Redeem reward with FIFO
+## UML Sequence — UC-LB-02 Redeem reward with FIFO
+
+**Artifact RACI:** same UML Sequence row: R Dev — Lê Huy Du | A SA — Vũ Trường Quang | C BA/PO — Đặng Duy Hoàng, Test — Lê Huy Du | I EA/DA/Sec — Khuất Duy Bách, Ops — Đặng Duy Hoàng, Owner — Facilitator
 
 ```plantuml
 @startuml
 actor Member
 participant "API Gateway" as Gateway
 participant "Redemption Engine Service" as Redemption
-participant "Idempotency Store" as Store
-database "Redemption DB" as DB
-participant "Partner Systems" as Partner
-Member -> Gateway: submit order
-Gateway -> Redemption: route request
-Redemption -> Store: lock member balance
-Redemption -> DB: create PENDING; reserve FIFO debit
-Redemption -> Partner: dispatch fulfillment
+participant "Idempotency Store" as Idempotency
+database "Redemption DB" as RedemptionDB
+participant "Partner Systems" as Partners
+Member -> Gateway : submit redemption order
+Gateway -> Redemption : route redemption request
+Redemption -> Idempotency : lock member balance
+Redemption -> RedemptionDB : create PENDING; reserve FIFO debit
+Redemption -> Partners : dispatch fulfillment request
 alt insufficient balance or tier-ineligible
-  Redemption -> DB: PENDING -> CANCELLED
+  Redemption -> RedemptionDB : PENDING -> CANCELLED
 else partner fulfillment failure (CON.3)
-  Partner --> Redemption: failure
-  Redemption -> DB: IN_PROGRESS -> FAILED
-  Redemption -> Store: restore original FIFO earn date and expiry
-  Redemption -> DB: FAILED -> REVERSED
-else fulfilled
-  Partner --> Redemption: delivery confirmation
-  Redemption -> DB: IN_PROGRESS -> FULFILLED
+  Partners --> Redemption : fulfillment failure
+  Redemption -> RedemptionDB : IN_PROGRESS -> FAILED
+  Redemption -> Idempotency : restore original FIFO earn date and expiry
+  Redemption -> RedemptionDB : FAILED -> REVERSED
+else fulfillment succeeds
+  Partners --> Redemption : delivery confirmation
+  Redemption -> RedemptionDB : IN_PROGRESS -> FULFILLED
 end
 @enduml
 ```
 
-## UC-LB-03 Apply tier upgrade
+## UML Sequence — UC-LB-03 Apply tier upgrade
+
+**Artifact RACI:** same UML Sequence row: R Dev — Lê Huy Du | A SA — Vũ Trường Quang | C BA/PO — Đặng Duy Hoàng, Test — Lê Huy Du | I EA/DA/Sec — Khuất Duy Bách, Ops — Đặng Duy Hoàng, Owner — Facilitator
 
 ```plantuml
 @startuml
 participant "Earning Engine Service" as Earning
 participant "Message Broker" as Broker
 participant "Tiering System Service" as Tiering
-database "Tiering DB" as DB
-Earning -> Broker: QP accrual event
-Broker -> Tiering: deliver QP accrual
+database "Tiering DB" as TieringDB
+Earning -> Broker : publish QP accrual event
+Broker -> Tiering : deliver QP accrual event
 alt replayed event
-  Tiering --> Broker: ignore replay
+  Tiering --> Broker : ignore replay through idempotent handling
 else threshold crossed
-  Tiering -> DB: update MemberTier
+  Tiering -> TieringDB : update MemberTier
+  Tiering -> Broker : publish tier change event
 end
 @enduml
 ```
 
-## UC-LB-04 Generate point liability report
+## UML Sequence — UC-LB-04 Generate point liability report
+
+**Artifact RACI:** same UML Sequence row: R Dev — Lê Huy Du | A SA — Vũ Trường Quang | C BA/PO — Đặng Duy Hoàng, Test — Lê Huy Du | I EA/DA/Sec — Khuất Duy Bách, Ops — Đặng Duy Hoàng, Owner — Facilitator
 
 ```plantuml
 @startuml
@@ -102,44 +121,100 @@ actor Finance
 participant "API Gateway" as Gateway
 participant "Analytics & Reporting Service" as Analytics
 database "Data Warehouse" as Warehouse
-Finance -> Gateway: request liability report
-Gateway -> Analytics: route request
-Analytics -> Warehouse: read analytical facts
-alt warehouse data stale beyond ten minutes (CON.4)
-  Analytics --> Finance: identify stale report
+Finance -> Gateway : request point liability report
+Gateway -> Analytics : route report request
+Analytics -> Warehouse : read analytical facts
+alt warehouse data stale beyond 10 minutes (CON.4)
+  Analytics --> Finance : mark report stale and do not claim fresh result
 else current facts
-  Analytics --> Finance: return liability report
+  Analytics --> Finance : return point liability report
 end
 @enduml
 ```
 
-## State Machine: `RedemptionOrder`
+## UML Activity — I-5 Happy Path
 
-```mermaid
-stateDiagram-v2
-    [*] --> PENDING: create order
-    PENDING --> IN_PROGRESS: validation passes and FIFO debit reserved
-    PENDING --> CANCELLED: validation fails or member cancels
-    IN_PROGRESS --> FULFILLED: partner confirms delivery
-    IN_PROGRESS --> FAILED: partner fulfillment fails
-    FAILED --> REVERSED: auto-reversal restores points
+**Artifact RACI:** R Test — Lê Huy Du | A BA/PO — Đặng Duy Hoàng | C SA — Vũ Trường Quang, Sec — Khuất Duy Bách | I EA/DA/Dev/Ops — Khuất Duy Bách / Lê Huy Du / Đặng Duy Hoàng, Owner — Facilitator
+
+The activity follows I-5 exactly and uses business activities rather than C4 containers as activity boxes.
+
+```plantuml
+@startuml
+start
+:1. Capture settled transaction for Member;
+:2. Validate event and check duplicate;
+if (CON.1 duplicate?) then (yes)
+  :Reject duplicate point posting;
+  stop
+else (no)
+  :Calculate points and write PointTransaction;
+endif
+:3. Publish QP accrual;
+:4. Update MemberTier if threshold crossed;
+:5. Member requests reward;
+:6. Validate tier and balance; reserve FIFO debit;
+if (CON.2 forbidden direct write?) then (yes)
+  :Reject forbidden database path;
+  stop
+else (no)
+  :7. Partner Systems fulfill reward;
+endif
+:8. Compute liability and engagement reporting;
+if (CON.4 data older than 10 minutes?) then (yes)
+  :Mark report stale;
+else (no)
+  :Publish report;
+endif
+stop
+@enduml
+```
+
+## UML State Machine — `RedemptionOrder`
+
+**Artifact RACI:** same UML Activity / State row: R Test — Lê Huy Du | A BA/PO — Đặng Duy Hoàng | C SA — Vũ Trường Quang, Sec — Khuất Duy Bách | I EA/DA/Dev/Ops — Khuất Duy Bách / Lê Huy Du / Đặng Duy Hoàng, Owner — Facilitator
+
+Exactly one object is modeled. The states are exactly the six I-6 values; terminal states are `CANCELLED`, `FULFILLED`, and `REVERSED`.
+
+```plantuml
+@startuml
+[*] --> PENDING : create RedemptionOrder
+PENDING --> IN_PROGRESS : validation passes; FIFO debit reserved
+PENDING --> CANCELLED : validation fails or member cancels
+IN_PROGRESS --> FULFILLED : Partner Systems confirms delivery
+IN_PROGRESS --> FAILED : Partner Systems fulfillment fails
+FAILED --> REVERSED : auto-reversal restores points
+@enduml
 ```
 
 ## G6 Coverage Note
 
-| Coverage ID | Planned test mapping |
+| Coverage ID | Planned test mapping | Evidence source |
+|---|---|---|
+| G6-T01 | `PENDING -> IN_PROGRESS` | I-6 / State Machine |
+| G6-T02 | `PENDING -> CANCELLED` | I-6 / State Machine |
+| G6-T03 | `IN_PROGRESS -> FULFILLED` | I-6 / State Machine |
+| G6-T04 | `IN_PROGRESS -> FAILED` | I-6 / State Machine |
+| G6-T05 | `FAILED -> REVERSED` | I-6 / State Machine |
+| G6-A01 | UC-LB-01 duplicate event under CON.1 | Sequence UC-LB-01 |
+| G6-A02 | UC-LB-02 insufficient balance or tier-ineligible | Sequence UC-LB-02 |
+| G6-A03 | UC-LB-02 partner fulfillment failure and CON.3 compensation | Sequence UC-LB-02 |
+| G6-A04 | UC-LB-03 replayed event | Sequence UC-LB-03 |
+| G6-A05 | UC-LB-04 warehouse data stale beyond ten minutes under CON.4 | Sequence UC-LB-04 |
+
+No tests were executed. G6 evidence is a planned modeling checklist only.
+
+## Comparison with Lab 5 Before Pack
+
+The same four exact I-11 use cases are retained. Lab 5 was the messy current-style source; this after pack standardizes it against Lab 8 Application Cooperation and Lab 9 C4 Container. Ambiguous or noncanonical lifelines are removed, all container participants now resolve to exact I-4 strings, modules appear only inside the selected `Redemption Engine Service`, and the Guide header, legend, and artifact-level RACI are added. The Lab 5 archive remains unchanged under `modeling-pack/archive-before/`.
+
+## Lab 10 Done-when Check
+
+| Requirement | Status |
 |---|---|
-| G6-T01 | PENDING -> IN_PROGRESS |
-| G6-T02 | PENDING -> CANCELLED |
-| G6-T03 | IN_PROGRESS -> FULFILLED |
-| G6-T04 | IN_PROGRESS -> FAILED |
-| G6-T05 | FAILED -> REVERSED |
-| G6-A01 | UC-LB-01 duplicate event under CON.1 |
-| G6-A02 | UC-LB-02 insufficient balance or tier-ineligible |
-| G6-A03 | UC-LB-02 partner fulfillment failure under CON.3 |
-| G6-A04 | UC-LB-03 replayed event |
-| G6-A05 | UC-LB-04 stale warehouse beyond ten minutes under CON.4 |
-
-## Comparison with Lab 5
-
-The audited pack retains the same four I-11 use cases and behavior. It replaces any ambiguous lifeline with exact I-2/I-3/I-4 names, keeps modules only within the selected `Redemption Engine Service`, uses one English UML vocabulary, and adds the after header, legend, and artifact-level RACI. The immutable Lab 5 source remains under `archive-before/`.
+| One audited sequence for every I-11 use case | Yes — UC-LB-01 through UC-LB-04 |
+| Participants match Lab 9 Container names | Yes — participant-to-SUT map |
+| One state machine for one I-6 object | Yes — `RedemptionOrder` only |
+| All I-6 transitions covered | Yes — G6-T01 through G6-T05 |
+| Every sequence `alt` covered | Yes — G6-A01 through G6-A05 |
+| Header, legend, and RACI present | Yes — Guide template filled |
+| Before archive unchanged | Yes — archive remains frozen |

@@ -74,9 +74,87 @@ $$\text{WinningCampaign} = \arg\min_{c \in \text{MatchedCampaigns}} (c.\text{pri
 
 ---
 
-## 4. Sequence Diagrams
+## 4. Entity Lifecycle State Machines
 
-### 4.1 Prospective Rule Change without Retroactive Impact (FLOW-07 / UC-04-04)
+Full lifecycle specifications with transition rules: [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) §5–§7.
+
+### 4.1 LoyaltyProgram Lifecycle
+
+Status values: `DRAFT`, `ACTIVE`, `SUSPENDED`, `DEACTIVATED` (`program_mgmt_db.loyalty_program`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Admin Creates Program\n[FR-04-001]
+
+    state ActivationGate <<choice>>
+    DRAFT --> ActivationGate: Admin Activates
+
+    ActivationGate --> ACTIVE: Pre-conditions Met\n(≥ 1 EarnRule + TierRule)\n[FR-04-002]
+    ActivationGate --> DRAFT: Pre-conditions Failed
+
+    ACTIVE --> SUSPENDED: Admin Suspends\n(Earn/redeem halted)\n[FR-04-003]
+    SUSPENDED --> ACTIVE: Admin Reactivates\n[FR-04-003]
+    SUSPENDED --> DEACTIVATED: Admin Deactivates\n(Terminal)\n[FR-04-006]
+    ACTIVE --> DEACTIVATED: Admin Deactivates
+
+    DEACTIVATED --> [*]
+```
+
+### 4.2 Campaign Lifecycle
+
+Status values: `DRAFT`, `ACTIVE`, `PAUSED`, `COMPLETED`, `DEACTIVATED` (`program_mgmt_db.campaign`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Admin Creates Campaign\n[FR-04-010]
+
+    DRAFT --> ACTIVE: Admin Activates\n[FR-04-013]
+
+    ACTIVE --> PAUSED: Admin Pauses
+    PAUSED --> ACTIVE: Admin Resumes
+
+    ACTIVE --> COMPLETED: end_date Reached\n(Auto-transition)\n[FR-04-014]
+    ACTIVE --> DEACTIVATED: Admin Force-Stops
+
+    PAUSED --> DEACTIVATED: Admin Deactivates
+
+    COMPLETED --> [*]
+    DEACTIVATED --> [*]
+
+    note right of ACTIVE
+        Priority conflict: lowest number wins.
+        "Double Points August" = priority 1.
+        [FR-04-012]
+    end note
+```
+
+### 4.3 Enrollment Lifecycle
+
+Status values: `PENDING`, `ACTIVE`, `SUSPENDED`, `CANCELLED` (`program_mgmt_db.enrollment`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Member Enrollment Request\n[FR-04-030]
+
+    state EligibilityCheck <<choice>>
+    PENDING --> EligibilityCheck: Validate Eligibility
+
+    EligibilityCheck --> ACTIVE: Eligible\n[FR-04-031]
+    EligibilityCheck --> CANCELLED: Ineligible
+
+    ACTIVE --> SUSPENDED: Admin Suspends
+    SUSPENDED --> ACTIVE: Admin Reactivates
+    ACTIVE --> CANCELLED: Member Opts Out\n[FR-04-034]
+    SUSPENDED --> CANCELLED: Admin Cancels
+
+    CANCELLED --> [*]
+```
+
+---
+
+## 5. Sequence Diagrams
+
+### 5.1 Prospective Rule Change without Retroactive Impact (FLOW-07 / UC-04-04)
 
 ```mermaid
 sequenceDiagram
@@ -95,7 +173,7 @@ sequenceDiagram
     Controller-->>Admin: 200 OK (Rule updated to v2. Past transactions remain at 1.0 rate)
 ```
 
-### 4.2 Partner Earn Event via OAuth 2.0 Gateway (FLOW-08 / UC-04-06)
+### 5.2 Partner Earn Event via OAuth 2.0 Gateway (FLOW-08 / UC-04-06)
 
 ```mermaid
 sequenceDiagram
@@ -115,7 +193,7 @@ sequenceDiagram
     Gateway-->>Partner: 201 Created (transaction_id, points_credited=100)
 ```
 
-### 4.3 High-Value Manual Adjustment with Dual Approval (FLOW-11 / UC-04-07)
+### 5.3 High-Value Manual Adjustment with Dual Approval (FLOW-11 / UC-04-07)
 
 ```mermaid
 sequenceDiagram

@@ -232,4 +232,206 @@ Delivers data-driven insights into loyalty program performance, member behavior,
 
 ---
 
-*Source: [loyalty.md](file:///d:/learn/loyalty/loyalty.md) — Domain: Loyalty Banking, Scope: Earning Engine, Tiering System, Redemption Engine, Program Management, Analytics & Reporting*
+## Domain Class Model (UML)
+
+The following class diagram defines the formal domain model for the Loyalty Banking platform. Entities are organized by **Bounded Context** (aggregate boundaries) aligned with the module decomposition in [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) §4 and [ADR-001](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md).
+
+> **MDD Anchor**: Every Functional Requirement (FR), Analytics Spec (AS), Detailed Design (DD), and Quality Gate criterion traces back to one or more entities and relationships in this model.
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% ──────────────────────────────────────────────
+    %% BOUNDED CONTEXT: Program Management
+    %% ──────────────────────────────────────────────
+    namespace ProgramManagement {
+        class LoyaltyProgram {
+            +UUID program_id
+            +String name
+            +String currency_name
+            +Decimal cost_per_point
+            +Enum status : DRAFT|ACTIVE|SUSPENDED|DEACTIVATED
+            +Date start_date
+            +Date end_date
+        }
+
+        class Campaign {
+            +UUID campaign_id
+            +String name
+            +Decimal multiplier
+            +BigInt flat_bonus
+            +Int priority
+            +Timestamp start_date
+            +Timestamp end_date
+            +Enum status : DRAFT|ACTIVE|PAUSED|COMPLETED|DEACTIVATED
+        }
+
+        class Partner {
+            +UUID partner_id
+            +String name
+            +String client_id
+            +Enum partner_type : EARN_ONLY|REDEEM_ONLY|BOTH
+            +Int rate_limit_rpm
+            +Enum status : ACTIVE|INACTIVE
+        }
+
+        class Enrollment {
+            +UUID enrollment_id
+            +Enum status : PENDING|ACTIVE|SUSPENDED|CANCELLED
+            +Timestamp enrollment_date
+        }
+
+        class EarnRule {
+            +UUID rule_id
+            +Decimal earn_rate
+            +String transaction_type
+            +String channel
+            +Int version
+            +Enum status : DRAFT|ACTIVE|INACTIVE
+            +Timestamp valid_from
+            +Timestamp valid_to
+        }
+    }
+
+    %% ──────────────────────────────────────────────
+    %% BOUNDED CONTEXT: Earning Engine
+    %% ──────────────────────────────────────────────
+    namespace EarningEngine {
+        class Member {
+            +UUID member_id
+            +String name
+            +String email
+        }
+
+        class PointTransaction {
+            +UUID transaction_id
+            +String source_event_id
+            +Enum source_type : CORE_BANKING|PARTNER|MANUAL_ADJUST|EXPIRY|REVERSAL
+            +Enum type : EARN|BONUS|REDEEM|EXPIRED|ADJUST_CREDIT|ADJUST_DEBIT|REVERSAL
+            +Enum status : PENDING|CONFIRMED|CANCELLED|PENDING_DEBIT|CONFIRMED_DEBIT
+            +BigInt amount
+            +BigInt remaining_balance
+            +Timestamp earn_date
+            +Timestamp expiry_date
+            +String idempotency_key
+        }
+
+        class PointBalance {
+            +UUID balance_id
+            +BigInt confirmed_balance
+            +BigInt pending_balance
+        }
+    }
+
+    %% ──────────────────────────────────────────────
+    %% BOUNDED CONTEXT: Tiering System
+    %% ──────────────────────────────────────────────
+    namespace TieringSystem {
+        class MemberTier {
+            +UUID member_tier_id
+            +Enum current_tier : SILVER|GOLD|PLATINUM
+            +Enum previous_tier : SILVER|GOLD|PLATINUM
+            +Enum status : ACTIVE|IN_GRACE_PERIOD|DOWNGRADED
+            +BigInt cumulative_qp
+            +Timestamp effective_from
+            +Timestamp grace_period_end
+        }
+
+        class QpLedger {
+            +UUID qp_id
+            +BigInt qp_amount
+            +Date tier_period_start
+            +Date tier_period_end
+        }
+
+        class TierRule {
+            +UUID tier_rule_id
+            +Enum tier_name : SILVER|GOLD|PLATINUM
+            +BigInt qp_threshold
+            +Decimal earn_multiplier
+            +Int grace_period_days
+            +Enum tier_period_type : CALENDAR_YEAR|ROLLING_12M
+            +Int version
+        }
+
+        class TierEvaluationLog {
+            +UUID run_id
+            +Int members_evaluated
+            +Int upgrades_count
+            +Int downgrades_count
+            +Enum status : SUCCESS|FAILED
+        }
+    }
+
+    %% ──────────────────────────────────────────────
+    %% BOUNDED CONTEXT: Redemption Engine
+    %% ──────────────────────────────────────────────
+    namespace RedemptionEngine {
+        class RewardItem {
+            +UUID item_id
+            +String name
+            +String category
+            +BigInt points_cost
+            +Enum fulfillment_type : DIGITAL|PHYSICAL|ACCOUNT_CREDIT
+            +Enum min_tier_required : SILVER|GOLD|PLATINUM
+            +Enum status : DRAFT|ACTIVE|OUT_OF_STOCK|DISCONTINUED
+        }
+
+        class RedemptionOrder {
+            +UUID order_id
+            +Int quantity
+            +BigInt total_points_debited
+            +String member_tier_at_order
+            +Enum status : PENDING|IN_PROGRESS|FULFILLED|FAILED|CANCELLED|REVERSED
+        }
+
+        class FulfillmentRecord {
+            +UUID fulfillment_id
+            +String tracking_number
+            +Enum status : PENDING|IN_PROGRESS|FULFILLED|FAILED
+            +Timestamp dispatched_at
+            +Timestamp fulfilled_at
+            +Timestamp sla_due_date
+        }
+    }
+
+    %% ──────────────────────────────────────────────
+    %% RELATIONSHIPS (Cross-Aggregate via ID Reference)
+    %% ──────────────────────────────────────────────
+
+    LoyaltyProgram "1" --> "0..*" Enrollment : has
+    LoyaltyProgram "1" --> "0..*" EarnRule : configures
+    LoyaltyProgram "1" --> "0..*" TierRule : configures
+    LoyaltyProgram "1" --> "0..*" Campaign : runs
+
+    Member "1" --> "0..*" Enrollment : joins
+    Member "1" --> "0..*" PointTransaction : owns
+    Member "1" --> "1" PointBalance : has_balance
+    Member "1" --> "0..*" QpLedger : accumulates_qp
+    Member "1" --> "1" MemberTier : assigned_tier
+    Member "1" --> "0..*" RedemptionOrder : places
+
+    Campaign "1" --> "0..*" PointTransaction : contributes_bonus
+
+    RedemptionOrder "1" --> "1" RewardItem : selects
+    RedemptionOrder "1" --> "0..1" FulfillmentRecord : tracks_delivery
+
+    Partner "1" --> "0..*" PointTransaction : originates_earn
+```
+
+### Aggregate Boundary Rules
+
+| Bounded Context | Aggregate Root | Owned Entities | Database | Cross-Context Access |
+|---|---|---|---|---|
+| **Program Management** | `LoyaltyProgram` | `Campaign`, `EarnRule`, `TierRule`, `Partner`, `Enrollment` | `program_mgmt_db` | REST API / Kafka events only |
+| **Earning Engine** | `PointTransaction` | `PointBalance` | `earning_db` + Redis | Kafka `qp_accrued` → Tiering; Ledger API → Redemption |
+| **Tiering System** | `MemberTier` | `QpLedger`, `TierRule`, `TierEvaluationLog` | `tiering_db` | Kafka `tier_changed` → Earning, Redemption |
+| **Redemption Engine** | `RedemptionOrder` | `RewardItem`, `FulfillmentRecord` | `redemption_db` + Redis | Calls Earning Ledger API; Calls Tier API |
+| **Analytics & Reporting** | `fact_point_transaction` | All `dim_*` and `fact_*` tables | `analytics_dw` | CDC read-only from all OLTP databases |
+
+> **Constraint**: No direct SQL queries, foreign keys, or cross-database transactions between bounded contexts ([ADR-001](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md)). All cross-context communication is via APIs or events.
+
+---
+
+*Source: [loyalty.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/loyalty.md) — Domain: Loyalty Banking, Scope: Earning Engine, Tiering System, Redemption Engine, Program Management, Analytics & Reporting*

@@ -6,7 +6,7 @@ Viewpoint:  ArchiMate — Business Layer
 Layer(s):   Business
 As-Is | To-Be | Transition:  To-Be
 Owner:      Role BA/PO  Name Loyalty Banking Modeling Team
-RACH:       R BA/PO  A Owner  C EA SA Sec Test  I DA Dev Ops
+RACI:       R BA/PO  A Owner  C EA SA Sec Test  I DA Dev Ops
 Version:    v1.0  Date 2026-08-21  Status Review
 Legend:     Triggering (→), Realization (..>), Serving (-->>), Assignment (==>), Access (~~>)
 RACI legend: R = draws · A = approves · C = consulted · I = informed

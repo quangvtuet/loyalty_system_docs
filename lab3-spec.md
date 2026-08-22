@@ -47,7 +47,7 @@ Modules inside the one selected container. Every neighbour is a black box named 
 | M4 Balance Lock | Takes and releases the per-Member debit lock so two orders cannot spend the same points | Idempotency Store |
 | M5 FIFO Debit Request | Asks for the debit of the oldest-earned points first and receives the allocation | Earning Engine Service |
 | M6 Order State Keeper | Moves the `RedemptionOrder` through its I-6 states and persists each change | Redemption DB |
-| M7 Fulfilment Dispatch | Sends the fulfilment request and receives the outcome | Partner Systems |
+| M7 Fulfillment Dispatch | Sends the fulfillment request and receives the outcome | Partner Systems |
 | M8 Reversal Handler | On failure, requests restoration of the original point batches and records the reversal | Earning Engine Service, CRM & Notification Gateway |
 
 Neighbour containers and externals used above, all from Lab 1: API Gateway, Tiering System Service, Earning Engine Service, Idempotency Store, Redemption DB, Partner Systems, CRM & Notification Gateway.
@@ -71,8 +71,8 @@ Happy path. Each message is owned by a module from section 2 or by a neighbour c
 | 9 | M5 FIFO Debit Request | Earning Engine Service | Debit the oldest unexpired batches | Neighbour container |
 | 10 | M6 Order State Keeper | Redemption DB | Move `RedemptionOrder` `PENDING` → `IN_PROGRESS` | M6 |
 | 11 | M4 Balance Lock | Idempotency Store | Release the Member's debit lock | M4 |
-| 12 | M7 Fulfilment Dispatch | Partner Systems | Send fulfilment request | M7 |
-| 13 | Partner Systems | M7 Fulfilment Dispatch | Return fulfilment outcome | Neighbour external |
+| 12 | M7 Fulfillment Dispatch | Partner Systems | Send fulfillment request | M7 |
+| 13 | Partner Systems | M7 Fulfillment Dispatch | Return fulfillment outcome | Neighbour external |
 | 14 | M6 Order State Keeper | Redemption DB | Move `IN_PROGRESS` → `FULFILLED` | M6 |
 | 15 | M6 Order State Keeper | CRM & Notification Gateway | Notify the Member of the outcome | Neighbour external |
 
@@ -137,7 +137,7 @@ Critical failure paths taken from I-10.
 | EXC-02 | CON.1 | Core Banking System reverses a source transaction that has already been rewarded | The matching `PointTransaction` is cancelled and `PointBalance` is corrected by its owner | Earning Engine Service |
 | EXC-03 | CON.1 | The same qualifying accrual is delivered twice at I-5 step 4 | The replay is ignored; `MemberTier` is not moved a second time | Tiering System Service |
 | EXC-04 | CON.2 | A channel, a partner, or another service attempts to write a database it does not own | The write is refused; the caller is routed to the owning service through API Gateway | API Gateway and the owning service |
-| EXC-05 | CON.3 | Partner Systems return a fulfilment failure after points were debited at I-5 step 7 | `RedemptionOrder` moves `IN_PROGRESS` → `FAILED` → `REVERSED`; the debited batches are restored with their original earn date and expiry; the Member is notified | Redemption Engine Service, with Earning Engine Service performing the restoration |
+| EXC-05 | CON.3 | Partner Systems return a fulfillment failure after points were debited at I-5 step 7 | `RedemptionOrder` moves `IN_PROGRESS` → `FAILED` → `REVERSED`; the debited batches are restored with their original earn date and expiry; the Member is notified | Redemption Engine Service, with Earning Engine Service performing the restoration |
 | EXC-06 | CON.3 | A Support Agent must undo an order that has not been fulfilled | The order is reversed and the reason recorded; points return to their original position | Redemption Engine Service |
 | EXC-07 | CON.4 | Data in Data Warehouse is more than 10 minutes behind at I-5 step 8 | The report or dashboard shows the staleness instead of presenting the figure as current, and Finance is alerted | Analytics & Reporting Service |
 | EXC-08 | CON.4 | A reporting request would place load on a transactional store | The request is served from Data Warehouse only; it is never routed to Earning DB, Tiering DB, Redemption DB, or Program Mgmt DB | Analytics & Reporting Service |
@@ -166,7 +166,7 @@ One row per I-6 transition of `RedemptionOrder`, and one row per alternate branc
 | T-07 | ALT-02 tier ineligible | Redemption Engine Service | Order is cancelled before any debit; the reward stays unavailable to that `MemberTier` |
 | T-08 | ALT-03 below minimum | Redemption Engine Service | A request under 100 points is cancelled before any debit |
 | T-09 | ALT-04 Member cancels early | Redemption Engine Service | Cancellation is accepted while `PENDING` and refused once `IN_PROGRESS` |
-| T-10 | ALT-05 fulfilment failure | Redemption Engine Service | Failure triggers reversal automatically; the Member is notified |
+| T-10 | ALT-05 fulfillment failure | Redemption Engine Service | Failure triggers reversal automatically; the Member is notified |
 | T-11 | ALT-06 lock not available | Redemption Engine Service | The second concurrent order is refused; the same points are never debited twice |
 
 ### 6.3 Constraint checks outside the selected container

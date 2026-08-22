@@ -26,12 +26,12 @@ public final class FulfillmentCoordinationModule {
     }
 
     public void dispatch(RedemptionOrder order) {
-        boolean delivered = partnerSystems.requestFulfilment(order.orderId, order.rewardItemId);
+        boolean delivered = partnerSystems.requestFulfillment(order.orderId, order.rewardItemId);
         if (delivered) {
             stateModule.toFulfilled(order);
             return;
         }
-        stateModule.toFailed(order, "partner fulfilment failed");
+        stateModule.toFailed(order, "partner fulfillment failed");
         fifoDebitModule.restore(order.allocations());
         stateModule.toReversed(order);
         crmNotificationGateway.notifyMemberOfReversal(order.memberId, order.orderId);

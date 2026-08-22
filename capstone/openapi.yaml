@@ -78,8 +78,8 @@ paths:
         Lab 3 contract rows CT-10 (Member to API Gateway, sync) and
         CT-11 (API Gateway to Redemption Engine Service, sync).
         Points are consumed oldest earned first. The three named I-11 alternates are
-        insufficient balance, tier-ineligible reward, and partner fulfilment failure.
-        On fulfilment failure the order ends REVERSED after the CON.3 compensating action.
+        insufficient balance, tier-ineligible reward, and partner fulfillment failure.
+        On fulfillment failure the order ends REVERSED after the CON.3 compensating action.
       requestBody:
         required: true
         content:
@@ -212,7 +212,7 @@ components:
           type: string
           nullable: true
           enum: [CON.3, null]
-          description: CON.3 when the order was reversed after a fulfilment failure
+          description: CON.3 when the order was reversed after a fulfillment failure
 
     PointLiabilityReport:
       type: object

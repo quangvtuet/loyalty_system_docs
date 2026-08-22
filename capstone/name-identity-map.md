@@ -99,7 +99,7 @@ Ownership is enforced, not documented: `store.OwnedStore.assertWriter` throws `s
 | Finance | I-2 actor | Caller of `GET /reports/point-liability` |
 | Support Agent | I-2 actor | No I-11 use case; not built — see section 8 |
 | Core Banking System | I-3 external | `external.CoreBankingSystemMock` — publishes simulated settled events |
-| Partner Systems | I-3 external | `external.PartnerSystemsMock` — fulfilment fake; caller of `POST /partner-earn` |
+| Partner Systems | I-3 external | `external.PartnerSystemsMock` — fulfillment fake; caller of `POST /partner-earn` |
 | CRM & Notification Gateway | I-3 external | `external.CrmNotificationGatewayMock` — records notifications |
 | Enterprise Data Warehouse | I-3 external | `external.EnterpriseDataWarehouseMock` — receives period figures |
 
@@ -148,3 +148,21 @@ Values the Lab 1 index did not fix. Each is simulated and used with one spelling
 | Member identifiers | `M-…` in tests and the demo | Simulated only; no real customer data |
 
 Rule values that are **not** assumptions, because Lab 2 fixed them: 1 point per unit spent (REQ-LB-05), 2x campaign (REQ-LB-06), tier thresholds 0 / 1,000 / 3,000 (REQ-LB-18), tier multipliers 1x / 1.5x / 2x (REQ-LB-20), minimum redemption 100 points (REQ-LB-27), cost per point $0.01 (REQ-LB-54), staleness limit ten minutes (CON.4).
+
+---
+
+## 10. Spelling policy
+
+Lab 1 spells the word **`fulfillment`**. That spelling is authoritative for this runtime: prose, comments, class and method names, test names, and OpenAPI descriptions all use it.
+
+Two identifiers are excepted because `lab3-spec.md` defined them and they are source-defined names, not invented ones:
+
+| Frozen identifier | Where it is defined | Why it is not renamed |
+|---|---|---|
+| `RequestFulfilment` | `lab3-spec.md` §4, contract row CT-14 | Renaming it would fork a name the Lab 3 register already fixed |
+| `ReturnFulfilmentOutcome` | `lab3-spec.md` §4, contract row CT-15 | Same |
+
+Everywhere else — including the Java method that realises CT-14, which is `requestFulfillment` — the Lab 1 spelling applies. The Lab 9 component name `Fulfillment Coordination Module` already used it, so `FulfillmentCoordinationModule` needed no change.
+
+One spelling per thing: there is no remaining occurrence of `fulfilment` in `capstone/` or `lab3-spec.md` outside those two frozen identifiers.
+

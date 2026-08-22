@@ -19,11 +19,11 @@ Specifically:
 
 **Any other gate or governance material in this repository is not a gate for this pack.** That includes everything under `quality-gates/` and the five-stage lifecycle inside `architecture/Architectural-Governance-Framework.md`. Those were written before the pack was re-sequenced, are marked as outside the pack, and are formally renounced here: they do not gate, block, or sign off anything.
 
-### 0.1 Open item — before pack is incomplete
+### 0.1 Before-pack status
 
-The Guide requires Labs 1–6 to be archived before this sitting. Our archive currently holds **Labs 1–3 only** (`before-pack/`). Lab 5 (UML for named use cases) and Lab 6 (integration ecosystem) have not been run.
+The Guide requires Labs 1–6 to be archived before this sitting. `before-pack/` now holds **Labs 1, 2, 3, 5, and 6** as first written. Lab 4 was itself the cleanup of Labs 1–3, so it has no separate messy predecessor to archive.
 
-This is recorded rather than hidden. The consequence is carried into the gate register in section 4: G2 and G6 cannot be closed until Lab 5 exists, because there is no messy state machine or sequence to audit against in Lab 10.
+The archive is frozen: nothing in `before-pack/` has been restyled to match the Guide.
 
 ---
 
@@ -129,16 +129,18 @@ Scope:      in-scope Lab 1 I-4 containers and I-8 edges / out-of-scope container
 
 Pass rules are the Guide's rules in our product wording. No gate is skipped, no gate is added.
 
-Evidence for every gate is an after-pack artifact from Labs 8–10, which have not been drawn yet. Nothing below is marked Pass at this sitting.
+Evidence for every gate is an after-pack artifact from Labs 8–10. This register was first written before those sittings, when every row read "not yet"; it is updated here now that the artifacts exist.
 
 | Gate | Blocks | Pass rule for Loyalty Banking Platform | Evidence artifact | Pass? |
 |---|---|---|---|---|
-| **G1** Strategy signed | Solution design | The Motivation or Strategy view carries the I-1 Goal, the I-1 measurable Outcome, and all four constraints CON.1–CON.4. No protocol, node, or container internal appears on it. | Lab 8 view 1 | Not yet — Lab 8 not drawn |
-| **G2** Process + states | Dev + Test design | The Business Process view shows the I-5 happy path with the relevant `CON.*` on its decision branches, and the `RedemptionOrder` states it names are exactly the six in I-6. | Lab 8 view 2, checked against the Lab 5 state machine | Not yet — Lab 8 not drawn, and Lab 5 not run |
-| **G3** C4 Context + Container | Implementation | Exactly one Context and one Container exist. Context carries no container, database, or event bus. Every external is named and is in I-3. Every Container edge is labelled sync or async. Every box name is a Lab 1 string. | Lab 9 Context and Container | Not yet — Lab 9 not drawn |
-| **G4** Contracts | Coding of integrations | Every relationship drawn on the Lab 9 Container view has a matching row in the `lab3-spec.md` contract register giving producer, consumer, sync or async, and the operation or event name. | `lab3-spec.md` §4 reconciled against Lab 9 | Not yet — Lab 9 not drawn |
-| **G5** Critical exception path | Production release | The fulfilment-failure path from CON.3 is modelled with its compensating action: `RedemptionOrder` moves `IN_PROGRESS` → `FAILED` → `REVERSED`, and the restored points keep their original earn date and expiry. | `lab3-spec.md` §5 EXC-05, shown on the Lab 10 sequence | Not yet — Lab 10 not drawn |
-| **G6** Test coverage | UAT sign-off | Every I-6 transition of `RedemptionOrder` and every `alt` on the Lab 10 sequences maps to a planned test, and every SUT name is a Lab 9 container name. | `lab3-spec.md` §6 reconciled against Lab 10 | Not yet — Lab 10 not drawn, and Lab 5 not run |
+| **G1** Strategy signed | Solution design | The Motivation or Strategy view carries the I-1 Goal, the I-1 measurable Outcome, and all four constraints CON.1–CON.4. No protocol, node, or container internal appears on it. | `lab8-archimate-views.md` View 1, with its G1 check table | **Pass** |
+| **G2** Process + states | Dev + Test design | The Business Process view shows the I-5 happy path with the relevant `CON.*` on its decision branches, and the `RedemptionOrder` states it names are exactly the six in I-6. | `lab8-archimate-views.md` View 2 G2 check, reconciled with the `RedemptionOrder` state machine in `lab-10-uml-after.md` | **Pass** |
+| **G3** C4 Context + Container | Implementation | Exactly one Context and one Container exist. Context carries no container, database, or event bus. Every external is named and is in I-3. Every Container edge is labelled sync or async. Every box name is a Lab 1 string. | `lab-09-c4-after.md` Context and Container, with its container identity and G3 check table | **Pass** |
+| **G4** Contracts | Coding of integrations | Every relationship drawn on the Lab 9 Container view has a matching row in the `lab3-spec.md` contract register giving producer, consumer, sync or async, and the operation or event name. Public HTTP rows are additionally published as OpenAPI. | `lab3-spec.md` §4 reconciled against `lab-09-c4-after.md`; `capstone/openapi.yaml`; drift tests `G4-D01`…`G4-D04` | **Pass** |
+| **G5** Critical exception path | Production release | The fulfillment-failure path from CON.3 is modelled with its compensating action: `RedemptionOrder` moves `IN_PROGRESS` → `FAILED` → `REVERSED`, and the restored points keep their original earn date and expiry. | `lab3-spec.md` §5 EXC-05; the UC-LB-02 `alt` in `lab-10-uml-after.md`; asserted by test `G6-A03` | **Pass** |
+| **G6** Test coverage | UAT sign-off | Every I-6 transition of `RedemptionOrder` and every `alt` on the Lab 10 sequences maps to a test, and every SUT name is a Lab 9 container name. | `lab-10-uml-after.md` G6 coverage note; `capstone/spec-trace.md` §2; suite result 27 passed, 0 failed | **Pass** |
+
+**Status of the modelling pack:** all six gates are closed on the after pack. G1–G3 were closed by Labs 8, 9, and 10; G4–G6 were closed as checklists over those models and are additionally demonstrated by the capstone runtime, which is a separate sitting outside this pack.
 
 This pack **draws through G3**. G4, G5, and G6 are checklists over the models — nothing is implemented, coded, or stood up to satisfy them.
 
@@ -150,7 +152,7 @@ This pack **draws through G3**. G4, G5, and G6 are checklists over the models �
 |---|---|
 | Roster exists | Yes — section 1 |
 | Adoption record exists, Guide used as written | Yes — section 0 |
-| Gate register G1–G6 exists | Yes — section 5 |
+| Gate register G1–G6 exists | Yes — section 5, all six closed against Labs 8–10 |
 | No competing gate list | Renounced in section 0; `quality-gates/` and the five-stage lifecycle are marked outside the pack |
 | No G7 or later | None |
-| Before pack still archived unchanged | `before-pack/` unchanged, but holds Labs 1–3 only — see section 0.1 |
+| Before pack still archived unchanged | `before-pack/` unchanged; holds Labs 1, 2, 3, 5, 6 — see section 0.1 |

@@ -3,13 +3,16 @@
 Implementation of the I-11 slice of the after pack. Not a modeling lab, and not part of the before or after pack.
 
 **Spec:** `../loyalty.md` (Lab 1), `../lab3-spec.md` (contract, exception, test spec), `../lab7-adoption.md` (G1–G6), `../lab8-archimate-views.md`, `../lab-09-c4-after.md`, `../lab-10-uml-after.md`.
-**R** Dev · **A** SA · **C** Test. Labs 1–10 are unchanged by this sitting.
+**R** Dev Lê Huy Du · **A** SA Vũ Trường Quang · **C** Test Lê Huy Du. Labs 1–10 are unchanged by this sitting, apart from decision D-4 in `SIGN-OFF.md`.
+
+> This runtime is **not yet SA-accepted**. See `SIGN-OFF.md`.
 
 | Document | What it is |
 |---|---|
 | `openapi.yaml` | G4 — the public contract, three operations, all from the Lab 3 register |
 | `name-identity-map.md` | Code identity to Lab 1 string, collapse rows, assumptions |
-| `spec-trace.md` | Each in-scope path → OpenAPI operation → test id, plus the N/A rows |
+| `spec-trace.md` | Each in-scope path → OpenAPI operation → test id, plus the non-public and N/A rows |
+| `SIGN-OFF.md` | SA acceptance record — **PENDING** until the SA signs section 4 |
 
 ---
 
@@ -103,7 +106,7 @@ Not comments, not README warnings — the tests attempt each violation and asser
 |---|---|---|
 | CON.1 no duplicate posting | The duplicate check runs before any write; a repeat returns the original result | `G6-A01` |
 | CON.2 no write outside the owner | Every store carries the I-4 name of its only writer; anything else throws `OwnershipViolation` | `NEG-I5-01` |
-| CON.3 restore on fulfilment failure | Points go back onto the **same** batches, so earn date and expiry survive and no new batch appears | `G6-A03` |
+| CON.3 restore on fulfillment failure | Points go back onto the **same** batches, so earn date and expiry survive and no new batch appears | `G6-A03` |
 | CON.4 ten-minute freshness | The report carries `stale` and alerts Finance instead of presenting an old figure as current | `G6-A05` |
 | I-9 forbidden path | No gateway route writes a store; a direct attempt from an external name is refused | `NEG-I9-01` |
 | I-6 six states only | `RedemptionOrder` is a type whose transitions are operations; anything outside I-6 throws | `NEG-I6-01` |

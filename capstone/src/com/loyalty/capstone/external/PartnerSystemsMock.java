@@ -7,15 +7,15 @@ import java.util.Set;
 public final class PartnerSystemsMock implements PartnerSystems {
 
     private final Set<String> rewardItemsThatFail = new HashSet<>();
-    private int fulfilmentRequests;
+    private int fulfillmentRequests;
 
     public void makeRewardItemFail(String rewardItemId) { rewardItemsThatFail.add(rewardItemId); }
 
-    public int fulfilmentRequests() { return fulfilmentRequests; }
+    public int fulfillmentRequests() { return fulfillmentRequests; }
 
     @Override
-    public boolean requestFulfilment(String orderId, String rewardItemId) {
-        fulfilmentRequests++;
+    public boolean requestFulfillment(String orderId, String rewardItemId) {
+        fulfillmentRequests++;
         return !rewardItemsThatFail.contains(rewardItemId);
     }
 }

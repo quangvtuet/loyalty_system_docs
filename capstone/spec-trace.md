@@ -15,7 +15,7 @@ Test ids are the coverage ids printed by the suite in `test/com/loyalty/capstone
 | UC-LB-02 Redeem reward with FIFO | Happy path | `SubmitRedemption` (`POST /redemptions`) → 201 | `RedemptionEngineService.submitRedemption` | `UC-LB-02` |
 | UC-LB-02 | `alt` insufficient balance | `SubmitRedemption` → 422 | `TierAndBalanceValidationModule.validate` | `G6-A02` |
 | UC-LB-02 | `alt` tier-ineligible reward | `SubmitRedemption` → 422 | `TierAndBalanceValidationModule.validate` | `G6-A02` |
-| UC-LB-02 | `alt` partner fulfilment failure under CON.3 | `SubmitRedemption` → 201 with `state=REVERSED` | `FulfillmentCoordinationModule.dispatch` | `G6-A03` |
+| UC-LB-02 | `alt` partner fulfillment failure under CON.3 | `SubmitRedemption` → 201 with `state=REVERSED` | `FulfillmentCoordinationModule.dispatch` | `G6-A03` |
 | UC-LB-03 Apply tier upgrade | Happy path | none — async, driven by `earning.qp_accrued` (CT-05, CT-06) | `TieringSystemService.onQualifyingPointsAccrued` | `UC-LB-03` |
 | UC-LB-03 | `alt` replayed event ignored | none — async | `TieringSystemService` replay guard | `G6-A04` |
 | UC-LB-04 Generate point liability report | Happy path | `RequestReport` (`GET /reports/point-liability`) → 200, `stale=false` | `AnalyticsReportingService.pointLiabilityReport` | `UC-LB-04` |
@@ -100,30 +100,66 @@ API Gateway has no route that writes a store, so the forbidden path is not reach
 
 ---
 
-## 5. Lab 3 contract register — in scope and N/A
+## 5. Lab 3 contract register — how every in-scope row is represented
 
-| Contract row | Status | Where |
+Every in-scope contract row has a written contract. Which **kind** of contract depends on the I-8 pattern of the row, so the register is split by pattern rather than forced into a single document.
+
+- **Public HTTP** rows are published in `openapi.yaml`. That document is G4 for this sitting and is guarded against drift by `G4-D01`…`G4-D04`.
+- **Non-public** rows are asynchronous events on Message Broker or in-process calls between containers. They are not HTTP routes, so they carry no OpenAPI path. Their contract is defined in §5.2 below: producer, consumer, mechanism, and payload.
+- **N/A** rows are outside the I-11 slice, are not implemented, and are not callable.
+
+Putting a non-public row into `openapi.yaml` would publish an operation that the Lab 3 register does not expose through API Gateway, which is the "OpenAPI lists extra operations" failure. The SA agreement recorded in `SIGN-OFF.md` §3 covers this split.
+
+### 5.1 Public HTTP contract rows — in `openapi.yaml`
+
+| Contract row | OpenAPI operation | Runtime |
 |---|---|---|
-| CT-01, CT-02 `transaction.settled` | In scope | `CoreBankingSystemMock` publishes; `EarningEngineService` consumes |
-| CT-03, CT-04 `SubmitPartnerEarn` | In scope | `POST /partner-earn` |
-| CT-05, CT-06 `earning.qp_accrued` | In scope | Drives UC-LB-03 |
-| CT-07 `tiering.tier_changed` published | In scope | `TieringSystemService` publishes on upgrade |
-| CT-08 `tiering.tier_changed` consumed by Earning Engine Service | In scope | `EarningEngineService.onTierChanged` keeps the local tier projection used for the earn multiplier |
-| CT-09 `tiering.tier_changed` consumed by Redemption Engine Service | **N/A** | Redemption reads the tier synchronously on CT-12 at validation time |
-| CT-10, CT-11 `SubmitRedemption` | In scope | `POST /redemptions` |
-| CT-12 `GetMemberTier` | In scope, internal | `TierAndBalanceValidationModule` to `TieringSystemService` |
-| CT-13 `DebitPointsFifo`, `RestorePoints` | In scope, internal | `FifoDebitModule` to `EarningEngineService` |
-| CT-14 `RequestFulfilment` | In scope, internal | `FulfillmentCoordinationModule` to `PartnerSystemsMock` |
-| CT-15 `ReturnFulfilmentOutcome` | In scope | Modelled as the synchronous return in the Lab 10 UC-LB-02 sequence, not a second endpoint |
-| CT-22 member notification | In scope | `CrmNotificationGatewayMock` on reversal and on stale report |
-| CT-23, CT-24 `cdc.platform_events` | In scope | `EarningEngineService` publishes; `AnalyticsReportingService` builds `FactPointTransaction` |
-| CT-25, CT-26 `RequestReport` | In scope | `GET /reports/point-liability` |
-| CT-16, CT-17 `UpdateProgramConfiguration` | **N/A** | No I-11 use case; configuration is seeded, not exposed |
-| CT-18, CT-19, CT-20 `config.rule_updated` | **N/A** | No I-11 use case |
-| CT-21 `earning.point_expired` | **N/A** | Expiry is not an I-11 use case |
-| CT-27 `PublishPeriodFigures` | **N/A** | Stub exists; no I-11 use case drives it |
+| CT-03, CT-04 `SubmitPartnerEarn` | `SubmitPartnerEarn` — `POST /partner-earn` | `ApiGateway.handlePartnerEarn` |
+| CT-10, CT-11 `SubmitRedemption` | `SubmitRedemption` — `POST /redemptions` | `ApiGateway.handleRedemptions` |
+| CT-25, CT-26 `RequestReport` | `RequestReport` — `GET /reports/point-liability` | `ApiGateway.handlePointLiability` |
 
-N/A rows are not implemented and are not callable. No N/A row was turned into an extra use case.
+Three register rows, three OpenAPI operations, three served routes. `G4-D01` asserts the sets are equal.
+
+### 5.2 Non-public in-scope contract rows — event and in-process contracts
+
+These are contracts, written here because they have no HTTP surface. Each names its mechanism and its payload.
+
+**Asynchronous event contracts** — mechanism: I-8 Async, published on Message Broker.
+
+| Contract row | Topic | Producer | Consumer | Payload fields |
+|---|---|---|---|---|
+| CT-01, CT-02 | `transaction.settled` | Core Banking System | Earning Engine Service | `sourceTransactionId`, `memberId`, `programId`, `amount` |
+| CT-05, CT-06 | `earning.qp_accrued` | Earning Engine Service | Tiering System Service | `eventId`, `memberId`, `qualifyingPoints` |
+| CT-07 | `tiering.tier_changed` | Tiering System Service | Message Broker | `memberId`, `fromTier`, `toTier` |
+| CT-08 | `tiering.tier_changed` | Message Broker | Earning Engine Service | `memberId`, `fromTier`, `toTier` |
+| CT-23, CT-24 | `cdc.platform_events` | Earning Engine Service | Analytics & Reporting Service | `pointTransactionId`, `memberId`, `outstandingPoints` |
+| CT-22 | member and Finance notification | Redemption Engine Service, Analytics & Reporting Service | CRM & Notification Gateway | reversal: `memberId`, `orderId`; stale report: `dataAgeSeconds` |
+
+`eventId` on `earning.qp_accrued` is the idempotency key that makes the UC-LB-03 replay `alt` possible; `G6-A04` publishes a duplicate `eventId` and asserts the tier does not move.
+
+**In-process call contracts** — mechanism: I-8 Sync, container to container inside the collapse.
+
+| Contract row | Operation | Caller | Callee | Signature |
+|---|---|---|---|---|
+| CT-12 | `GetMemberTier` | Redemption Engine Service | Tiering System Service | `String currentTier(String memberId)` |
+| CT-13 | `DebitPointsFifo` | Redemption Engine Service | Earning Engine Service | `List<DebitAllocation> debitFifo(String memberId, long points)` |
+| CT-13 | `RestorePoints` | Redemption Engine Service | Earning Engine Service | `void restore(List<DebitAllocation> allocations)` |
+| CT-14 | `RequestFulfilment` | Redemption Engine Service | Partner Systems | `boolean requestFulfillment(String orderId, String rewardItemId)` |
+| CT-15 | `ReturnFulfilmentOutcome` | Partner Systems | Redemption Engine Service | The boolean return of CT-14, exactly as the Lab 10 UC-LB-02 sequence draws it — a return message, not a second inbound call |
+
+`RequestFulfilment` and `ReturnFulfilmentOutcome` keep the spelling `lab3-spec.md` defined for them; see the spelling policy in `name-identity-map.md` §10.
+
+### 5.3 N/A rows — outside the I-11 slice
+
+| Contract row | Why it is out |
+|---|---|
+| CT-09 `tiering.tier_changed` consumed by Redemption Engine Service | Redemption reads the tier synchronously on CT-12 at validation time, so the event consumer is not needed |
+| CT-16, CT-17 `UpdateProgramConfiguration` | No I-11 use case; configuration is seeded, not exposed |
+| CT-18, CT-19, CT-20 `config.rule_updated` | No I-11 use case |
+| CT-21 `earning.point_expired` | Point expiry is not an I-11 use case |
+| CT-27 `PublishPeriodFigures` | The I-3 stub exists; no I-11 use case drives it |
+
+N/A rows are not implemented and are not callable. No N/A row was turned into an extra use case, and none was silently dropped.
 
 ---
 
@@ -154,3 +190,13 @@ There is no route, handler, or package that does not appear above.
 | No automated OpenAPI drift guard | Four drift tests added that parse `openapi.yaml` and compare it to the runtime | §2.2 |
 
 Test count moved from 17 to 27. No I-11 use case, name, operation, or state was added.
+
+### Second review round
+
+| Review point | Change |
+|---|---|
+| C8 — no SA sign-off artifact | `SIGN-OFF.md` added: evidence assembled, five decisions listed for SA confirmation, decision block left unsigned |
+| D2/D4 — async and internal rows had no contract representation | §5 rewritten. Public HTTP rows in `openapi.yaml`; non-public rows carry event and in-process contracts in §5.2 with producer, consumer, mechanism and payload; N/A rows separated into §5.3 |
+| C1 — `fulfilment` and `fulfillment` mixed | Normalised to Lab 1's `fulfillment` across `capstone/` and `lab3-spec.md`. The two source-defined identifiers `RequestFulfilment` and `ReturnFulfilmentOutcome` are frozen and documented in `name-identity-map.md` §10 |
+| Lab 7 gate register stale | `../lab7-adoption.md` §5 updated: G1–G6 now carry real Lab 8–10 evidence and read Pass; §0.1 corrected to say the archive holds Labs 1, 2, 3, 5, 6 |
+| Tracked build output | `capstone/out/` untracked and deleted; `.gitignore` already covered it |

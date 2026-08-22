@@ -55,14 +55,14 @@ public final class CapstoneTests {
         runner.check("G6-T04", "IN_PROGRESS -> FAILED", () -> {
             RedemptionOrder order = newOrder();
             order.markInProgress(oneAllocation());
-            order.markFailed("partner fulfilment failed");
+            order.markFailed("partner fulfillment failed");
             assertEquals(OrderState.FAILED, order.state(), "state after delivery failure");
         });
 
         runner.check("G6-T05", "FAILED -> REVERSED", () -> {
             RedemptionOrder order = newOrder();
             order.markInProgress(oneAllocation());
-            order.markFailed("partner fulfilment failed");
+            order.markFailed("partner fulfillment failed");
             order.markReversed();
             assertEquals(OrderState.REVERSED, order.state(), "state after auto-reversal");
         });
@@ -100,11 +100,11 @@ public final class CapstoneTests {
             assertEquals(OrderState.CANCELLED, ineligible.state(), "tier below minimum means cancelled");
             assertTrue(ineligible.reason().contains("below required"), "reason names the tier");
 
-            assertEquals(0, platform.partnerSystems.fulfilmentRequests(),
-                    "no fulfilment is dispatched for a cancelled order");
+            assertEquals(0, platform.partnerSystems.fulfillmentRequests(),
+                    "no fulfillment is dispatched for a cancelled order");
         });
 
-        runner.check("G6-A03", "UC-LB-02 fulfilment failure compensates under CON.3", () -> {
+        runner.check("G6-A03", "UC-LB-02 fulfillment failure compensates under CON.3", () -> {
             MutableClock clock = new MutableClock(START);
             Platform platform = new Platform(clock);
 
@@ -119,7 +119,7 @@ public final class CapstoneTests {
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-3", Platform.REWARD_OUT_OF_STOCK);
 
-            assertEquals(OrderState.REVERSED, order.state(), "failed fulfilment ends REVERSED");
+            assertEquals(OrderState.REVERSED, order.state(), "failed fulfillment ends REVERSED");
             assertEquals(400L, platform.earningEngineService.availablePoints("M-3"),
                     "points are back on the balance");
             assertEquals(400L, batch.remainingPoints(), "the original batch is whole again");

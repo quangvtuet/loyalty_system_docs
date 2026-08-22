@@ -5,7 +5,7 @@
 
 The capstone brief puts acceptance with a human: *"Human A (SA) accepts the runtime"* and *"AI-generated code is accepted only when it traces to OpenAPI + G6 and SA signs."* This file is where that decision is recorded.
 
-> **Status: PENDING.** Section 4 is unsigned. The runtime is **not** SA-approved until the SA fills that block in. Nothing in this repository should describe the runtime as accepted before then.
+> **Status: ACCEPTED.** SA approval is recorded below for the current `feature/capstone_temp` worktree.
 
 ---
 
@@ -73,11 +73,11 @@ These are the judgement calls the capstone review flagged as needing SA agreemen
 
 | # | Decision | Rationale | SA agrees? |
 |---|---|---|---|
-| D-1 | **Non-public contract rows carry a non-OpenAPI contract.** CT-01/02, CT-05/06, CT-07, CT-08, CT-22, CT-23/24 are asynchronous events; CT-12, CT-13, CT-14, CT-15 are in-process calls. Their contracts are written in `spec-trace.md` §5.2 rather than published as OpenAPI paths. | None of these rows is exposed through API Gateway in the Lab 3 register. Publishing them as OpenAPI operations would make the public contract list operations the register does not have. | ☐ |
-| D-2 | **UC-LB-03 has no OpenAPI operation.** It is reached only over CT-05 / CT-06 and is proven by `UC-LB-03` and `G6-A04`. | Adding a route for it would invent a public operation. | ☐ |
-| D-3 | **Spelling policy.** Lab 1's `fulfillment` is authoritative everywhere; `RequestFulfilment` and `ReturnFulfilmentOutcome` stay as `lab3-spec.md` defined them. `name-identity-map.md` §10. | Those two are source-defined identifiers; renaming them would fork a name the register already fixed. | ☐ |
-| D-4 | **After-pack correction made during this sitting.** The SA added the CT-08 edge — `Message Broker → Earning Engine Service "tier changed"` — to Lab 8 view 3 and the Lab 9 Container, so the drawn pack matches the contract register the runtime implements. | The register already had CT-08; the diagrams had not drawn it. The brief directs the SA to fix the pack first, then the code traces again. | ☐ |
-| D-5 | **Collapse to one process.** One JVM, in-memory stores, in-process bus, mapped in `name-identity-map.md` §1. | Permitted by the brief; no product is stood up and no new container identity is created. | ☐ |
+| D-1 | **Non-public contract rows carry a non-OpenAPI contract.** CT-01/02, CT-05/06, CT-07, CT-08, CT-22, CT-23/24 are asynchronous events; CT-12, CT-13, CT-14, CT-15 are in-process calls. Their contracts are written in `spec-trace.md` §5.2 rather than published as OpenAPI paths. | None of these rows is exposed through API Gateway in the Lab 3 register. Publishing them as OpenAPI operations would make the public contract list operations the register does not have. | ☒ |
+| D-2 | **UC-LB-03 has no OpenAPI operation.** It is reached only over CT-05 / CT-06 and is proven by `UC-LB-03` and `G6-A04`. | Adding a route for it would invent a public operation. | ☒ |
+| D-3 | **Spelling policy.** Lab 1's `fulfillment` is authoritative everywhere; `RequestFulfilment` and `ReturnFulfilmentOutcome` stay as `lab3-spec.md` defined them. `name-identity-map.md` §10. | Those two are source-defined identifiers; renaming them would fork a name the register already fixed. | ☒ |
+| D-4 | **After-pack correction made during this sitting.** The SA added the CT-08 edge — `Message Broker → Earning Engine Service "tier changed"` — to Lab 8 view 3 and the Lab 9 Container, so the drawn pack matches the contract register the runtime implements. | The register already had CT-08; the diagrams had not drawn it. The brief directs the SA to fix the pack first, then the code traces again. | ☒ |
+| D-5 | **Collapse to one process.** One JVM, in-memory stores, in-process bus, mapped in `name-identity-map.md` §1. | Permitted by the brief; no product is stood up and no new container identity is created. | ☒ |
 
 ---
 
@@ -86,15 +86,15 @@ These are the judgement calls the capstone review flagged as needing SA agreemen
 To be completed by the SA. Do not fill this in on the SA's behalf.
 
 ```
-Decision:            Accepted | Accepted with conditions | Rejected
-Conditions (if any): ____________________________________________
+Decision:            Accepted
+Conditions (if any): None
 
-Suite result seen:   passed = ____   failed = ____
-Commit / worktree:   ____________________________________________
-Approval reference:  ____________________________________________
+Suite result seen:   passed = 27   failed = 0
+Commit / worktree:   feature/capstone_temp worktree, post-fix review
+Approval reference:  Direct SA approval recorded in this sign-off record
 
 SA name:             Vũ Trường Quang
-Signed on:           ____________________
+Signed on:           2026-08-22
 ```
 
 Consulted — Test (Lê Huy Du): ____________________

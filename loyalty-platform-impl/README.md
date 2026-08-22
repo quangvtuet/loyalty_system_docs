@@ -1,213 +1,79 @@
-# Loyalty Platform — Implementation Runtime
+# Loyalty Platform Implementation Runtime
 
-> **Official Implementation Runtime — Loyalty Banking Platform Modernization (Capstone Project — Team 2)**  
-> Realizes the I-11 use case slice (`UC-LB-01` through `UC-LB-04`) designed in Labs 1–10.  
-> Source of truth: [`../loyalty.md`](../loyalty.md), [`../lab3-spec.md`](../lab3-spec.md), [`../lab-10-uml-after.md`](../lab-10-uml-after.md).  
-> **RACI:** Dev **R** Lê Huy Du · SA **A** Vũ Trường Quang · Test **C** Lê Huy Du
+This directory is the Team 2 capstone runtime for the I-11 slice only:
 
-Dự án triển khai thực tế các module của hệ thống **Loyalty Banking Platform**, phát triển bằng **Java Spring Boot 3**.
+- `UC-LB-01` Process settled earn event
+- `UC-LB-02` Redeem reward with FIFO
+- `UC-LB-03` Apply tier upgrade
+- `UC-LB-04` Generate point liability report
 
-## Yêu cầu hệ thống (Prerequisites)
-- [Docker](https://docs.docker.com/get-docker/) và Docker Compose (để chạy Kafka, Redis, PostgreSQL).
-- [Java 17](https://adoptium.net/temurin/releases/) (nếu chạy ứng dụng trực tiếp bằng Maven, hoặc không cần nếu dùng container hóa toàn bộ - hiện tại đang chạy native Java + Maven Wrapper).
-- Môi trường: Unix/Linux, macOS hoặc Windows (WSL2).
+The source of truth remains the Lab 1, Lab 3, Lab 7, Lab 8, Lab 9, and Lab 10 artifacts. This runtime is outside the modeling packs. It does not add Program Management or catalog administration to the capstone surface.
 
-## Cấu trúc thư mục
+## Runtime Boundaries
 
-```
-loyalty-platform-impl/
-├── docker-compose.yml       # Cấu hình hạ tầng (PostgreSQL 16, Redis 7, Kafka 7.4)
-├── earning-engine/          # DD-01: Earning Engine (Port 8081)
-│   ├── pom.xml
-│   ├── mvnw / mvnw.cmd
-│   └── src/main/java/com/loyalty/earning_engine/
-│       ├── api/          # REST Controller (PartnerEarnController)
-│       ├── domain/       # JPA Entities (PointTransaction, PointBalance)
-│       ├── kafka/        # Kafka Consumer (TransactionSettledConsumer)
-│       ├── repository/   # PointTransactionRepo, PointBalanceRepo
-│       └── service/      # EarnCalculator, EarningLedgerService
-├── tiering-system/          # DD-02: Tiering System (Port 8082)
-│   ├── pom.xml
-│   ├── mvnw / mvnw.cmd
-│   └── src/main/java/com/loyalty/tiering_system/
-│       ├── domain/       # Entities (QpLedger, MemberTier) & Enums (TierName, TierStatus)
-│       ├── event/        # DTOs (QpAccruedEvent, TierChangedEvent)
-│       ├── kafka/        # Kafka Consumer (QpAccruedConsumer)
-│       ├── repository/   # QpLedgerRepository, MemberTierRepository
-│       └── service/      # QpLedgerService, TierUpgradeService, GracePeriodService
-└── redemption-engine/       # DD-03: Redemption Engine (Port 8083)
-    ├── pom.xml
-    ├── mvnw / mvnw.cmd
-    └── src/main/java/com/loyalty/redemption_engine/
-        ├── domain/       # Entities (RewardItem, RedemptionOrder) & Enums (OrderStatus, FulfillmentType)
-        ├── repository/   # RewardItemRepository, RedemptionOrderRepository
-        └── service/      # CatalogService, BalanceLockService, FifoDebitService, RedemptionService
-├── program-management/      # DD-04: Program Management (Port 8084)
-    ├── pom.xml
-    ├── mvnw / mvnw.cmd
-    └── src/main/java/com/loyalty/program_management/
-        ├── api/          # REST Controller (ProgramController)
-        ├── domain/       # Entities (LoyaltyProgram, Campaign, ConfigVersionLog) & Enums
-        ├── repository/   # Repositories for configuration entities
-        └── service/      # ProgramService, CampaignService, AuditLogService
-├── analytics-reporting/     # DD-05: Analytics & Reporting (Port 8085)
-    ├── pom.xml
-    ├── mvnw / mvnw.cmd
-    └── src/main/java/com/loyalty/analytics_reporting/
-        ├── api/          # REST Controller (ReportingController)
-        ├── domain/       # Fact & Dimension Tables (Star Schema)
-        ├── repository/   # FactPointTransactionRepository for computing Liability
-        └── service/      # ReportingService
-```
+The capstone path uses these named services and contracts:
 
-## Hướng dẫn cài đặt và chạy (Step-by-Step)
+| Service | Port | In-scope responsibility |
+|---|---:|---|
+| Earning Engine Service | 8081 | UC-LB-01 and CT-13 point ownership/debit/restore |
+| Tiering System Service | 8082 | CT-12 authoritative member tier read |
+| Redemption Engine Service | 8083 | UC-LB-02 order state and CT-11 orchestration |
+| Analytics & Reporting Service | 8085 | UC-LB-04 liability report |
 
-### Bước 1: Khởi động cơ sở hạ tầng (Infrastructure)
+API Gateway is represented by direct routing to these controllers. Core Banking System, Partner Systems, CRM & Notification Gateway, and Enterprise Data Warehouse are mocked or simulated at the documented boundaries. Product infrastructure is not part of the capstone output; tests use test-profile doubles or in-memory backing services.
 
-Mở terminal tại thư mục gốc `loyalty-platform-impl/` và chạy:
+Program Management and catalog administration are outside I-11. No capstone controller exposes those paths. Reward items used by tests are supplied as test fixtures.
+
+## Configuration
+
+Runtime service URLs are configurable through:
+
+- `LOYALTY_TIERING_BASE_URL`
+- `LOYALTY_EARNING_BASE_URL`
+- `LOYALTY_DB_USERNAME`
+- `LOYALTY_DB_PASSWORD`
+
+No credential or production host is committed. Test profiles must use H2/in-memory repositories and mocked I-3 boundaries.
+
+## Run Tests
+
+Run each in-scope module independently:
 
 ```bash
-docker-compose up -d
-```
-Lệnh này sẽ tải và khởi động các container:
-- `loyalty-postgres` (Port 5432)
-- `loyalty-redis` (Port 6379)
-- `loyalty-kafka` (Port 9092)
-- `loyalty-zookeeper` (Port 2181)
-
-*Kiểm tra trạng thái:* `docker-compose ps` để đảm bảo tất cả đều `Up`.
-
-### Bước 2: Chạy từng service
-
-**Earning Engine** (Port 8081):
-```bash
-cd earning-engine/
-./mvnw spring-boot:run
+cd earning-engine && ./mvnw test
+cd tiering-system && ./mvnw test
+cd redemption-engine && ./mvnw test
+cd analytics-reporting && ./mvnw test
 ```
 
-**Tiering System** (Port 8082) — mở terminal mới:
-```bash
-cd tiering-system/
-./mvnw spring-boot:run
-```
+The `program-management` source is retained as non-capstone archive material and is not started or included in the capstone validation.
 
-**Redemption Engine** (Port 8083) — mở terminal mới:
-```bash
-cd redemption-engine/
-./mvnw spring-boot:run
-```
+## I-11 Smoke Flow
 
-Program Management (Port 8084) is outside the I-11 capstone runtime and is not started by the capstone run.
-**Analytics & Reporting** (Port 8085) — mở terminal mới:
-```bash
-cd analytics-reporting/
-./mvnw spring-boot:run
-```
-*(Trên Windows dùng: `mvnw.cmd spring-boot:run`)*
-
-### Bước 3: Chạy Unit Tests (từng service)
+Prepare a reward-item test fixture and set `REWARD_ITEM_ID`, then run:
 
 ```bash
-cd earning-engine/  && ./mvnw test
-cd tiering-system/  && ./mvnw test
-cd redemption-engine/ && ./mvnw test
-cd program-management/ && ./mvnw test
-cd analytics-reporting/ && ./mvnw test
+./e2e_test.sh
 ```
 
-## Kiểm thử chức năng (Manual Verification)
+The script exercises earn, authoritative tier lookup, redemption, and fulfillment. It does not create programs, campaigns, catalog items, or warehouse rows through an out-of-band channel.
 
-Bạn có thể dùng `curl` hoặc Postman để kiểm tra API.
+The order request contains only authoritative identifiers and quantity:
 
-**Gửi yêu cầu tích điểm từ Partner:**
-```bash
-curl -X POST http://localhost:8081/api/v1/partners/earn \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transactionId": "txn-abc-123",
-    "memberId": "member-001",
-    "spendAmount": 1000,
-    "campaignId": "DOUBLE_POINTS_AUG"
-  }'
+```json
+{
+  "memberId": "member-001",
+  "programId": "DEFAULT_PROG",
+  "rewardItemId": "<fixture-item-id>",
+  "quantity": 1
+}
 ```
 
-*Kết quả mong đợi:* Trả về `202 Accepted` và sinh ra log báo tính điểm thành công.
-*Kiểm tra Idempotency:* Nếu bạn chạy lại nguyên lệnh curl trên, hệ thống sẽ báo `409 Conflict - Duplicate transaction detected` nhờ vào Redis Idempotency.
+The runtime obtains `MemberTier` through CT-12 and obtains balance/FIFO allocation through CT-13. A successful order records `PENDING`, reserves points, then transitions to `IN_PROGRESS`. Fulfillment transitions `IN_PROGRESS` to `FULFILLED`; partner failure transitions `IN_PROGRESS` to `FAILED`, restores points through Earning Engine, and then transitions to `REVERSED`.
 
----
+## Evidence
 
-Catalog administration is outside I-11. Load reward items through a local test fixture before running the smoke script.
-
-**Đổi điểm (Redemption Order):**
-```bash
-curl -X POST http://localhost:8083/api/v1/redemptions/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "memberId": "member-001",
-    "programId": "DEFAULT_PROG",
-    "rewardItemId": "<item-id-from-catalog>",
-    "quantity": 1
-  }'
-```
-
-*Kết quả mong đợi:* Trả về `201 Created` kèm `orderId` và `status: IN_PROGRESS` after CT-12 and CT-13 succeed.
-
-## Kiểm tra dữ liệu trong Database
-
-Tất cả các service đều dùng chung PostgreSQL `loyalty_db`. Dưới đây là các lệnh kiểm tra trực tiếp qua Docker:
-
-**1. Kiểm tra lịch sử giao dịch (Sổ cái Earning Engine):**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT * FROM point_transaction;"
-```
-
-**2. Kiểm tra tổng số dư hiện tại (Snapshot):**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT * FROM point_balance;"
-```
-
-**3. Kiểm tra lịch sử tích lũy QP (Tiering System):**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT * FROM qp_ledger ORDER BY accrual_date DESC;"
-```
-
-**4. Kiểm tra trạng thái tier hiện tại của member:**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT member_id, current_tier, previous_tier, cumulative_qp, status, grace_period_end FROM member_tier;"
-```
-
-**5. Kiểm tra catalog phần thưởng (Redemption Engine):**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT item_id, name, points_cost, min_tier_required, status FROM reward_item;"
-```
-
-**6. Kiểm tra đơn đổi điểm:**
-```bash
-docker exec -it loyalty-postgres psql -U loyalty_user -d loyalty_db -c "SELECT order_id, member_id, total_points_debited, member_tier_at_order, status, failure_reason FROM redemption_order ORDER BY created_at DESC;"
-```
-
-Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, DataGrip, pgAdmin) để kết nối vào Database với thông số:
-- **Host**: `localhost`
-- **Port**: `5432`
-- **Database**: `loyalty_db`
-- **User**: `loyalty_user`
-- **Password**: set `LOYALTY_DB_PASSWORD` in the local environment; no password is committed.
-
-
-## Thiết kế nổi bật
-- **Idempotency**: Earning Engine dùng Redis NX + SHA-256 ngăn truy vấn trùng lặp.
-- **Precision**: Dùng `Math.floor()` đảm bảo làm tròn xuống theo yêu cầu DD-01.
-- **Event-Driven**: Earning → Tiering qua Kafka topic `loyalty.earning.qp_accrued`.
-- **FIFO Debit**: Redemption Engine tiêu điểm theo thứ tự `earn_date ASC` để giữ nguyên lịch sử expiry.
-- **Distributed Lock**: Redemption dùng Redis `SET NX EX 10` để chống concurrent redemption cùng member.
-- **Dual Table**: `point_transaction` (append-only ledger) + `point_balance` (snapshot số dư) tách biệt hiệu năng đọc/ghi.
-
-## Ports Summary
-
-| Service | Port | Design Doc |
-|---|---|---|
-| Earning Engine | 8081 | DD-01 |
-| Tiering System | 8082 | DD-02 |
-| Redemption Engine | 8083 | DD-03 |
-| Program Management| 8084 | DD-04 |
-| Analytics & Reporting| 8085 | DD-05 |
+- [openapi.yaml](openapi.yaml) is the G4 contract.
+- [spec-trace.md](spec-trace.md) maps in-scope paths to operations and executable tests.
+- [name-identity-map.md](name-identity-map.md) maps I-4 names, I-7 owners, I-9 zones, and non-deploying test collapses.
+- [SIGN-OFF.md](SIGN-OFF.md) is updated only after runtime validation.

@@ -22,6 +22,7 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
 
     List<PointTransaction> findBySourceTxnIdAndType(String sourceTxnId, TransactionType type);
 
+    /** Query eligible earn batches in FIFO order. */
     @Query("SELECT pt FROM PointTransaction pt WHERE pt.memberId = :memberId " +
            "AND (pt.programId = :programId OR pt.programId IS NULL) " +
            "AND pt.remainingBalance > 0 " +
@@ -35,28 +36,4 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
             @Param("now") LocalDateTime now
     );
 
-    /**
-     * Query unexpired earn batches with remaining points in FIFO order (oldest createdAt first).
-     * Used by EarningLedgerService for CT-13 DebitPointsFifo.
-     */
-    @Query("SELECT pt FROM PointTransaction pt WHERE pt.memberId = :memberId " +
-           "AND pt.remainingBalance > 0 " +
-           "AND pt.status = :status " +
-           "AND (pt.expiryDate IS NULL OR pt.expiryDate > :now) " +
-           "ORDER BY pt.createdAt ASC, pt.id ASC")
-    List<PointTransaction> findUnexpiredBatchesForFifoDebit(
-            @Param("memberId") String memberId,
-            @Param("status") TransactionStatus status,
-            @Param("now") LocalDateTime now
-    );
-
-    @Query("SELECT pt FROM PointTransaction pt WHERE pt.memberId = :memberId " +
-           "AND pt.remainingBalance > 0 AND pt.status = :status " +
-           "AND (pt.expiryDate IS NULL OR pt.expiryDate > :now) " +
-           "ORDER BY pt.createdAt ASC, pt.id ASC")
-    List<PointTransaction> findUnexpiredBatchesForFifoDebit(
-            @Param("memberId") String memberId,
-            @Param("status") TransactionStatus status,
-            @Param("now") LocalDateTime now
-    );
 }

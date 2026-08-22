@@ -16,7 +16,7 @@
 | Earning Engine Service | Domain Services Zone | 8081 | `earning-engine/` | `com.loyalty.earning_engine` | `EarningEngineApplication`, `EarnCalculator`, `EarningLedgerService`, `FifoDebitController`, `PartnerEarnController`, `IdempotencyService` |
 | Tiering System Service | Domain Services Zone | 8082 | `tiering-system/` | `com.loyalty.tiering_system` | `TieringSystemApplication`, `MemberTierController`, `QpLedgerService`, `TierUpgradeService`, `GracePeriodService` |
 | Redemption Engine Service | Domain Services Zone | 8083 | `redemption-engine/` | `com.loyalty.redemption_engine` | `RedemptionEngineApplication`, `RedemptionController`, `RedemptionService`, `CatalogService`, `BalanceLockService`, `FifoDebitService`, `TieringClient` |
-| Program Management Service | Domain Services Zone | 8084 | `program-management/` | `com.loyalty.program_management` | `ProgramManagementApplication`, `ProgramService`, `CampaignService`, `AuditLogService` |
+| Program Management Service | Domain Services Zone | — | archived/non-capstone source only | — | Not started or exposed by the I-11 capstone profile |
 | Analytics & Reporting Service | Analytics Zone | 8085 | `analytics-reporting/` | `com.loyalty.analytics_reporting` | `AnalyticsReportingApplication`, `ReportingController`, `ReportingService` |
 | Idempotency Store | Data Services Zone | 6379 | *(Redis key-value store)* | `com.loyalty.earning_engine.service` | `IdempotencyService` (earning CON.1), `BalanceLockService` (redemption ALT-06) |
 | Earning DB | Data Services Zone | 5432 | *(PostgreSQL — schema: public/earning)* | `com.loyalty.earning_engine.domain` | `PointTransaction`, `PointBalance` |
@@ -33,10 +33,10 @@ Per capstone rules, all deployable consolidations are explicitly mapped below so
 
 | Collapsed Infrastructure | Represents I-4 Container(s) | Stand-in / Realization Strategy | I-9 Zone Mapped |
 |---|---|---|---|
-| Shared PostgreSQL Instance | `Earning DB`, `Tiering DB`, `Redemption DB`, `Program Mgmt DB`, `Data Warehouse` | 5 logical databases consolidated onto one PostgreSQL DBMS using isolated schema namespaces. Each schema is strictly owned by its single microservice. | Data Services Zone (transactional DBs) & Analytics Zone (Data Warehouse) |
-| Kafka Cluster (KRaft / Zookeeper) | `Message Broker` | Message Broker container provides asynchronous event topics (`earning.qp_accrued`, `tiering.tier_changed`). Zookeeper is purely an internal clustering coordinator for Kafka, NOT a new container identity. | Edge & Ingestion Zone |
-| Redis Instance | `Idempotency Store` | Key-value store providing distributed locking (Redemption M4) and idempotency deduplication (Earning CON.1). | Data Services Zone |
-| Direct HTTP Endpoint Routing | `API Gateway` | In this POC runtime, API Gateway routing is simulated via direct REST requests to each microservice's `@RestController` port. | Edge & Ingestion Zone |
+| Test-profile persistence doubles | `Earning DB`, `Tiering DB`, `Redemption DB`, `Data Warehouse` | In-memory/H2 test repositories stand in for the named I-7 locations. No database product is deployed by the capstone runtime. | Data Services Zone & Analytics Zone |
+| Test-profile event double | `Message Broker` | In-process test event boundary stands in for named asynchronous topics. No Kafka or Zookeeper product is deployed by the capstone runtime. | Edge & Ingestion Zone |
+| Test-profile lock/idempotency double | `Idempotency Store` | In-memory test double stands in for the named lock/idempotency location. No Redis product is deployed by the capstone runtime. | Data Services Zone |
+| Direct HTTP Endpoint Routing | `API Gateway` | API Gateway routing is simulated via direct REST requests to the four in-scope service controller ports. | Edge & Ingestion Zone |
 
 ---
 

@@ -70,7 +70,7 @@ public class RedemptionService {
         try {
             // 5. Delegate FIFO debit to Earning Engine Service (CT-13 / M5)
             // (If balance is insufficient in Earning DB, Earning Engine throws ERR_RED_INSUFFICIENT_BALANCE)
-            fifoDebitService.debitFifo(memberId, prog, totalPoints, orderId);
+            String allocationId = fifoDebitService.debitFifo(memberId, prog, totalPoints, orderId);
 
             // 6. Create Order and move PENDING → IN_PROGRESS (G6-T01 debit reserved)
             RedemptionOrder order = RedemptionOrder.builder()
@@ -79,12 +79,15 @@ public class RedemptionService {
                     .rewardItemId(rewardItemId)
                     .quantity(quantity)
                     .totalPointsDebited(totalPoints)
+                    .debitAllocationId(allocationId)
                     .memberTierAtOrder(memberTier)
-                    .status(OrderStatus.IN_PROGRESS) // Moved to IN_PROGRESS upon debit reservation
+                    .status(OrderStatus.PENDING)
                     .build();
 
             order = orderRepository.save(order);
-            log.info("[Redemption] Order created and moved to IN_PROGRESS: {} | member: {} | points: {}",
+            order.setStatus(OrderStatus.IN_PROGRESS);
+            order = orderRepository.save(order);
+            log.info("[Redemption] Order transitioned PENDING -> IN_PROGRESS: {} | member: {} | points: {}",
                     order.getOrderId(), memberId, totalPoints);
             return order;
 
@@ -126,7 +129,7 @@ public class RedemptionService {
         // Delegate restoration to Earning Engine Service (CT-13 RestorePoints)
         try {
             fifoDebitService.reverseDebit(order.getMemberId(), order.getProgramId(),
-                    orderId.toString(), order.getTotalPointsDebited());
+                    orderId.toString(), order.getDebitAllocationId(), order.getTotalPointsDebited(), reason);
             order.setStatus(OrderStatus.REVERSED);
             order = orderRepository.save(order);
             log.info("[Redemption] Order REVERSED: {} under CON.3", orderId);

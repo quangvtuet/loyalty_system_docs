@@ -32,8 +32,18 @@ public class FifoDebitService {
      * M5 FIFO Debit Request → CT-13: DebitPointsFifo.
      * Ủy quyền cho Earning Engine Service kiểm tra số dư và trừ điểm FIFO.
      */
-    public void debitFifo(String memberId, String programId, long pointsRequired, String orderId) {
-        post("/api/v1/earning/fifo/debit", new DebitRequest(memberId, programId, pointsRequired, orderId));
+    public String debitFifo(String memberId, String programId, long pointsRequired, String orderId) {
+        EarningDebitResponse response = restClient.post()
+                .uri("/api/v1/earning/fifo/debit")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new DebitRequest(memberId, programId, pointsRequired, orderId))
+                .retrieve()
+                .body(EarningDebitResponse.class);
+        if (response == null || !"RESERVED".equals(response.status())) {
+            throw new IllegalStateException("ERR_RED_EARNING_UPSTREAM: debit reservation was not confirmed");
+        }
+        return response.allocationId() == null || response.allocationId().isBlank()
+                ? orderId : response.allocationId();
     }
 
     /**
@@ -42,8 +52,13 @@ public class FifoDebitService {
      * EXC-05 / CON.3.
      */
     public void reverseDebit(String memberId, String programId, String orderId, long pointsToRestore) {
-        post("/api/v1/earning/fifo/restore", new RestoreRequest(memberId, programId, orderId, orderId,
-                pointsToRestore, "FULFILLMENT_FAILED"));
+        reverseDebit(memberId, programId, orderId, orderId, pointsToRestore, "FULFILLMENT_FAILED");
+    }
+
+    public void reverseDebit(String memberId, String programId, String orderId, String allocationId,
+                             long pointsToRestore, String reason) {
+        post("/api/v1/earning/fifo/restore", new RestoreRequest(memberId, programId, orderId,
+                allocationId, pointsToRestore, reason));
     }
 
     private void post(String path, Object request) {
@@ -62,4 +77,6 @@ public class FifoDebitService {
     public record DebitRequest(String memberId, String programId, long pointsRequired, String orderId) {}
     public record RestoreRequest(String memberId, String programId, String orderId, String allocationId,
                                   long pointsToRestore, String reason) {}
+    private record EarningDebitResponse(String orderId, String memberId, long pointsDebited, String status,
+                                         int debitedBatchesCount, String allocationId, String message) {}
 }

@@ -61,7 +61,7 @@
 | Lab 3 CT | Lab 3 Contract Name | Producer → Consumer | OpenAPI operationId | Match? |
 |---|---|---|---|:---:|
 | **CT-04** | RecordEarn | API Gateway → Earning Engine Service | `recordEarn`, `cancelEarnTransaction` | ✅ |
-| **CT-11** | CreateRedemptionOrder, QueryCatalog | API Gateway → Redemption Engine Service | `createRedemptionOrder`, `addCatalogItem` | ✅ |
+| **CT-11** | CreateRedemptionOrder | API Gateway → Redemption Engine Service | `createRedemptionOrder` | ✅ |
 | **CT-12** | GetMemberTier | Redemption Engine Service → Tiering System Service | `getMemberTier` | ✅ |
 | **CT-13** | DebitPointsFifo, RestorePoints | Redemption Engine Service → Earning Engine Service | `debitPointsFifo`, `restorePoints`, `getMemberBalance` | ✅ |
 | **CT-14** | RequestFulfilment | Redemption Engine Service → Partner Systems | `fulfillRedemptionOrder`, `failAndReverseRedemptionOrder` (PATCH) | ✅ |
@@ -91,9 +91,6 @@
 
 ---
 
-## 6. Out-of-Scope Paths — N/A Declaration
+## 6. Out-of-Scope Paths — Not Exposed
 
-The following operations belong to supporting administrative functions (I-1) outside the 4 I-11 use cases and are declared N/A:
-- Program configuration CRUD (`Program Management Service` / `POST /api/v1/programs`)
-- Campaign configuration CRUD (`Program Management Service` / `POST /api/v1/campaigns`)
-- Catalog seed endpoint (`POST /api/v1/catalog/items`)
+Program configuration, campaign configuration, catalog administration, and catalog query routes are not part of the I-11 capstone runtime. Their controllers and OpenAPI operations are absent from the capstone profile, so they are not callable paths and are not included in G4-G6 evidence.

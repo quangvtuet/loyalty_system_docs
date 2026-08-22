@@ -443,26 +443,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
-  /api/v1/catalog/items:
-    post:
-      operationId: addCatalogItem
-      tags:
-        - UC-LB-02 Redemption Engine Service
-      summary: UC-LB-02 — add reward catalog item (M1 Catalog Query setup, CT-11 QueryCatalog)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RewardItemRequest'
-      responses:
-        "201":
-          description: Catalog item created.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RewardItemResponse'
-
   # ─────────────────────────────────────────────────────────────────
   # UC-LB-03 — Apply tier upgrade (CT-12 GetMemberTier)
   # Server: http://localhost:8082
@@ -745,6 +725,9 @@ components:
           type: integer
         memberTierAtOrder:
           type: string
+        debitAllocationId:
+          type: string
+          description: Persisted CT-13 allocation identity used for restoration.
         status:
           type: string
           enum: [PENDING, IN_PROGRESS, FULFILLED, FAILED, REVERSED, CANCELLED]
@@ -757,47 +740,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
-    RewardItemRequest:
-      type: object
-      required: [programId, name, category, pointsCost, fulfillmentType, minTierRequired]
-      properties:
-        programId:
-          type: string
-        name:
-          type: string
-        category:
-          type: string
-        pointsCost:
-          type: integer
-          minimum: 100
-          description: Must be >= 100 (minimum points constraint FR-03-013).
-        currencyValue:
-          type: number
-          format: double
-        fulfillmentType:
-          type: string
-          enum: [DIGITAL, PHYSICAL]
-        minTierRequired:
-          type: string
-          enum: [SILVER, GOLD, PLATINUM]
-
-    RewardItemResponse:
-      type: object
-      properties:
-        itemId:
-          type: string
-          format: uuid
-        programId:
-          type: string
-        name:
-          type: string
-        pointsCost:
-          type: integer
-        minTierRequired:
-          type: string
-        status:
-          type: string
 
     # ── UC-LB-03 ─────────────────────────────────────────
     MemberTierResponse:

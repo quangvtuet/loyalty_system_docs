@@ -9,7 +9,10 @@ import java.util.UUID;
 /** Exact source-batch allocation created by CT-13 debit. */
 @Entity
 @Table(name = "fifo_debit_allocation",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"order_id", "batch_id"}))
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"order_id", "batch_id"}),
+                @UniqueConstraint(columnNames = {"order_id", "allocation_key"})
+        })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,6 +25,9 @@ public class FifoDebitAllocation {
 
     @Column(name = "order_id", nullable = false)
     private String orderId;
+
+    @Column(name = "allocation_key", nullable = false)
+    private String allocationKey;
 
     @Column(name = "member_id", nullable = false)
     private String memberId;

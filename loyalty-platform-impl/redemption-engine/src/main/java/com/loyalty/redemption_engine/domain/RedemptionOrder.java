@@ -44,6 +44,9 @@ public class RedemptionOrder {
     @Column(nullable = false)
     private Long totalPointsDebited;
 
+    @Column
+    private String debitAllocationId;
+
     @Column(nullable = false)
     private String memberTierAtOrder;
 

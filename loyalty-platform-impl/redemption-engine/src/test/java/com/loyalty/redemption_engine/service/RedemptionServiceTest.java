@@ -96,7 +96,7 @@ class RedemptionServiceTest {
         when(tieringClient.getMemberTier("member-001", "DEFAULT_PROG")).thenReturn("SILVER");
         doNothing().when(catalogService).validateTierEligibility(any(), eq("SILVER"));
         when(balanceLockService.tryLock(any(), any())).thenReturn(true);
-        doNothing().when(fifoDebitService).debitFifo(any(), any(), anyLong(), any());
+        when(fifoDebitService.debitFifo(any(), any(), anyLong(), any())).thenReturn("allocation-001");
 
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -240,7 +240,7 @@ class RedemptionServiceTest {
         assertEquals("OUT_OF_STOCK", reversed.getFailureReason());
 
         // Verify CT-13 RestorePoints was delegated to Earning Engine Service (EXC-05)
-        verify(fifoDebitService).reverseDebit("member-001", "DEFAULT_PROG", orderId.toString(), 300L);
+        verify(fifoDebitService).reverseDebit("member-001", "DEFAULT_PROG", orderId.toString(), null, 300L, "OUT_OF_STOCK");
     }
 
     /**

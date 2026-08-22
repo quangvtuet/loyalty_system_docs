@@ -126,7 +126,7 @@ public class EarningLedgerService {
             transactionRepository.save(batch);
             if (allocationRepository != null) {
                 allocationRepository.save(FifoDebitAllocation.builder()
-                        .orderId(orderId).memberId(memberId).programId(prog)
+                        .orderId(orderId).allocationKey(orderId + ":" + batch.getId()).memberId(memberId).programId(prog)
                         .batchId(batch.getId()).pointsDebited(deduct).restored(false).build());
             }
             remainingToDebit -= deduct;
@@ -204,7 +204,7 @@ public class EarningLedgerService {
         // 1. Query unexpired earn batches to restore remaining_balance
         // (In FIFO reversal, points are restored back to the oldest unexpired batches)
         List<PointTransaction> earnBatches = transactionRepository.findUnexpiredBatchesForFifoDebit(
-                memberId, TransactionStatus.CONFIRMED, LocalDateTime.now());
+                memberId, prog, TransactionStatus.CONFIRMED, LocalDateTime.now());
 
         long remainingToRestore = pointsToRestore;
 

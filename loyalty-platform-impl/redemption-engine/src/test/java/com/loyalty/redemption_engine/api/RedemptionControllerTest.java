@@ -3,7 +3,6 @@ package com.loyalty.redemption_engine.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loyalty.redemption_engine.domain.OrderStatus;
 import com.loyalty.redemption_engine.domain.RedemptionOrder;
-import com.loyalty.redemption_engine.service.CatalogService;
 import com.loyalty.redemption_engine.service.RedemptionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +45,6 @@ class RedemptionControllerTest {
 
     @MockitoBean
     private RedemptionService redemptionService;
-
-    @MockitoBean
-    private CatalogService catalogService;
 
     private static final UUID ITEM_ID = UUID.randomUUID();
 

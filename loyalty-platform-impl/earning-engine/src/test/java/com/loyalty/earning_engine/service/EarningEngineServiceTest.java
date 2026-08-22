@@ -53,7 +53,7 @@ class EarningEngineServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository);
+        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, null);
         earnCalculator = new EarnCalculator(earningLedgerService, kafkaTemplate);
 
         when(balanceRepository.findByMemberIdAndProgramIdForUpdate(anyString(), anyString()))
@@ -183,7 +183,7 @@ class EarningEngineServiceTest {
                 .build();
 
         List<PointTransaction> batches = new ArrayList<>(List.of(batch1, batch2));
-        when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq(TransactionStatus.CONFIRMED), any()))
+        when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq("DEFAULT_PROG"), eq(TransactionStatus.CONFIRMED), any()))
                 .thenReturn(batches);
 
         // Act: debit 400 points
@@ -245,7 +245,7 @@ class EarningEngineServiceTest {
                 .build();
 
         List<PointTransaction> batches = new ArrayList<>(List.of(batch1, batch2));
-        when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq(TransactionStatus.CONFIRMED), any()))
+        when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq("DEFAULT_PROG"), eq(TransactionStatus.CONFIRMED), any()))
                 .thenReturn(batches);
 
         // Act: restore 400 points under CON.3

@@ -1,8 +1,6 @@
 package com.loyalty.redemption_engine.api;
 
 import com.loyalty.redemption_engine.domain.RedemptionOrder;
-import com.loyalty.redemption_engine.domain.RewardItem;
-import com.loyalty.redemption_engine.service.CatalogService;
 import com.loyalty.redemption_engine.service.RedemptionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -16,9 +14,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,35 +36,6 @@ import java.util.UUID;
 public class RedemptionController {
 
     private final RedemptionService redemptionService;
-    private final CatalogService catalogService;
-
-    // ─── Catalog API ───────────────────────────────────────────────
-
-    @GetMapping("/catalog")
-    public ResponseEntity<List<RewardItem>> getCatalog(
-            @RequestParam String programId,
-            @RequestParam String memberTier) {
-        List<RewardItem> items = catalogService.getCatalogForMember(programId, memberTier);
-        return ResponseEntity.ok(items);
-    }
-
-    @PostMapping("/catalog/items")
-    public ResponseEntity<RewardItem> addCatalogItem(@Valid @RequestBody AddItemRequest request) {
-        RewardItem item = RewardItem.builder()
-                .programId(request.getProgramId())
-                .name(request.getName())
-                .category(request.getCategory())
-                .pointsCost(request.getPointsCost())
-                .currencyValue(BigDecimal.valueOf(request.getCurrencyValue()))
-                .fulfillmentType(com.loyalty.redemption_engine.domain.FulfillmentType.valueOf(request.getFulfillmentType()))
-                .minTierRequired(request.getMinTierRequired())
-                .stockQuantity(request.getStockQuantity())
-                .status("ACTIVE")
-                .build();
-        item = catalogService.addItem(item);
-        log.info("[Catalog] Item added: {} ({} pts, tier: {})", item.getName(), item.getPointsCost(), item.getMinTierRequired());
-        return ResponseEntity.status(HttpStatus.CREATED).body(item);
-    }
 
     // ─── Redemption Order API ───────────────────────────────────────
 
@@ -105,23 +72,15 @@ public class RedemptionController {
         }
     }
 
-    @GetMapping("/redemptions/orders")
-    public ResponseEntity<List<RedemptionOrder>> getHistory(
-            @RequestParam String memberId,
-            @RequestParam String programId) {
-        return ResponseEntity.ok(redemptionService.getHistory(memberId, programId));
-    }
-
     /**
      * PATCH /api/v1/redemptions/orders/{orderId}/cancel (operationId: cancelRedemptionOrder).
      */
     @PatchMapping("/redemptions/orders/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
             @PathVariable String orderId,
-            @RequestBody(required = false) CancelOrderRequest request) {
+            @Valid @RequestBody CancelOrderRequest request) {
         try {
-            String memberId = (request != null && request.getMemberId() != null) ? request.getMemberId() : "member-001";
-            RedemptionOrder order = redemptionService.cancelOrder(UUID.fromString(orderId), memberId);
+            RedemptionOrder order = redemptionService.cancelOrder(UUID.fromString(orderId), request.getMemberId());
             return ResponseEntity.ok(order);
         } catch (IllegalStateException e) {
             ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
@@ -144,11 +103,10 @@ public class RedemptionController {
         try {
             RedemptionOrder order = redemptionService.fulfillOrder(UUID.fromString(orderId));
             return ResponseEntity.ok(order);
+        } catch (IllegalStateException e) {
+            return problem(HttpStatus.CONFLICT, "invalid-state", "Invalid Order State", e.getMessage());
         } catch (IllegalArgumentException e) {
-            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-            problem.setType(URI.create("https://loyalty.internal/errors/order-not-found"));
-            problem.setTitle("Order Not Found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+            return problem(HttpStatus.NOT_FOUND, "order-not-found", "Order Not Found", e.getMessage());
         }
     }
 
@@ -158,16 +116,14 @@ public class RedemptionController {
     @PatchMapping("/redemptions/orders/{orderId}/fail")
     public ResponseEntity<?> failOrder(
             @PathVariable String orderId,
-            @RequestBody(required = false) FailOrderRequest request) {
+            @Valid @RequestBody FailOrderRequest request) {
         try {
-            String reason = (request != null && request.getReason() != null) ? request.getReason() : "FULFILLMENT_FAILED";
-            RedemptionOrder order = redemptionService.failAndReverseOrder(UUID.fromString(orderId), reason);
+            RedemptionOrder order = redemptionService.failAndReverseOrder(UUID.fromString(orderId), request.getReason());
             return ResponseEntity.ok(order);
+        } catch (IllegalStateException e) {
+            return problem(HttpStatus.CONFLICT, "restore-failed", "Restoration Failed", e.getMessage());
         } catch (IllegalArgumentException e) {
-            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-            problem.setType(URI.create("https://loyalty.internal/errors/order-not-found"));
-            problem.setTitle("Order Not Found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+            return problem(HttpStatus.NOT_FOUND, "order-not-found", "Order Not Found", e.getMessage());
         }
     }
 
@@ -186,25 +142,20 @@ public class RedemptionController {
 
     @Data
     public static class CancelOrderRequest {
+        @NotBlank(message = "memberId is required")
         private String memberId;
     }
 
     @Data
     public static class FailOrderRequest {
+        @NotBlank(message = "reason is required")
         private String reason;
     }
 
-    @Data
-    public static class AddItemRequest {
-        private String programId = "DEFAULT_PROG";
-        @NotBlank
-        private String name;
-        private String category;
-        @NotNull
-        private Long pointsCost;
-        private double currencyValue;
-        private String fulfillmentType = "DIGITAL";
-        private String minTierRequired = "SILVER";
-        private Integer stockQuantity;
+    private ResponseEntity<ProblemDetail> problem(HttpStatus status, String type, String title, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setType(URI.create("https://loyalty.internal/errors/" + type));
+        problem.setTitle(title);
+        return ResponseEntity.status(status).body(problem);
     }
 }

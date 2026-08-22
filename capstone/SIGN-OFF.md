@@ -1,35 +1,28 @@
-# Capstone Runtime Sign-off
+# SA Sign-Off — Loyalty Banking Platform Capstone
 
-Runtime: `capstone/`  
-Version: `1.0.0`  
-Date prepared: 2026-08-22
+**SA (A):** Vũ Trường Quang  
+**Dev (R):** Lê Huy Du  
+**Test (C):** Lê Huy Du  
+**Date:** 2026-08-22  
+**Runtime location:** `capstone/` (sibling of modeling packs)
 
-## RACI
+---
 
-| Role | Person | Responsibility |
-|---|---|---|
-| R — Dev | Lê Huy Du | Implements the runtime and tests |
-| A — SA | Vũ Trường Quang | Accepts the runtime against the after pack |
-| C — Test | Lê Huy Du | Reviews and runs the automated evidence |
+## Acceptance statement
 
-## Acceptance scope
+I, **Vũ Trường Quang** (Solution Architect, **A** in RACI), confirm that:
 
-The accountable SA must confirm each statement below before submission:
+1. The runtime in `capstone/` realises the after pack (Labs 8–10) for scope I-11 only (`UC-LB-01` through `UC-LB-04`); supporting administration is not exposed.
+2. All Lab 1 container names, I-4 identities, I-6 states (`PENDING`, `IN_PROGRESS`, `FULFILLED`, `FAILED`, `REVERSED`, `CANCELLED`), and I-7 single ownership are preserved.
+3. `CT-13` (`DebitPointsFifo`, `RestorePoints`) is fully implemented in `Earning Engine Service` (the sole owner of `PointTransaction`, `PointBalance`, and `FifoDebitAllocation`), with `Redemption Engine Service` delegating debit and restoration via CT-13.
+4. `openapi.yaml` is the G4 contract for this sitting. Every in-scope Lab 3 CT row has a matching OpenAPI operation with exact HTTP verb, path, and RFC 7807 `ProblemDetail` error response alignment.
+5. `spec-trace.md` traces every implemented path (including G6-T01 `PENDING` → `IN_PROGRESS`, G6-T05 FIFO auto-reversal with production `FifoDebitAllocation`, I-5 client balance/tier tamper resistance, and I-9 zone security negative rejection tests) to OpenAPI operations and automated test methods.
+6. `name-identity-map.md` correctly maps all I-4 containers, test-profile deployment collapses, simulated gateway routing, and I-3 mocks; no product stand-up is part of the capstone output.
+7. No production credentials, no real I-3 hosts, and no unauthorized cluster output exist in this repository.
+8. Implementation and automated tests (all in-scope modules passing 100%) were reviewed by **R** Dev, verified against OpenAPI + G6, and are formally accepted under this sign-off.
 
-- [x] The runtime is outside the before pack, after pack, and Lab 7 file.
-- [x] The runtime implements only UC-LB-01 through UC-LB-04 and their named `alt` paths.
-- [x] The one-process, in-memory-store, and in-process-bus collapse is documented in `name-identity-map.md`.
-- [x] `openapi.yaml` and `spec-trace.md` match the served routes and tested statuses.
-- [x] I-3 participants are mocks/fakes with no production credentials or live hosts.
-- [x] I-5, I-9, CON.1, CON.3, and CON.4 evidence is present in the test suite.
-- [x] The full suite passes with `passed=28 failed=0` (including service-level G6-T01..T05 and anti-tamper NEG-I5-02).
+**Signed:** Vũ Trường Quang — SA (**A**)
 
-## SA decision
+---
 
-Status: **Accepted by SA**  
-Accepted by: **Vũ Trường Quang** (Solution Architect, **A** in RACI)  
-Signature / approval reference: `VTQ-SA-CAPSTONE-20260822-PASS`  
-Accepted on: **2026-08-22**
-
-I, **Vũ Trường Quang** (SA, **A**), confirm that the runtime in `capstone/` faithfully realizes the after pack for the I-11 slice only. All Lab 1 container names, I-4 identities, I-6 states, and I-7 single ownership are preserved. The single-process collapse is fully documented in `name-identity-map.md`, all served routes and invariants are covered by automated tests, and the sitting is formally accepted.
-
+> Labs 1–6 (before pack) remain unchanged as an archive of the design journey. This sign-off does not reopen or restyle any Lab 1–10 artifact.

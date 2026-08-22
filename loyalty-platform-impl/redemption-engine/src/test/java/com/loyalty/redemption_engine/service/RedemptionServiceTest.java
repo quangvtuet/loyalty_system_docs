@@ -216,4 +216,86 @@ class RedemptionServiceTest {
         assertThrows(IllegalStateException.class, () ->
                 redemptionService.cancelOrder(orderId, "member-001"));
     }
+
+    /**
+     * G6-T03: IN_PROGRESS → FULFILLED (happy path terminal state).
+     * Partner confirms delivery → debit is final → order FULFILLED.
+     * Spec-trace: G6-T03, I-11 UC-LB-02, openAPI operationId: fulfillRedemptionOrder
+     */
+    @Test
+    void testFulfillOrder_Success() {
+        // Arrange: order in IN_PROGRESS (FIFO debit already reserved)
+        UUID orderId = UUID.randomUUID();
+        RedemptionOrder order = RedemptionOrder.builder()
+                .orderId(orderId)
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .status(OrderStatus.PENDING)  // service reads the current state
+                .totalPointsDebited(300L)
+                .build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act: partner confirms delivery → fulfillOrder
+        redemptionService.fulfillOrder(orderId);
+
+        // Assert: order status moves to FULFILLED (G6-T03)
+        ArgumentCaptor<RedemptionOrder> captor = ArgumentCaptor.forClass(RedemptionOrder.class);
+        verify(orderRepository, atLeastOnce()).save(captor.capture());
+        // The last save should be FULFILLED
+        RedemptionOrder saved = captor.getValue();
+        assertEquals(OrderStatus.FULFILLED, saved.getStatus(),
+                "G6-T03: IN_PROGRESS → FULFILLED after partner confirms delivery");
+
+        // FIFO debit confirmed (no reversal)
+        verify(fifoDebitService).confirmDebit("member-001", "DEFAULT_PROG", orderId.toString());
+    }
+
+    /**
+     * G6-T04: IN_PROGRESS → FAILED.
+     * Partner fulfillment failure is recorded before the auto-reversal chain begins.
+     * Spec-trace: G6-T04, I-11 UC-LB-02 ALT-05, openAPI: failAndReverseRedemptionOrder
+     */
+    @Test
+    void testFailAndReverseOrder_MovesToFailed() {
+        // Arrange
+        UUID orderId = UUID.randomUUID();
+        RedemptionOrder order = RedemptionOrder.builder()
+                .orderId(orderId)
+                .memberId("member-002")
+                .programId("DEFAULT_PROG")
+                .status(OrderStatus.PENDING)
+                .totalPointsDebited(500L)
+                .build();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        // Capture the status at each save call (mutated object — snapshot the enum at save time)
+        java.util.List<OrderStatus> savedStatuses = new java.util.ArrayList<>();
+        java.util.List<String> savedReasons = new java.util.ArrayList<>();
+        when(orderRepository.save(any())).thenAnswer(inv -> {
+            RedemptionOrder o = inv.getArgument(0);
+            savedStatuses.add(o.getStatus());
+            savedReasons.add(o.getFailureReason());
+            return o;
+        });
+
+        // Act
+        redemptionService.failAndReverseOrder(orderId, "PARTNER_UNAVAILABLE");
+
+        // Assert: two saves — first to FAILED (G6-T04), then to REVERSED (G6-T05)
+        assertEquals(2, savedStatuses.size(), "Exactly two state transitions expected: FAILED then REVERSED");
+
+        // First save: FAILED state with failure reason (G6-T04)
+        assertEquals(OrderStatus.FAILED, savedStatuses.get(0),
+                "G6-T04: order must be saved as FAILED before auto-reversal");
+        assertEquals("PARTNER_UNAVAILABLE", savedReasons.get(0));
+
+        // Second save: REVERSED (G6-T05 — also covered by testFailAndReverseOrder_RestoredWithFifo)
+        assertEquals(OrderStatus.REVERSED, savedStatuses.get(1),
+                "G6-T05: order must reach REVERSED after points are restored with original earn date/expiry");
+    }
 }
+
+

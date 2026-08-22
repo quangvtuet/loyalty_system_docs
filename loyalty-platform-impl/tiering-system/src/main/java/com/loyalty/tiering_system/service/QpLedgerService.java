@@ -12,6 +12,12 @@ import java.time.LocalDate;
 /**
  * QP Ledger Service — ghi nhận (append-only) mỗi QP accrual event.
  * FR-02-004: Record every QP accrual in qp_ledger.
+ *
+ * CON.1 / EXC-03: If (memberId, programId, sourceEventId) already exists in the ledger,
+ * the write is skipped and the current cumulative total is returned unchanged.
+ * This prevents duplicate QP rows from Kafka message re-delivery.
+ * Spec-trace: G6-A04 — tested by TierUpgradeIdempotencyTest.testEvaluateAndUpgrade_ReplayedEvent_TierNotMovedTwice
+ *             and QpLedgerServiceTest.testRecordQpAndGetCumulative_DuplicateEvent_SkipsWrite.
  */
 @Service
 @RequiredArgsConstructor
@@ -22,11 +28,24 @@ public class QpLedgerService {
 
     /**
      * Ghi một dòng QP accrual vào sổ cái và trả về tổng QP tích lũy trong period.
+     *
+     * CON.1 idempotency: if sourceEventId already recorded for this member+program,
+     * skip the write and return the current cumulative (no duplicate row).
      */
     @Transactional
     public long recordQpAndGetCumulative(String memberId, String programId, String sourceEventId, long qpAmount) {
         LocalDate periodStart = LocalDate.of(LocalDate.now().getYear(), 1, 1);
         LocalDate periodEnd = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+
+        // CON.1 — idempotency check at ledger level (EXC-03)
+        boolean alreadyRecorded = qpLedgerRepository.existsByMemberIdAndProgramIdAndSourceEventId(
+                memberId, programId, sourceEventId);
+        if (alreadyRecorded) {
+            log.warn("[CON.1 / EXC-03] Duplicate QP event skipped for member {} (sourceEventId: {}). " +
+                     "No new ledger row written.", memberId, sourceEventId);
+            // Return current cumulative — no change
+            return qpLedgerRepository.sumQpByMemberAndPeriod(memberId, programId, periodStart, periodEnd);
+        }
 
         QpLedger ledger = QpLedger.builder()
                 .memberId(memberId)

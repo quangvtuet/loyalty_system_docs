@@ -16,6 +16,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for QpLedgerService — including CON.1 ledger-level idempotency.
+ *
+ * Spec-trace:
+ * - testRecordQpAndGetCumulative_SavesLedgerAndReturnsCumulative → UC-LB-03 happy path, I-11
+ * - testRecordQpAndGetCumulative_NewMember_ReturnsSingleQpAmount → I-11 boundary
+ * - testRecordQpAndGetCumulative_DuplicateEvent_SkipsWrite       → CON.1 / EXC-03 / G6-A04 (UPGRADED from tier-only to ledger-level)
+ */
 class QpLedgerServiceTest {
 
     @Mock
@@ -34,6 +42,8 @@ class QpLedgerServiceTest {
         LocalDate periodStart = LocalDate.of(LocalDate.now().getYear(), 1, 1);
         LocalDate periodEnd = LocalDate.of(LocalDate.now().getYear(), 12, 31);
 
+        when(qpLedgerRepository.existsByMemberIdAndProgramIdAndSourceEventId(
+                "member-001", "DEFAULT_PROG", "event-001")).thenReturn(false);
         when(qpLedgerRepository.save(any())).thenReturn(new QpLedger());
         when(qpLedgerRepository.sumQpByMemberAndPeriod("member-001", "DEFAULT_PROG", periodStart, periodEnd))
                 .thenReturn(1100L);
@@ -59,6 +69,8 @@ class QpLedgerServiceTest {
         LocalDate periodStart = LocalDate.of(LocalDate.now().getYear(), 1, 1);
         LocalDate periodEnd = LocalDate.of(LocalDate.now().getYear(), 12, 31);
 
+        when(qpLedgerRepository.existsByMemberIdAndProgramIdAndSourceEventId(
+                "new-member", "DEFAULT_PROG", "event-new")).thenReturn(false);
         when(qpLedgerRepository.save(any())).thenReturn(new QpLedger());
         when(qpLedgerRepository.sumQpByMemberAndPeriod(any(), any(), eq(periodStart), eq(periodEnd)))
                 .thenReturn(500L);
@@ -66,5 +78,42 @@ class QpLedgerServiceTest {
         long result = qpLedgerService.recordQpAndGetCumulative("new-member", "DEFAULT_PROG", "event-new", 500L);
 
         assertEquals(500L, result);
+    }
+
+    /**
+     * CON.1 / EXC-03 / G6-A04 — Duplicate QP event at the LEDGER level.
+     *
+     * When the same (memberId, programId, sourceEventId) arrives again (Kafka re-delivery),
+     * QpLedgerService must NOT write a second ledger row.
+     * The existing cumulative total is returned unchanged.
+     *
+     * This closes the earlier partial gap where CON.1 was only enforced at the tier-ordinal level
+     * in TierUpgradeService but not at the QP ledger level, meaning a replay could create a
+     * ghost QP row that inflated the cumulative total.
+     *
+     * Spec-trace: CON.1, EXC-03, G6-A04, I-5
+     */
+    @Test
+    void testRecordQpAndGetCumulative_DuplicateEvent_SkipsWrite() {
+        LocalDate periodStart = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+        LocalDate periodEnd = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+
+        // Arrange: sourceEventId "event-dup-001" already exists in the ledger
+        when(qpLedgerRepository.existsByMemberIdAndProgramIdAndSourceEventId(
+                "member-001", "DEFAULT_PROG", "event-dup-001")).thenReturn(true);
+        // Current cumulative before replay: 1000 QP
+        when(qpLedgerRepository.sumQpByMemberAndPeriod(
+                "member-001", "DEFAULT_PROG", periodStart, periodEnd)).thenReturn(1000L);
+
+        // Act: same event delivered again
+        long result = qpLedgerService.recordQpAndGetCumulative(
+                "member-001", "DEFAULT_PROG", "event-dup-001", 200L);
+
+        // Assert: no new ledger row written (CON.1 / EXC-03)
+        verify(qpLedgerRepository, never()).save(any());
+
+        // Assert: current cumulative returned unchanged (1000, not 1200)
+        assertEquals(1000L, result,
+                "CON.1 / EXC-03: replayed QP event must not inflate cumulative total");
     }
 }

@@ -25,4 +25,16 @@ public interface QpLedgerRepository extends JpaRepository<QpLedger, UUID> {
             @Param("periodStart") LocalDate periodStart,
             @Param("periodEnd") LocalDate periodEnd
     );
+
+    /**
+     * CON.1 — Check whether a QP accrual event has already been recorded.
+     * Used by QpLedgerService to prevent duplicate ledger rows for replayed Kafka events (EXC-03).
+     * The natural idempotency key is (memberId, programId, sourceEventId).
+     */
+    boolean existsByMemberIdAndProgramIdAndSourceEventId(
+            String memberId,
+            String programId,
+            String sourceEventId
+    );
 }
+

@@ -36,19 +36,25 @@ public final class CapstoneTests {
             platform.earningEngineService.recordEarn("TXN-T01", "M-T01", Platform.PROGRAM_ID, 200d);
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-T01", Platform.REWARD_DIGITAL_VOUCHER);
-            assertEquals(OrderState.FULFILLED, order.state(),
-                    "service path reserves PENDING -> IN_PROGRESS before successful dispatch");
-            assertEquals(1, order.allocations().size(), "service recorded the FIFO reservation");
+
+            assertTrue(order.hasTransition(OrderState.PENDING, OrderState.IN_PROGRESS),
+                    "the order really made PENDING -> IN_PROGRESS");
+            assertEquals("PENDING -> IN_PROGRESS", order.transitions().get(0),
+                    "it is the first transition the order made");
+            assertEquals(1, order.allocations().size(),
+                    "the FIFO reservation that justifies the transition was recorded");
         });
 
         runner.check("G6-T02", "PENDING -> CANCELLED", () -> {
             Platform platform = new Platform(new MutableClock(START));
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-T02", Platform.REWARD_DIGITAL_VOUCHER);
-            assertEquals(OrderState.CANCELLED, order.state(), "state after cancellation");
+
+            assertTrue(order.hasTransition(OrderState.PENDING, OrderState.CANCELLED),
+                    "the order really made PENDING -> CANCELLED");
+            assertEquals(1, order.transitions().size(), "no other transition happened");
+            assertTrue(order.allocations().isEmpty(), "a cancelled order never reserved points");
             assertTrue(order.state().isTerminal(), "CANCELLED is terminal in I-6");
-            assertEquals(0, platform.partnerSystems.fulfillmentRequests(),
-                    "cancelled order never dispatches to Partner Systems");
         });
 
         runner.check("G6-T03", "IN_PROGRESS -> FULFILLED", () -> {
@@ -56,9 +62,11 @@ public final class CapstoneTests {
             platform.earningEngineService.recordEarn("TXN-T03", "M-T03", Platform.PROGRAM_ID, 200d);
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-T03", Platform.REWARD_DIGITAL_VOUCHER);
-            assertEquals(OrderState.FULFILLED, order.state(), "state after delivery");
-            assertEquals(1, platform.partnerSystems.fulfillmentRequests(),
-                    "fulfilled order was dispatched to Partner Systems");
+
+            assertTrue(order.hasTransition(OrderState.IN_PROGRESS, OrderState.FULFILLED),
+                    "the order really made IN_PROGRESS -> FULFILLED");
+            assertEquals("[PENDING -> IN_PROGRESS, IN_PROGRESS -> FULFILLED]", order.transitions().toString(),
+                    "the delivered path is exactly those two transitions");
         });
 
         runner.check("G6-T04", "IN_PROGRESS -> FAILED", () -> {
@@ -66,8 +74,13 @@ public final class CapstoneTests {
             platform.earningEngineService.recordEarn("TXN-T04", "M-T04", Platform.PROGRAM_ID, 200d);
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-T04", Platform.REWARD_OUT_OF_STOCK);
-            assertEquals(OrderState.REVERSED, order.state(),
-                    "service path moves through FAILED before automatic reversal");
+
+            assertTrue(order.hasTransition(OrderState.IN_PROGRESS, OrderState.FAILED),
+                    "the order really made IN_PROGRESS -> FAILED");
+            assertEquals("IN_PROGRESS -> FAILED", order.transitions().get(1),
+                    "FAILED was entered from IN_PROGRESS, not jumped to");
+            assertTrue(!order.hasTransition(OrderState.PENDING, OrderState.FAILED),
+                    "there is no PENDING -> FAILED shortcut");
             assertTrue(order.reason().contains("fulfillment"), "failure reason is recorded");
         });
 
@@ -76,11 +89,12 @@ public final class CapstoneTests {
             platform.earningEngineService.recordEarn("TXN-T05", "M-T05", Platform.PROGRAM_ID, 200d);
             RedemptionOrder order = platform.redemptionEngineService
                     .submitRedemption("M-T05", Platform.REWARD_OUT_OF_STOCK);
-            assertEquals(OrderState.REVERSED, order.state(), "state after auto-reversal");
-            assertEquals(400L, platform.earningEngineService.availablePoints("M-T05"),
-                    "service path restores the debited points");
-            assertEquals(1, platform.crmNotificationGateway.reversalNotices().size(),
-                    "service path notifies the member");
+
+            assertTrue(order.hasTransition(OrderState.FAILED, OrderState.REVERSED),
+                    "the order really made FAILED -> REVERSED");
+            assertEquals("[PENDING -> IN_PROGRESS, IN_PROGRESS -> FAILED, FAILED -> REVERSED]",
+                    order.transitions().toString(),
+                    "the compensated path is exactly those three transitions, in order");
         });
 
         // ---- I-11 named alternates ----

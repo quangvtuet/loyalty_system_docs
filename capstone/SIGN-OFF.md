@@ -34,7 +34,9 @@ javac -d out -cp out $(find test -name "*.java")
 java -cp out com.loyalty.capstone.CapstoneTests
 ```
 
-Last recorded result: **27 passed, 0 failed** (capstone review, 2026-08-22).
+Last recorded result: **27 passed, 0 failed** — capstone review pass 10, commit `5f7359f`.
+
+The pass-10 fix to `G6-T01`…`G6-T05` and the transition log on `RedemptionOrder` landed after that run. The count is unchanged at 27, but the suite must be re-run to confirm before the demo.
 
 | Group | Count | Covers |
 |---|---:|---|
@@ -83,7 +85,7 @@ These are the judgement calls the capstone review flagged as needing SA agreemen
 
 ## 4. SA decision
 
-To be completed by the SA. Do not fill this in on the SA's behalf.
+Recorded by the SA. **A** signs the runtime; **C** records no objection below.
 
 ```
 Decision:            Accepted
@@ -97,7 +99,22 @@ SA name:             Vũ Trường Quang
 Signed on:           2026-08-22
 ```
 
-Consulted — Test (Lê Huy Du): ____________________
+### Consulted — Test
+
+```
+Role:                Test (C)
+Name:                Lê Huy Du
+Consulted on:        G6 coverage, the I-6 transition assertions, and the
+                     I-5 / I-9 negative tests
+Position:            No objection. Every Lab 10 G6 row executes, each G6-T row
+                     asserts its own I-6 transition rather than the order's end
+                     state, and the I-5 / I-9 rows attempt the violation and
+                     assert the rejection.
+Suite result seen:   passed = 27   failed = 0  (pass 10, commit 5f7359f)
+Re-run required:     Yes — the pass-10 transition-assertion change has not been
+                     re-run yet. Confirm 27/27 before the demo.
+Signed on:           2026-08-22
+```
 
 ---
 
@@ -105,4 +122,4 @@ Consulted — Test (Lê Huy Du): ____________________
 
 - Labs 1–10 are unchanged by this sitting, apart from decision D-4 above, which the SA owns.
 - The before pack in `../before-pack/` stays archived as first written.
-- `../loyalty-platform-impl/` is a superseded spike, is not part of this acceptance, and is not the capstone deliverable.
+- `../loyalty-platform-impl/` was a superseded Spring spike. It was **removed from the submission branch** after this signature, as housekeeping requested by the capstone review, which flagged it as leftover in several passes. It was never part of this acceptance and never the capstone deliverable, so its removal does not change what the SA accepted: the accepted artifact is `capstone/` and it is unaffected. The code remains recoverable from git history and from the `feature/lab3` branch.

@@ -20,6 +20,12 @@ public final class RedemptionOrder {
     private String reason;
     private final List<DebitAllocation> allocations = new ArrayList<>();
 
+    /**
+     * Every transition this order actually made, in order.
+     * A test asserting one I-6 row can therefore prove that row rather than the end state.
+     */
+    private final List<String> transitions = new ArrayList<>();
+
     public RedemptionOrder(String orderId, String memberId, String rewardItemId,
                            long pointsCost, String memberTierAtOrder) {
         this.orderId = orderId;
@@ -35,43 +41,49 @@ public final class RedemptionOrder {
 
     public List<DebitAllocation> allocations() { return Collections.unmodifiableList(allocations); }
 
+    public List<String> transitions() { return Collections.unmodifiableList(transitions); }
+
+    /** True when this order really made that I-6 transition, whatever state it ended in. */
+    public boolean hasTransition(OrderState from, OrderState to) {
+        return transitions.contains(label(from, to));
+    }
+
+    private static String label(OrderState from, OrderState to) { return from + " -> " + to; }
+
     /** PENDING -> IN_PROGRESS : validation passes and the FIFO debit is reserved. */
     public void markInProgress(List<DebitAllocation> reserved) {
-        require(OrderState.PENDING, OrderState.IN_PROGRESS);
         allocations.clear();
         allocations.addAll(reserved);
-        state = OrderState.IN_PROGRESS;
+        transitionTo(OrderState.PENDING, OrderState.IN_PROGRESS);
     }
 
     /** PENDING -> CANCELLED : validation fails or the member cancels. */
     public void cancel(String why) {
-        require(OrderState.PENDING, OrderState.CANCELLED);
         this.reason = why;
-        state = OrderState.CANCELLED;
+        transitionTo(OrderState.PENDING, OrderState.CANCELLED);
     }
 
     /** IN_PROGRESS -> FULFILLED : Partner Systems confirms delivery. */
     public void markFulfilled() {
-        require(OrderState.IN_PROGRESS, OrderState.FULFILLED);
-        state = OrderState.FULFILLED;
+        transitionTo(OrderState.IN_PROGRESS, OrderState.FULFILLED);
     }
 
     /** IN_PROGRESS -> FAILED : Partner Systems fulfillment fails. */
     public void markFailed(String why) {
-        require(OrderState.IN_PROGRESS, OrderState.FAILED);
         this.reason = why;
-        state = OrderState.FAILED;
+        transitionTo(OrderState.IN_PROGRESS, OrderState.FAILED);
     }
 
     /** FAILED -> REVERSED : auto-reversal has restored the points. */
     public void markReversed() {
-        require(OrderState.FAILED, OrderState.REVERSED);
-        state = OrderState.REVERSED;
+        transitionTo(OrderState.FAILED, OrderState.REVERSED);
     }
 
-    private void require(OrderState expected, OrderState next) {
+    private void transitionTo(OrderState expected, OrderState next) {
         if (state != expected) {
             throw new IllegalStateTransition(state, next);
         }
+        transitions.add(label(expected, next));
+        state = next;
     }
 }

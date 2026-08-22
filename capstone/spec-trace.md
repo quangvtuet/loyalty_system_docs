@@ -34,6 +34,8 @@ UC-LB-03 has no OpenAPI operation because no Lab 3 contract row exposes it throu
 | G6-T03 | `IN_PROGRESS -> FULFILLED` | Redemption Engine Service | `G6-T03` | Yes |
 | G6-T04 | `IN_PROGRESS -> FAILED` | Redemption Engine Service | `G6-T04` | Yes |
 | G6-T05 | `FAILED -> REVERSED` | Redemption Engine Service | `G6-T05` | Yes |
+
+Each of those five runs through `RedemptionEngineService.submitRedemption` and asserts **its own transition**, not the state the order finished in. `RedemptionOrder` records the transitions it actually made, so `G6-T01` proves `PENDING -> IN_PROGRESS` happened even though the order ends `FULFILLED`, and `G6-T04` proves `IN_PROGRESS -> FAILED` happened even though the order ends `REVERSED`. `G6-T04` additionally asserts there is no `PENDING -> FAILED` shortcut, and `G6-T03` and `G6-T05` pin the whole ordered path.
 | G6-A01 | UC-LB-01 duplicate under CON.1 | Earning Engine Service | `G6-A01` | Yes |
 | G6-A02 | UC-LB-02 insufficient balance or tier-ineligible | Redemption Engine Service | `G6-A02` | Yes |
 | G6-A03 | UC-LB-02 partner failure and CON.3 compensation | Redemption Engine Service | `G6-A03` | Yes |
@@ -200,3 +202,12 @@ Test count moved from 17 to 27. No I-11 use case, name, operation, or state was 
 | C1 — `fulfilment` and `fulfillment` mixed | Normalised to Lab 1's `fulfillment` across `capstone/` and `lab3-spec.md`. The two source-defined identifiers `RequestFulfilment` and `ReturnFulfilmentOutcome` are frozen and documented in `name-identity-map.md` §10 |
 | Lab 7 gate register stale | `../lab7-adoption.md` §5 updated: G1–G6 now carry real Lab 8–10 evidence and read Pass; §0.1 corrected to say the archive holds Labs 1, 2, 3, 5, 6 |
 | Tracked build output | `capstone/out/` untracked and deleted; `.gitignore` already covered it |
+
+### Third review round — pass 10
+
+| Review point | Change |
+|---|---|
+| "T01 still asserts `FULFILLED`; T04 still asserts `REVERSED`" — the five G6-T rows ran through the service but each asserted the order's final state, so none proved the transition it claimed | `RedemptionOrder` now records the ordered list of transitions it actually made (`transitions()`, `hasTransition(from, to)`). `G6-T01`…`G6-T05` assert their own row: T01 asserts `PENDING -> IN_PROGRESS` is the first transition, T04 asserts `IN_PROGRESS -> FAILED` occurred and that no `PENDING -> FAILED` shortcut exists, T03 and T05 pin the exact ordered path. No test asserts an end state in place of its transition. |
+
+The transition log is derived state on the I-6 object. It adds no state, no name, and no use case: `OrderState` still holds exactly the six I-6 values, and an out-of-I-6 transition still throws before anything is recorded.
+

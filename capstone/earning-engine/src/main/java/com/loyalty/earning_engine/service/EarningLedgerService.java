@@ -7,6 +7,7 @@ import com.loyalty.earning_engine.domain.TransactionStatus;
 import com.loyalty.earning_engine.domain.TransactionType;
 import com.loyalty.earning_engine.dto.FifoDebitResponse;
 import com.loyalty.earning_engine.dto.FifoRestoreResponse;
+import com.loyalty.earning_engine.repository.FifoDebitAllocationRepository;
 import com.loyalty.earning_engine.repository.PointBalanceRepository;
 import com.loyalty.earning_engine.repository.PointTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class EarningLedgerService {
 
     private final PointTransactionRepository transactionRepository;
     private final PointBalanceRepository balanceRepository;
-    private final com.loyalty.earning_engine.repository.FifoDebitAllocationRepository allocationRepository;
+    private final FifoDebitAllocationRepository allocationRepository;
     
     // Constant for default program for this POC
     private static final String DEFAULT_PROGRAM = "DEFAULT_PROG";

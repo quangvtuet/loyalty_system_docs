@@ -1,6 +1,5 @@
 package com.loyalty.redemption_engine.service;
 
-import com.loyalty.redemption_engine.domain.FulfillmentType;
 import com.loyalty.redemption_engine.domain.RewardItem;
 import com.loyalty.redemption_engine.repository.RewardItemRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,11 +8,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 class CatalogServiceTest {

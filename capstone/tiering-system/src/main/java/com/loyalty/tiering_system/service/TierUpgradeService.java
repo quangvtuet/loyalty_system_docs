@@ -26,8 +26,6 @@ import java.time.LocalDateTime;
 public class TierUpgradeService {
 
     private static final String TIER_CHANGED_TOPIC = "loyalty.tiering.tier_changed";
-    private static final String DEFAULT_PROGRAM = "DEFAULT_PROG";
-    private static final int GRACE_PERIOD_DAYS = 30;
 
     private final MemberTierRepository memberTierRepository;
     private final KafkaTemplate<String, TierChangedEvent> kafkaTemplate;

@@ -3,11 +3,13 @@ package com.loyalty.capstone;
 import com.loyalty.capstone.gateway.ApiGateway;
 
 import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,11 +40,7 @@ public final class OpenApiDriftTests {
 
         runner.check("G4-D02", "every status the runtime returned is documented for that path", () -> {
             Map<String, Set<Integer>> documented = readOpenApi();
-
-            Map<String, Set<Integer>> observed = new LinkedHashMap<>();
-            observed.put("/partner-earn", statuses(201, 409, 400, 405));
-            observed.put("/redemptions", statuses(201, 422, 400, 404, 405));
-            observed.put("/reports/point-liability", statuses(200, 405));
+            Map<String, Set<Integer>> observed = observeRuntimeStatuses();
 
             for (Map.Entry<String, Set<Integer>> entry : observed.entrySet()) {
                 Set<Integer> documentedForPath = documented.get(entry.getKey());
@@ -56,11 +54,7 @@ public final class OpenApiDriftTests {
 
         runner.check("G4-D03", "openapi.yaml documents no status the runtime cannot produce", () -> {
             Map<String, Set<Integer>> documented = readOpenApi();
-
-            Map<String, Set<Integer>> producible = new LinkedHashMap<>();
-            producible.put("/partner-earn", statuses(201, 409, 400, 405));
-            producible.put("/redemptions", statuses(201, 422, 400, 404, 405));
-            producible.put("/reports/point-liability", statuses(200, 405));
+            Map<String, Set<Integer>> producible = observeRuntimeStatuses();
 
             for (Map.Entry<String, Set<Integer>> entry : documented.entrySet()) {
                 Set<Integer> producibleForPath = producible.get(entry.getKey());
@@ -74,20 +68,54 @@ public final class OpenApiDriftTests {
 
         runner.check("G4-D04", "the six I-6 states are the only ones in the documented order schema", () -> {
             String yaml = readRaw();
-            int at = yaml.indexOf("enum: [PENDING");
-            assertTrue(at > 0, "order state enum present in openapi.yaml");
-            String line = yaml.substring(at, yaml.indexOf('\n', at));
-            for (String state : new String[]{"PENDING", "IN_PROGRESS", "FULFILLED", "FAILED", "CANCELLED", "REVERSED"}) {
-                assertTrue(line.contains(state), "I-6 state documented: " + state);
-            }
-            assertEquals(6, line.split(",").length, "exactly six states are documented");
+            int description = yaml.indexOf("description: The six I-6 states");
+            assertTrue(description >= 0, "order state schema is identified in openapi.yaml");
+            int at = yaml.indexOf("enum: [", description);
+            assertTrue(at >= 0, "order state enum present in openapi.yaml");
+            int lineEnd = yaml.indexOf('\n', at);
+            assertTrue(lineEnd >= 0, "order state enum is on a complete line");
+            String line = yaml.substring(at + "enum: [".length(), lineEnd).trim();
+            assertEquals(Arrays.asList("PENDING", "IN_PROGRESS", "FULFILLED", "FAILED", "CANCELLED", "REVERSED"),
+                    Arrays.asList(line.substring(0, line.length() - 1).split(", ")),
+                    "exactly the six I-6 states are documented in order");
         });
     }
 
-    private static Set<Integer> statuses(int... codes) {
-        Set<Integer> set = new LinkedHashSet<>();
-        for (int code : codes) set.add(code);
-        return set;
+    /**
+     * Exercise every documented response scenario against the gateway. The drift checks must
+     * observe the runtime, not repeat a second hand-written copy of its status table.
+     */
+    private static Map<String, Set<Integer>> observeRuntimeStatuses() {
+        Map<String, Set<Integer>> observed = new LinkedHashMap<>();
+        HttpTestClient.withRuntime((base, clock, platform) -> {
+            record(observed, "/partner-earn", HttpTestClient.post(base + "/partner-earn",
+                    "{\"sourceTransactionId\":\"DRIFT-EARN\",\"memberId\":\"DRIFT-MEMBER\",\"amount\":200}"));
+            record(observed, "/partner-earn", HttpTestClient.post(base + "/partner-earn",
+                    "{\"sourceTransactionId\":\"DRIFT-EARN\",\"memberId\":\"DRIFT-MEMBER\",\"amount\":200}"));
+            record(observed, "/partner-earn", HttpTestClient.post(base + "/partner-earn",
+                    "{\"memberId\":\"DRIFT-MEMBER\"}"));
+            record(observed, "/partner-earn", HttpTestClient.get(base + "/partner-earn"));
+
+            record(observed, "/redemptions", HttpTestClient.post(base + "/redemptions",
+                    "{\"memberId\":\"DRIFT-POOR\",\"rewardItemId\":\"RI-VOUCHER-300\"}"));
+            record(observed, "/redemptions", HttpTestClient.post(base + "/redemptions",
+                    "{\"memberId\":\"DRIFT-MEMBER\",\"rewardItemId\":\"RI-VOUCHER-300\"}"));
+            record(observed, "/redemptions", HttpTestClient.post(base + "/redemptions",
+                    "{\"memberId\":\"DRIFT-MEMBER\"}"));
+            record(observed, "/redemptions", HttpTestClient.post(base + "/redemptions",
+                    "{\"memberId\":\"DRIFT-MEMBER\",\"rewardItemId\":\"RI-UNKNOWN\"}"));
+            record(observed, "/redemptions", HttpTestClient.get(base + "/redemptions"));
+
+            record(observed, "/reports/point-liability", HttpTestClient.get(base + "/reports/point-liability"));
+            record(observed, "/reports/point-liability",
+                    HttpTestClient.post(base + "/reports/point-liability", "{}"));
+        });
+        return observed;
+    }
+
+    private static void record(Map<String, Set<Integer>> observed, String path,
+                               HttpResponse<String> response) {
+        observed.computeIfAbsent(path, ignored -> new LinkedHashSet<>()).add(response.statusCode());
     }
 
     private static String readRaw() {
@@ -119,19 +147,26 @@ public final class OpenApiDriftTests {
             if (line.startsWith("components:")) break;
 
             String trimmed = line.trim();
-            if (line.startsWith("  /") && trimmed.endsWith(":")) {
+            if (line.startsWith("  /") && !line.startsWith("   ") && trimmed.endsWith(":")) {
                 current = trimmed.substring(0, trimmed.length() - 1);
+                if (documented.containsKey(current)) {
+                    throw new AssertionError("duplicate OpenAPI path: " + current);
+                }
                 documented.put(current, new LinkedHashSet<>());
                 continue;
             }
-            if (current != null && trimmed.startsWith("'") && trimmed.endsWith("':")) {
-                String code = trimmed.substring(1, trimmed.length() - 2);
-                try {
+            if (current != null && line.startsWith("        ") && trimmed.endsWith(":")) {
+                String code = trimmed.substring(0, trimmed.length() - 1);
+                if (code.startsWith("'") && code.endsWith("'")) {
+                    code = code.substring(1, code.length() - 1);
+                }
+                if (code.matches("[1-5][0-9]{2}")) {
                     documented.get(current).add(Integer.parseInt(code));
-                } catch (NumberFormatException notAStatus) {
-                    // not a status key
                 }
             }
+        }
+        if (documented.isEmpty()) {
+            throw new AssertionError("openapi.yaml contains no paths");
         }
         return documented;
     }

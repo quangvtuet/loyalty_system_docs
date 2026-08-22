@@ -14,7 +14,7 @@ public final class TestRunner {
             body.run();
             passed++;
             System.out.println("PASS  " + coverageId + "  " + name);
-        } catch (Throwable failure) {
+        } catch (AssertionError | RuntimeException failure) {
             failures.add(coverageId + " " + name + " :: " + failure);
             System.out.println("FAIL  " + coverageId + "  " + name + "  :: " + failure);
         }
@@ -40,7 +40,7 @@ public final class TestRunner {
     public static void assertThrows(Class<? extends Throwable> expected, Runnable body, String message) {
         try {
             body.run();
-        } catch (Throwable thrown) {
+        } catch (RuntimeException | Error thrown) {
             if (expected.isInstance(thrown)) return;
             throw new AssertionError(message + " threw " + thrown.getClass().getName());
         }

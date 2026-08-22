@@ -103,6 +103,7 @@ Not comments, not README warnings — the tests attempt each violation and asser
 |---|---|---|
 | CON.1 no duplicate posting | The duplicate check runs before any write; a repeat returns the original result | `G6-A01` |
 | CON.2 no write outside the owner | Every store carries the I-4 name of its only writer; anything else throws `OwnershipViolation` | `NEG-I5-01` |
+| I-5 anti-tamper on tier/balance | Server ignores forged tier and balance in earn/redeem payloads, deriving points and eligibility from authoritative services | `NEG-I5-02` |
 | CON.3 restore on fulfillment failure | Points go back onto the **same** batches, so earn date and expiry survive and no new batch appears | `G6-A03` |
 | CON.4 ten-minute freshness | The report carries `stale` and alerts Finance instead of presenting an old figure as current | `G6-A05` |
 | I-9 forbidden path | No gateway route writes a store; a direct attempt from an external name is refused | `NEG-I9-01` |

@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: earning-engine
+  
+  datasource:
+    url: ${EARNING_DB_URL:jdbc:postgresql://${EARNING_DB_HOST:localhost}:${EARNING_DB_PORT:5432}/${EARNING_DB_NAME:earning_db}?currentSchema=earning,public}
+    username: ${EARNING_DB_USERNAME:earning_user}
+    password: ${EARNING_DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${MESSAGE_BROKER_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: earning-engine-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  data:
+    redis:
+      host: ${IDEMPOTENCY_STORE_HOST:localhost}
+      port: ${IDEMPOTENCY_STORE_PORT:6379}
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.loyalty: DEBUG
+    org.springframework.kafka: INFO

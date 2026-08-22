@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: tiering-system
+
+  datasource:
+    url: ${TIERING_DB_URL:jdbc:postgresql://${TIERING_DB_HOST:localhost}:${TIERING_DB_PORT:5432}/${TIERING_DB_NAME:tiering_db}?currentSchema=tiering,public}
+    username: ${TIERING_DB_USERNAME:tiering_user}
+    password: ${TIERING_DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${MESSAGE_BROKER_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: tiering-system-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.value.default.type: "com.loyalty.tiering_system.event.QpAccruedEvent"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 8082
+
+logging:
+  level:
+    com.loyalty: DEBUG
+    org.springframework.kafka: INFO

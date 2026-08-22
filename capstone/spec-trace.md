@@ -93,7 +93,7 @@ The brief requires a test that **attempts** the violation and a runtime that rej
 | CON.2 — Redemption Engine Service writes Tiering DB | `tieringDb.tierForWrite("Redemption Engine Service", …)` | `OwnershipViolation` thrown | `NEG-I5-01` |
 | CON.2 — API Gateway writes Redemption DB | `redemptionDb.saveOrder("API Gateway", …)` | `OwnershipViolation` thrown | `NEG-I5-01` |
 | CON.2 — Earning Engine Service writes Data Warehouse | `dataWarehouse.upsertFact("Earning Engine Service", …)` | `OwnershipViolation` thrown | `NEG-I5-01` |
-| I-5 Anti-tamper — Client sends forged tier in partner earn payload | `POST /partner-earn` with `{"tier":"PLATINUM"}` | Server ignores forged tier field; calculates points using authoritative projected tier (SILVER) | `NEG-I5-02` |
+| I-5 Anti-tamper — Client sends forged tier in partner earn payload; client sends forged tier/balance in redemption payload | `POST /partner-earn` with `{"tier":"PLATINUM"}`; `POST /redemptions` with `{"tier":"PLATINUM","balance":999999}` | Server ignores forged client fields; calculates earn points using authoritative projected tier (SILVER); rejects ineligible redemption with 422 CANCELLED | `NEG-I5-02` |
 | CON.1 — the same source transaction is posted twice | Second `recordEarn` with the same source transaction | Duplicate result returned, one ledger row only | `G6-A01` |
 | I-6 — a transition outside the six states | `markFulfilled` from `PENDING`, `markReversed` from `PENDING`, `markInProgress` from `CANCELLED` | `IllegalStateTransition` thrown | `NEG-I6-01` |
 

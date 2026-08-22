@@ -1,0 +1,243 @@
+openapi: 3.0.3
+
+# G4 for the capstone sitting.
+# Every operation below is an in-scope row of the Lab 3 contract register in ../lab3-spec.md.
+# No operation exists here that the four I-11 use cases do not need.
+
+info:
+  title: Loyalty Banking Platform — capstone runtime
+  version: "1.0.0"
+  description: >
+    Public contract of the collapsed runtime. Every path is served by the I-4 container
+    API Gateway. Simulated scenario only: no real host, no production credential.
+
+servers:
+  - url: http://localhost:8080
+    description: Local capstone runtime
+
+tags:
+  - name: UC-LB-01
+    description: Process settled earn event
+  - name: UC-LB-02
+    description: Redeem reward with FIFO
+  - name: UC-LB-04
+    description: Generate point liability report
+
+paths:
+
+  /partner-earn:
+    post:
+      tags: [UC-LB-01]
+      operationId: SubmitPartnerEarn
+      summary: Submit a partner earn event
+      description: >
+        Lab 3 contract rows CT-03 (Partner Systems to API Gateway, adapter, sync) and
+        CT-04 (API Gateway to Earning Engine Service, sync).
+        A source transaction that has already been rewarded is refused under CON.1;
+        the original result is returned and no second PointTransaction is written.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerEarnRequest'
+      responses:
+        '201':
+          description: Points awarded and a PointTransaction written
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EarnResult'
+        '409':
+          description: >
+            CON.1 duplicate. The source transaction was already rewarded.
+            The body carries the original pointTransactionId and duplicate is true.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EarnResult'
+        '400':
+          description: sourceTransactionId, memberId or amount missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /redemptions:
+    post:
+      tags: [UC-LB-02]
+      operationId: SubmitRedemption
+      summary: Submit a redemption order
+      description: >
+        Lab 3 contract rows CT-10 (Member to API Gateway, sync) and
+        CT-11 (API Gateway to Redemption Engine Service, sync).
+        Points are consumed oldest earned first. The three named I-11 alternates are
+        insufficient balance, tier-ineligible reward, and partner fulfillment failure.
+        On fulfillment failure the order ends REVERSED after the CON.3 compensating action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedemptionRequest'
+      responses:
+        '201':
+          description: >
+            Order accepted. state is FULFILLED on delivery, or REVERSED when Partner Systems
+            failed and the CON.3 compensating action restored the original point batches.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedemptionOrder'
+        '422':
+          description: >
+            Order CANCELLED before any debit. reason names the cause:
+            insufficient balance or a tier below the reward minimum.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedemptionOrder'
+        '404':
+          description: Unknown reward item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: memberId or rewardItemId missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /reports/point-liability:
+    get:
+      tags: [UC-LB-04]
+      operationId: RequestReport
+      summary: Request the point liability report
+      description: >
+        Lab 3 contract rows CT-25 (Finance to API Gateway, sync) and
+        CT-26 (API Gateway to Analytics & Reporting Service, sync).
+        Read from Data Warehouse only. When the warehouse is more than ten minutes behind,
+        stale is true and Finance is alerted — the report is never presented as current.
+      responses:
+        '200':
+          description: >
+            Liability figures. stale is true when the CON.4 ten-minute limit is exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointLiabilityReport'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+components:
+  schemas:
+
+    PartnerEarnRequest:
+      type: object
+      required: [sourceTransactionId, memberId, amount]
+      properties:
+        sourceTransactionId:
+          type: string
+          example: TXN-1001
+        memberId:
+          type: string
+          example: M-1001
+        amount:
+          type: number
+          format: double
+          example: 200
+
+    EarnResult:
+      type: object
+      required: [pointTransactionId, pointsAwarded, duplicate]
+      properties:
+        pointTransactionId:
+          type: string
+        pointsAwarded:
+          type: integer
+          format: int64
+        duplicate:
+          type: boolean
+        constraint:
+          type: string
+          nullable: true
+          enum: [CON.1, null]
+          description: CON.1 when the posting was refused as a duplicate
+
+    RedemptionRequest:
+      type: object
+      required: [memberId, rewardItemId]
+      properties:
+        memberId:
+          type: string
+          example: M-1001
+        rewardItemId:
+          type: string
+          example: RI-VOUCHER-300
+
+    RedemptionOrder:
+      type: object
+      required: [orderId, memberId, state]
+      properties:
+        orderId:
+          type: string
+        memberId:
+          type: string
+        state:
+          type: string
+          description: The six I-6 states. No other value is produced.
+          enum: [PENDING, IN_PROGRESS, FULFILLED, FAILED, CANCELLED, REVERSED]
+        reason:
+          type: string
+          nullable: true
+        constraint:
+          type: string
+          nullable: true
+          enum: [CON.3, null]
+          description: CON.3 when the order was reversed after a fulfillment failure
+
+    PointLiabilityReport:
+      type: object
+      required: [outstandingPoints, liabilityUsd, stale, dataAgeSeconds]
+      properties:
+        outstandingPoints:
+          type: integer
+          format: int64
+        liabilityUsd:
+          type: number
+          format: double
+        stale:
+          type: boolean
+        dataAgeSeconds:
+          type: integer
+          format: int64
+        constraint:
+          type: string
+          nullable: true
+          enum: [CON.4, null]
+          description: CON.4 when the warehouse is more than ten minutes behind
+
+    Problem:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string

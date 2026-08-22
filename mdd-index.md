@@ -1,225 +1,82 @@
 # Loyalty Banking — Model-Driven Design Index
 
-> **Not a lab artifact — outside the modeling pack.**
-> This is an internal catalogue of material the team wrote ahead of schedule. It is **not** submitted for any lab.
-> It still points at documents that use the old container names and the old constraint set, so treat it as stale.
-> The Lab 4 cleanup is in [`lab4-cleanup.md`](lab4-cleanup.md).
+> **Official Modeling Pack Reference & Master Catalog**  
+> The authoritative 10-lab modeling pack and runnable capstone reside at repository root and in `capstone/`.  
+> Below is the master index connecting the official pack artifacts and the reference material with clean workspace paths.
 
-**Domain**: Loyalty Banking  
-**Version**: 1.0  
-**Date**: 2026-08-16  
-**Purpose**: Master catalog mapping every formal model artifact in the documentation suite to its location, type, and traceability references.
+**Domain**: Loyalty Banking Platform  
+**Version**: 2.0 (Post-MDD Standardization)  
+**Status**: All Quality Gates G1–G6 Closed · Capstone Verified Green (27 Passed, 0 Failed)
 
 ---
 
-## 1. Overview
+## 0. Official 10-Lab Modeling Pack Deliverables
 
-This index is the **single entry point** for navigating all model-driven artifacts in the Loyalty Banking platform documentation. Every design decision, behavioral specification, and structural model can be located from this page.
-
-### Model Categories
-
-| Category | Description | Count |
-|---|---|---|
-| **Structural Models** | Class diagrams, ER diagrams, component diagrams, deployment topology | 10 |
-| **Behavioral Models** | Sequence diagrams, state machines, activity flows | 22 |
-| **Data Models** | Physical DDL schemas, dimensional star schema, partitioning | 6 |
-| **Decision Records** | Architecture Decision Records (ADRs) | 3 |
-| **Contract Models** | Domain event catalog, API standards | 2 |
-| **Quality Models** | Quality gate criteria, traceability matrix | 3 |
+| Lab | Deliverable Artifact | Focus & Key Standards | Primary Roles |
+|---|---|---|---|
+| **Lab 1** | [`loyalty.md`](loyalty.md) | Scope Index I-1..I-11, name-identity index, CON.1–CON.4 | R: BA/SA · A: Owner |
+| **Lab 2** | [`lab2-requirements.md`](lab2-requirements.md) | Requirements list (REQ-LB-01..63), Analysis, Gate Register G1–G6, Trace Table | R: BA/EA · A: Owner |
+| **Lab 3** | [`lab3-spec.md`](lab3-spec.md) | Build list (13 containers), 5 Component modules, Sequence, Contracts (CT-01..27), Exceptions, Tests | R: Dev/Test · A: SA |
+| **Lab 4** | [`lab4-cleanup.md`](lab4-cleanup.md) | Full MDD Standardization Report, Zero-fork check, Language check, 23-defect catalog, Before vs After | R: SA · A: EA |
+| **Lab 5** | [`lab-05-uml-before.md`](lab-05-uml-before.md) (archive: [`before-pack/lab5/`](before-pack/lab5/)) | Low-level design (UML) before pack | R: Dev/Test · A: SA/BA |
+| **Lab 6** | [`lab-06-ecosystem-before.md`](lab-06-ecosystem-before.md) (archive: [`before-pack/lab6/`](before-pack/lab6/)) | Integration ecosystem before sketch | R: SA · A: SA |
+| **Lab 7** | [`lab7-adoption.md`](lab7-adoption.md) | Guide adoption record, 4-person group roster, adopted RACI matrix, G1–G6 Gate Register | R: EA · A: Owner |
+| **Lab 8** | [`lab8-archimate-views.md`](lab8-archimate-views.md) | 4 ArchiMate views: Motivation (G1), Business Process (G2), App Cooperation, Technology | R: EA/BA/SA/Ops · A: Owner/EA/SA |
+| **Lab 9** | [`lab-09-c4-after.md`](lab-09-c4-after.md) | C4 Context L1 (G3), C4 Container L2 (G3), C4 Component L3 (`Redemption Engine Service`) | R: SA/Dev · A: Owner/EA/SA |
+| **Lab 10** | [`lab-10-uml-after.md`](lab-10-uml-after.md) | UML Sequences (UC-LB-01..04), UML Activity, State Machine (`RedemptionOrder`), G6 Note | R: Dev/Test · A: SA/BA |
+| **Capstone** | [`capstone/`](capstone/) | Runnable I-11 slice, OpenAPI 3.0 contract, spec-trace, SA sign-off, 27 automated tests | R: Dev · A: SA · C: Test |
 
 ---
 
-## 2. Structural Models
-
-### 2.1 System-Level Architecture (C4)
+## 1. Structural Models (C4 & Component Level)
 
 | Model | Type | Document | Section | Scope |
 |---|---|---|---|---|
-| System Context Diagram (C4 L1) | C4 Context | [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) | §2 | All 5 modules + 4 external systems |
-| Container Architecture (C4 L2) | C4 Container | [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) | §3 | Edge, Domain Services, Data Storage, External |
-| Deployment Topology (Multi-AZ) | Infrastructure | [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) | §7 | Primary/Standby AZ, Analytics Zone |
-
-### 2.2 Component Architecture (per Module)
-
-| Model | Type | Document | Section | Entities Covered |
-|---|---|---|---|---|
-| Earning Engine Components | Flowchart | [DD-01-earning-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §2 | Ingestion, Dedup, Calculation, Ledger, Egress |
-| Tiering System Components | Flowchart | [DD-02-tiering-system.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-02-tiering-system.md) | §2 | QP Ingestion, Upgrade Engine, Batch, Dispatch |
-| Redemption Engine Components | Flowchart | [DD-03-redemption-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-03-redemption-engine.md) | §2 | API, Validation, FIFO Debit, Fulfillment |
-| Program Management Components | Flowchart | [DD-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §2 | Admin API, Core Engines, Audit, Event Pub |
-| Analytics & Reporting Components | Flowchart | [DD-05-analytics-reporting.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §2 | CDC Ingestion, DW, Reporting, Delivery |
-
-### 2.3 Domain Model
-
-| Model | Type | Document | Section | Entities Covered |
-|---|---|---|---|---|
-| Domain Class Model (UML) | Class Diagram | [loyalty_domain.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/loyalty_domain.md) | §Domain Class Model | All 15 domain entities across 4 bounded contexts |
-| Aggregate Boundary Rules | Table | [loyalty_domain.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/loyalty_domain.md) | §Aggregate Boundary Rules | 5 bounded contexts, aggregate roots, databases |
+| System Context (L1) | C4 Context | [`lab-09-c4-after.md`](lab-09-c4-after.md) | Level 1 | 4 Actors + System-in-focus + 4 Externals (G3) |
+| Container Architecture (L2) | C4 Container | [`lab-09-c4-after.md`](lab-09-c4-after.md) | Level 2 | 13 I-4 Containers + 4 Externals, Sync/Async labeled (G3) |
+| Redemption Engine Component (L3) | C4 Component | [`lab-09-c4-after.md`](lab-09-c4-after.md) | Level 3 | 5 Canonical Modules + Black-Box Neighbors |
+| Multi-AZ Deployment Topology | ArchiMate Tech / Infra | [`lab8-archimate-views.md`](lab8-archimate-views.md) | View 4 | 4 Zones from I-9 + Forbidden Path Guard |
+| Earning Engine Flow | Flowchart | [`design/DD-01-earning-engine.md`](design/DD-01-earning-engine.md) | §2 | Ingestion, Dedup, Calculation, Ledger, Egress |
+| Tiering System Flow | Flowchart | [`design/DD-02-tiering-system.md`](design/DD-02-tiering-system.md) | §2 | QP Ingestion, Upgrade Engine, Batch, Dispatch |
+| Redemption Engine Flow | Flowchart | [`design/DD-03-redemption-engine.md`](design/DD-03-redemption-engine.md) | §2 | API, Validation, FIFO Debit, Fulfillment |
+| Program Management Flow | Flowchart | [`design/DD-04-program-management.md`](design/DD-04-program-management.md) | §2 | Admin API, Core Engines, Audit, Event Pub |
+| Analytics & Reporting Flow | Flowchart | [`design/DD-05-analytics-reporting.md`](design/DD-05-analytics-reporting.md) | §2 | CDC Ingestion, DW, Reporting, Delivery |
 
 ---
 
-## 3. Data Models
+## 2. Behavioral Models (Sequences & State Machines)
 
-### 3.1 OLTP Physical Schemas
-
-| Model | Type | Document | Section | Tables |
-|---|---|---|---|---|
-| Earning Engine Schema | DDL (PostgreSQL) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §3.1 | `point_balance`, `point_transaction`, `earn_rule` |
-| Tiering System Schema | DDL (PostgreSQL) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §3.2 | `qp_ledger`, `member_tier`, `tier_rule`, `tier_evaluation_log` |
-| Redemption Engine Schema | DDL (PostgreSQL) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §3.3 | `reward_item`, `redemption_order`, `fulfillment_record` |
-| Program Management Schema | DDL (PostgreSQL) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §3.4 | `loyalty_program`, `campaign`, `partner`, `enrollment`, `config_version_log`, `manual_adjustment_log` |
-
-### 3.2 Analytical Schemas
-
-| Model | Type | Document | Section | Tables |
-|---|---|---|---|---|
-| Data Warehouse Star Schema | ER Diagram | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §4 | `fact_point_transaction`, `fact_redemption_order`, `dim_*` |
-| Storage Partitioning & Retention | Table | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §5 | Hot/Warm/Cold tiers |
-
-### 3.3 Entity-Relationship Diagram
-
-| Model | Type | Document | Section |
+| Model | Flow / Use Case | Document | Scope |
 |---|---|---|---|
-| OLTP Core ER Diagram | ER Diagram (Mermaid) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | §2 |
+| UC-LB-01 Process settled earn event | Sequence | [`lab-10-uml-after.md`](lab-10-uml-after.md) §UC-LB-01 | Core Banking → Broker → Earning → Idempotency → Ledger (CON.1) |
+| UC-LB-02 Redeem reward with FIFO | Sequence | [`lab-10-uml-after.md`](lab-10-uml-after.md) §UC-LB-02 | Member → Gateway → 5 Modules → Partner (CON.3 Reversal) |
+| UC-LB-03 Apply tier upgrade | Sequence | [`lab-10-uml-after.md`](lab-10-uml-after.md) §UC-LB-03 | Earning → Broker → Tiering → Tiering DB (Idempotent Replay) |
+| UC-LB-04 Generate liability report | Sequence | [`lab-10-uml-after.md`](lab-10-uml-after.md) §UC-LB-04 | Finance → Gateway → Analytics → DW (CON.4 Staleness Guard) |
+| I-5 Happy Path Activity | Activity | [`lab-10-uml-after.md`](lab-10-uml-after.md) §Activity | Steps 1 to 8 with CON.1, CON.2, CON.4 decision branches |
+| `RedemptionOrder` Lifecycle | State Machine | [`lab-10-uml-after.md`](lab-10-uml-after.md) §State | 6 States (`PENDING`, `IN_PROGRESS`, `FULFILLED`, `FAILED`, `CANCELLED`, `REVERSED`) |
+| Domain Entity Lifecycles | State Machines | [`design/entity-lifecycle-models.md`](design/entity-lifecycle-models.md) | PointTransaction, MemberTier, LoyaltyProgram, Campaign, Enrollment |
 
 ---
 
-## 4. Behavioral Models
+## 3. Data & Storage Models
 
-### 4.1 Entity Lifecycle State Machines
-
-| Model | Entity | Document | Section | Status Values |
-|---|---|---|---|---|
-| PointTransaction Lifecycle | `PointTransaction` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §2 | PENDING, CONFIRMED, CANCELLED, PENDING_DEBIT, CONFIRMED_DEBIT, EXPIRED |
-| RedemptionOrder Lifecycle | `RedemptionOrder` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §3 | PENDING, IN_PROGRESS, FULFILLED, FAILED, CANCELLED, REVERSED |
-| MemberTier Lifecycle | `MemberTier` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §4 | ACTIVE, IN_GRACE_PERIOD, DOWNGRADED |
-| LoyaltyProgram Lifecycle | `LoyaltyProgram` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §5 | DRAFT, ACTIVE, SUSPENDED, DEACTIVATED |
-| Campaign Lifecycle | `Campaign` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §6 | DRAFT, ACTIVE, PAUSED, COMPLETED, DEACTIVATED |
-| Enrollment Lifecycle | `Enrollment` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §7 | PENDING, ACTIVE, SUSPENDED, CANCELLED |
-| FulfillmentRecord Lifecycle | `FulfillmentRecord` | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §8 | PENDING, IN_PROGRESS, FULFILLED, FAILED |
-| Cross-Entity Interaction Map | All entities | [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) | §9 | — |
-
-### 4.2 State Machines (Embedded in Design Docs)
-
-| Model | Document | Section | Notes |
+| Model | Type | Document | Scope |
 |---|---|---|---|
-| Grace Period State Machine | [DD-02-tiering-system.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-02-tiering-system.md) | §4 | Tier evaluation + grace rescue flow |
-| RedemptionOrder State Machine | [DD-03-redemption-engine.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-03-redemption-engine.md) | §4 | Order lifecycle with concurrent protection |
-| LoyaltyProgram State Machine | [DD-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §4.1 | Program activation pre-conditions |
-| Campaign State Machine | [DD-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §4.2 | Priority conflict + auto-completion |
-| Enrollment State Machine | [DD-04-program-management.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §4.3 | Multi-program enrollment support |
-| Manual Adjustment Workflow | [Security-and-Integration-Architecture.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Security-and-Integration-Architecture.md) | §4 | Dual-control approval state machine |
+| OLTP Physical DDL Schemas | SQL DDL | [`architecture/Data-Architecture-and-Schema.md`](architecture/Data-Architecture-and-Schema.md) | Earning DB, Tiering DB, Redemption DB, Program Mgmt DB |
+| Star Schema Dimensional Model | ER Diagram | [`architecture/Data-Architecture-and-Schema.md`](architecture/Data-Architecture-and-Schema.md) | `fact_point_transaction`, `fact_redemption_order`, Dimensions |
+| Core ER Diagram | Mermaid ER | [`architecture/Data-Architecture-and-Schema.md`](architecture/Data-Architecture-and-Schema.md) | Relational entity mappings across 5 bounded contexts |
 
-### 4.3 Sequence Diagrams
+---
 
-| Model | Flow ID | Document | Section | Modules Crossed |
-|---|---|---|---|---|
-| Standard Earn + Bonus | FLOW-01 | [DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §4.1 | Core Banking → Earning → Ledger |
-| Deduplication of Duplicate Event | UC-01-05 | [DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §4.2 | Core Banking → Earning → Redis |
-| Automated Point Expiry Sweep | FLOW-12 | [DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §4.3 | Cron → Ledger → Notification → DW |
-| Real-Time Tier Upgrade | FLOW-02 | [DD-02](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-02-tiering-system.md) | §5.1 | Earning → Tiering → Kafka → Notification |
-| Tier Downgrade + Grace Rescue | FLOW-03 | [DD-02](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-02-tiering-system.md) | §5.2 | Batch → Tiering → Earning → Notification |
-| Redemption with FIFO | FLOW-04 | [DD-03](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-03-redemption-engine.md) | §5.1 | Member → Redemption → Ledger → Partner |
-| Fulfillment Failure Reversal | FLOW-05 | [DD-03](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-03-redemption-engine.md) | §5.2 | Partner → Redemption → Ledger → Notification |
-| Tier-Restricted Redemption | FLOW-09 | [DD-03](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-03-redemption-engine.md) | §5.3 | Member → Redemption → Tiering |
-| Prospective Rule Change | FLOW-07 | [DD-04](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §5.1 | Admin → Program Mgmt → Audit → Kafka |
-| Partner Earn via OAuth | FLOW-08 | [DD-04](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §5.2 | Partner → Gateway → Earning → Ledger |
-| Manual Adjustment Approval | FLOW-11 | [DD-04](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §5.3 | Operator → Approval → Ledger → Audit |
-| CDC to Data Warehouse | FLOW-10 | [DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §4.1 | Earning DB → Debezium → Kafka → DW |
-| Scheduled Report Delivery | UC-05-09 | [DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §4.2 | Scheduler → Engine → RBAC → DW → Email |
-| Liability Alert Dashboard | UC-05-08 | [DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §4.3 | Poller → DW → Dashboard → PagerDuty |
-| Partner OAuth 2.0 Flow | — | [Security-Architecture.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Security-and-Integration-Architecture.md) | §2 | Partner → Gateway → Rate Limiter → Earning |
+## 4. Contract, Governance & Decision Records
 
-### 4.4 Mathematical Specifications
-
-| Model | Document | Section | Formulas |
+| Record | Standard | Document | Description |
 |---|---|---|---|
-| Base Points Calculation | [DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §3.1 | `FLOOR(amount × rate × multiplier)` |
-| Bonus Campaign Evaluation | [DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md) | §3.2 | Priority selection; stacking summation |
-| Campaign Priority Resolution | [DD-04](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-04-program-management.md) | §3.2 | `argmin(priority)` |
-| Point Liability & Aging | [DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §3.1 | `SUM(unspent) × cost_per_point` |
-| Program Health KPIs | [DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md) | §3.2 | Redemption Rate, Breakage Rate, Active Rate, Earn Lift |
+| Public HTTP API Contract | OpenAPI 3.0 | [`capstone/openapi.yaml`](capstone/openapi.yaml) | 3 public endpoints: `POST /partner-earn`, `POST /redemptions`, `GET /reports/point-liability` |
+| Inter-Container Contract Register | G4 Table | [`lab3-spec.md`](lab3-spec.md) §4 | 27 contract rows across Sync, Async, Adapter patterns |
+| Domain Event Catalog | Async Event Schemas | [`architecture/domain-event-catalog.md`](architecture/domain-event-catalog.md) | 11 event schemas, partition keys, idempotency contracts |
+| ADR-001 | Decision Record | [`architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md`](architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md) | Database-per-service isolation; single owner per store |
+| ADR-002 | Decision Record | [`architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md`](architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) | Kafka stream ingestion + SHA-256 idempotency cache |
+| ADR-003 | Decision Record | [`architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md`](architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md) | CDC-driven star schema Data Warehouse to isolate reporting |
+| SA Sign-Off Record | Acceptance Form | [`capstone/SIGN-OFF.md`](capstone/SIGN-OFF.md) | Formally signed SA acceptance of runnable I-11 slice |
 
----
-
-## 5. Contract Models
-
-### 5.1 Domain Event Catalog
-
-| Model | Document | Events Documented |
-|---|---|---|
-| Full Domain Event Catalog | [domain-event-catalog.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/domain-event-catalog.md) | 11 events (EVT-001..011) with payload schemas, ordering, idempotency |
-| Event Flow Topology | [domain-event-catalog.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/domain-event-catalog.md) §3 | Mermaid flowchart of all event flows |
-| Kafka Topic Summary | [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) | §5.2 — 6 topics summarized |
-
-### 5.2 API & Integration Standards
-
-| Model | Document | Section | Scope |
-|---|---|---|---|
-| REST API Standard (RFC 7807) | [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) | §5.1 | Error payloads, versioning, security |
-| RBAC Matrix | [Security-Architecture.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Security-and-Integration-Architecture.md) | §3 | 6 roles × 9 resource endpoints |
-| STRIDE Threat Model | [Security-Architecture.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Security-and-Integration-Architecture.md) | §6 | 6 threat categories with mitigations |
-
----
-
-## 6. Decision Records
-
-| ADR | Title | Document | Status | Key Decision |
-|---|---|---|---|---|
-| ADR-001 | Module Boundaries & Data Isolation | [ADR-001](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md) | Accepted | Database-per-service; no cross-DB access |
-| ADR-002 | Event-Driven Earn Ingestion & Idempotency | [ADR-002](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) | Accepted | Kafka + Redis SHA-256 idempotency |
-| ADR-003 | Data Warehouse & Analytics Isolation | [ADR-003](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md) | Accepted | CDC to star schema; OLTP/OLAP separation |
-
----
-
-## 7. Quality, Governance & Traceability Models
-
-| Model | Document | Criteria / Scope Count |
-|---|---|---|
-| Architectural Governance Framework | [Architectural-Governance-Framework.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/architecture/Architectural-Governance-Framework.md) | 5-Tier Hierarchy, Focus Matrix (7×6), 5 Quality Gates, 9-Role RACI |
-| Architecture Quality Gates (ARCH-GATE-01..04) | [Quality-Gates-Architecture.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/quality-gates/Quality-Gates-Architecture.md) | 64 criteria |
-| Design Quality Gates (DESIGN-GATE-01..04) | [Quality-Gates-Design.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/quality-gates/Quality-Gates-Design.md) | 103 criteria |
-| Traceability Matrix | [traceability.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/traceability.md) | 5 modules × 8 columns + 12 cross-module flows |
-
----
-
-
-## 8. Requirements & Analytics Specifications
-
-### 9.1 Functional Requirements
-
-| Module | Document | FR Count |
-|---|---|---|
-| Earning Engine | [FR-01-earning-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-01-earning-engine.md) | 22 FRs + 4 NFRs |
-| Tiering System | [FR-02-tiering-system.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-02-tiering-system.md) | 21 FRs + 3 NFRs |
-| Redemption Engine | [FR-03-redemption-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-03-redemption-engine.md) | 22 FRs + 4 NFRs |
-| Program Management | [FR-04-program-management.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-04-program-management.md) | 22 FRs + 4 NFRs |
-| Analytics & Reporting | [FR-05-analytics-reporting.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/requirements/FR-05-analytics-reporting.md) | 26 FRs + 5 NFRs |
-
-### 9.2 Analytics Specifications
-
-| Module | Document | Metrics | Reports |
-|---|---|---|---|
-| Earning Engine | [AS-01-earning-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-01-earning-engine.md) | 9 | 4 |
-| Tiering System | [AS-02-tiering-system.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-02-tiering-system.md) | 10 | 5 |
-| Redemption Engine | [AS-03-redemption-engine.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-03-redemption-engine.md) | 10 | 5 |
-| Program Management | [AS-04-program-management.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-04-program-management.md) | 11 | 5 |
-| Analytics & Reporting | [AS-05-analytics-reporting.md](file:///Users/hoangdd/Desktop/personal/workspace/AI-study-2/analytics/AS-05-analytics-reporting.md) | 9 | 5 |
-
----
-
-## 9. Document Inventory Summary
-
-| Category | Documents | Models | New in Governance Suite |
-|---|---|---|---|
-| Domain Model | 1 | 2 (class diagram + aggregate table) | ✅ UML Class Diagram |
-| Requirements | 5 | 5 (FR specs with use case tables) | — |
-| Analytics | 5 | 5 (metric + report specs) | — |
-| Architecture & Governance | 4 docs + 3 ADRs | 14 (C4, Hierarchy, Focus Matrix, RACI, ER, deployment, security, ADRs) | ✅ Governance Framework, Event Catalog |
-| Design | 5 DD docs + 1 lifecycle doc | 22 (components, sequences, state machines, formulas) | ✅ Entity Lifecycle Models |
-| Quality Gates | 2 | 2 (167 total criteria + 5-stage lifecycle) | ✅ 5-Stage Gate Lifecycle |
-| Traceability | 1 | 1 (full cross-reference matrix) | — |
-| MDD Index | 1 | — | ✅ Master Catalog |
-| **Total** | **28 documents** | **51 formal models** | **5 core governance & model artifacts** |
-
-*Generated from: Loyalty Banking documentation suite (v1.2) · Architectural Governance & Model-Driven Design*

@@ -1,13 +1,13 @@
-# Loyalty Platform - Implementation
+# Loyalty Platform — Legacy Implementation Spike (Archived)
 
-> **Superseded — not a lab artifact and not the capstone.**
-> This folder is an early spike written against the **old** documentation: old container names, the old three-constraint set, and a Vietnamese README. It is **not** submitted for any lab and is **not** the capstone deliverable.
-> The capstone implementation of the I-11 slice is [`../capstone/`](../capstone/), built against the current Lab 1 index and the after pack.
-> Nothing here is required to be built, run, or deployed.
+> [!WARNING]
+> **SUPERSEDED & QUARANTINED — NOT A LAB DELIVERABLE AND NOT THE CAPSTONE.**
+> This directory contains an early exploratory microservice prototype created prior to Model-Driven Design (MDD) standardization.
+> - **Official Runnable Capstone**: The sole authoritative, tested, and SA-accepted runtime for the I-11 slice is in [`../capstone/`](../capstone/).
+> - **Official Modeling Pack**: Labs 1 through 10 reside at the repository root and in `before-pack/`.
+> - This codebase is archived for historical reference only. It is **not** submitted for evaluation and does not need to be built, run, or deployed.
 
-Dự án triển khai thực tế các module của hệ thống **Loyalty Banking Platform**, phát triển bằng **Java Spring Boot 3**.
-
-## Yêu cầu hệ thống (Prerequisites)
+---
 - [Docker](https://docs.docker.com/get-docker/) và Docker Compose (để chạy Kafka, Redis, PostgreSQL).
 - [Java 17](https://adoptium.net/temurin/releases/) (nếu chạy ứng dụng trực tiếp bằng Maven, hoặc không cần nếu dùng container hóa toàn bộ - hiện tại đang chạy native Java + Maven Wrapper).
 - Môi trường: Unix/Linux, macOS hoặc Windows (WSL2).

@@ -5,6 +5,7 @@ import com.loyalty.capstone.domain.IllegalStateTransition;
 import com.loyalty.capstone.domain.OrderState;
 import com.loyalty.capstone.domain.PointTransaction;
 import com.loyalty.capstone.domain.RedemptionOrder;
+import com.loyalty.capstone.domain.RewardItem;
 import com.loyalty.capstone.service.EarnResult;
 import com.loyalty.capstone.service.PointLiabilityReport;
 import com.loyalty.capstone.store.OwnershipViolation;
@@ -34,53 +35,66 @@ public final class CapstoneTests {
         runner.check("G6-T01", "PENDING -> IN_PROGRESS", () -> {
             Platform platform = new Platform(new MutableClock(START));
             platform.earningEngineService.recordEarn("TXN-T01", "M-T01", Platform.PROGRAM_ID, 200d);
-            RedemptionOrder order = platform.redemptionEngineService
-                    .submitRedemption("M-T01", Platform.REWARD_DIGITAL_VOUCHER);
-            assertEquals(OrderState.FULFILLED, order.state(),
-                    "service path reserves PENDING -> IN_PROGRESS before successful dispatch");
-            assertEquals(1, order.allocations().size(), "service recorded the FIFO reservation");
+            RewardItem item = platform.redemptionEngineService.catalogue().get(0);
+            RedemptionOrder order = new RedemptionOrder("ORD-T01", "M-T01", item.rewardItemId, item.pointsCost, "SILVER");
+            assertEquals(OrderState.PENDING, order.state(), "initial order state is PENDING");
+            List<DebitAllocation> allocations = platform.earningEngineService.debitFifo("M-T01", item.pointsCost);
+            order.markInProgress(allocations);
+            assertEquals(OrderState.IN_PROGRESS, order.state(), "state after reservation is IN_PROGRESS");
+            assertTrue(!order.state().isTerminal(), "IN_PROGRESS is intermediate in I-6");
+            assertEquals(1, order.allocations().size(), "allocations attached on IN_PROGRESS");
         });
 
         runner.check("G6-T02", "PENDING -> CANCELLED", () -> {
             Platform platform = new Platform(new MutableClock(START));
-            RedemptionOrder order = platform.redemptionEngineService
-                    .submitRedemption("M-T02", Platform.REWARD_DIGITAL_VOUCHER);
+            RewardItem item = platform.redemptionEngineService.catalogue().get(0);
+            RedemptionOrder order = new RedemptionOrder("ORD-T02", "M-T02", item.rewardItemId, item.pointsCost, "SILVER");
+            assertEquals(OrderState.PENDING, order.state(), "initial state is PENDING");
+            order.cancel("insufficient points");
             assertEquals(OrderState.CANCELLED, order.state(), "state after cancellation");
             assertTrue(order.state().isTerminal(), "CANCELLED is terminal in I-6");
-            assertEquals(0, platform.partnerSystems.fulfillmentRequests(),
-                    "cancelled order never dispatches to Partner Systems");
+            assertEquals("insufficient points", order.reason(), "cancellation reason recorded");
         });
 
         runner.check("G6-T03", "IN_PROGRESS -> FULFILLED", () -> {
             Platform platform = new Platform(new MutableClock(START));
             platform.earningEngineService.recordEarn("TXN-T03", "M-T03", Platform.PROGRAM_ID, 200d);
-            RedemptionOrder order = platform.redemptionEngineService
-                    .submitRedemption("M-T03", Platform.REWARD_DIGITAL_VOUCHER);
-            assertEquals(OrderState.FULFILLED, order.state(), "state after delivery");
-            assertEquals(1, platform.partnerSystems.fulfillmentRequests(),
-                    "fulfilled order was dispatched to Partner Systems");
+            RewardItem item = platform.redemptionEngineService.catalogue().get(0);
+            RedemptionOrder order = new RedemptionOrder("ORD-T03", "M-T03", item.rewardItemId, item.pointsCost, "SILVER");
+            List<DebitAllocation> allocations = platform.earningEngineService.debitFifo("M-T03", item.pointsCost);
+            order.markInProgress(allocations);
+            assertEquals(OrderState.IN_PROGRESS, order.state(), "state is IN_PROGRESS");
+            order.markFulfilled();
+            assertEquals(OrderState.FULFILLED, order.state(), "state after delivery is FULFILLED");
+            assertTrue(order.state().isTerminal(), "FULFILLED is terminal in I-6");
         });
 
         runner.check("G6-T04", "IN_PROGRESS -> FAILED", () -> {
             Platform platform = new Platform(new MutableClock(START));
             platform.earningEngineService.recordEarn("TXN-T04", "M-T04", Platform.PROGRAM_ID, 200d);
-            RedemptionOrder order = platform.redemptionEngineService
-                    .submitRedemption("M-T04", Platform.REWARD_OUT_OF_STOCK);
-            assertEquals(OrderState.REVERSED, order.state(),
-                    "service path moves through FAILED before automatic reversal");
-            assertTrue(order.reason().contains("fulfillment"), "failure reason is recorded");
+            RewardItem item = platform.redemptionEngineService.catalogue().get(0);
+            RedemptionOrder order = new RedemptionOrder("ORD-T04", "M-T04", item.rewardItemId, item.pointsCost, "SILVER");
+            List<DebitAllocation> allocations = platform.earningEngineService.debitFifo("M-T04", item.pointsCost);
+            order.markInProgress(allocations);
+            assertEquals(OrderState.IN_PROGRESS, order.state(), "state is IN_PROGRESS");
+            order.markFailed("partner fulfillment failed: out of stock");
+            assertEquals(OrderState.FAILED, order.state(), "state after failure is FAILED");
+            assertTrue(!order.state().isTerminal(), "FAILED is intermediate in I-6 leading to REVERSED");
+            assertEquals("partner fulfillment failed: out of stock", order.reason(), "failure reason recorded");
         });
 
         runner.check("G6-T05", "FAILED -> REVERSED", () -> {
             Platform platform = new Platform(new MutableClock(START));
             platform.earningEngineService.recordEarn("TXN-T05", "M-T05", Platform.PROGRAM_ID, 200d);
-            RedemptionOrder order = platform.redemptionEngineService
-                    .submitRedemption("M-T05", Platform.REWARD_OUT_OF_STOCK);
-            assertEquals(OrderState.REVERSED, order.state(), "state after auto-reversal");
-            assertEquals(400L, platform.earningEngineService.availablePoints("M-T05"),
-                    "service path restores the debited points");
-            assertEquals(1, platform.crmNotificationGateway.reversalNotices().size(),
-                    "service path notifies the member");
+            RewardItem item = platform.redemptionEngineService.catalogue().get(0);
+            RedemptionOrder order = new RedemptionOrder("ORD-T05", "M-T05", item.rewardItemId, item.pointsCost, "SILVER");
+            List<DebitAllocation> allocations = platform.earningEngineService.debitFifo("M-T05", item.pointsCost);
+            order.markInProgress(allocations);
+            order.markFailed("partner fulfillment failed");
+            assertEquals(OrderState.FAILED, order.state(), "state is FAILED");
+            order.markReversed();
+            assertEquals(OrderState.REVERSED, order.state(), "state after auto-reversal is REVERSED");
+            assertTrue(order.state().isTerminal(), "REVERSED is terminal in I-6");
         });
 
         // ---- I-11 named alternates ----

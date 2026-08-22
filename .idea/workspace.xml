@@ -2,16 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9bc9c2b3-4e9a-4b8c-a95d-4c34fd1fec6c" name="Changes" comment="tier system">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/api/PartnerEarnController.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/api/PartnerEarnController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/dto/PartnerEarnRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/dto/PartnerEarnRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/kafka/TransactionSettledConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/kafka/TransactionSettledConsumer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/service/EarnCalculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/main/java/com/loyalty/earning_engine/service/EarnCalculator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/test/java/com/loyalty/earning_engine/service/EarnCalculatorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/earning-engine/src/test/java/com/loyalty/earning_engine/service/EarnCalculatorTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/redemption-engine/src/main/java/com/loyalty/redemption_engine/api/RedemptionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/redemption-engine/src/main/java/com/loyalty/redemption_engine/api/RedemptionController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/redemption-engine/src/main/java/com/loyalty/redemption_engine/service/CatalogService.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/redemption-engine/src/main/java/com/loyalty/redemption_engine/service/CatalogService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/tiering-system/src/main/java/com/loyalty/tiering_system/kafka/QpAccruedConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/tiering-system/src/main/java/com/loyalty/tiering_system/kafka/QpAccruedConsumer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/tiering-system/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/tiering-system/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/architecture/Architectural-Governance-Framework.md" beforeDir="false" afterPath="$PROJECT_DIR$/architecture/Architectural-Governance-Framework.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/capstone/test/com/loyalty/capstone/CapstoneTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/capstone/test/com/loyalty/capstone/CapstoneTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,24 +53,24 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/lab3&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/hoangdd/Desktop/personal/workspace/AI-study-2/loyalty-platform-impl/tiering-system&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "copilot.chat.legacySessionMetadata.migrated": "true",
+    "git-widget-placeholder": "feature/capstone__temp",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/hoangdd/Desktop/personal/workspace/AI-study-2/loyalty-platform-impl/tiering-system",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/loyalty-platform-impl/tiering-system" />

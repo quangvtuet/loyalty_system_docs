@@ -3,13 +3,13 @@
 **Domain**: Loyalty Banking  
 **Version**: 1.0  
 **Date**: 2026-08-16  
-**Source**: [loyalty_domain.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/loyalty_domain.md) | [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) | [FR-01..05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/) | [Quality-Gates-Design.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../loyalty_domain.md) | [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) | [FR-01..05](../requirements/) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 
 ## 1. Overview
 
-This document consolidates all **entity lifecycle state machine models** for the Loyalty Banking platform. Each state machine is the authoritative behavioral specification for its entity's `status` column as defined in the physical database schema ([Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md)).
+This document consolidates all **entity lifecycle state machine models** for the Loyalty Banking platform. Each state machine is the authoritative behavioral specification for its entity's `status` column as defined in the physical database schema ([Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md)).
 
 ### Model-Driven Traceability
 
@@ -339,4 +339,4 @@ flowchart LR
 
 ---
 
-*Source: [loyalty_domain.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/loyalty_domain.md) · [Data-Architecture-and-Schema.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Data-Architecture-and-Schema.md) · FR-01..05 · Quality-Gates-Design.md*
+*Source: [loyalty_domain.md](../loyalty_domain.md) · [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) · FR-01..05 · Quality-Gates-Design.md*

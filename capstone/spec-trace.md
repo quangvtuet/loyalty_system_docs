@@ -15,7 +15,7 @@ Test ids are the coverage ids printed by the suite in `test/com/loyalty/capstone
 | UC-LB-02 Redeem reward with FIFO | Happy path | `SubmitRedemption` (`POST /redemptions`) → 201 | `RedemptionEngineService.submitRedemption` | `UC-LB-02` |
 | UC-LB-02 | `alt` insufficient balance | `SubmitRedemption` → 422 | `TierAndBalanceValidationModule.validate` | `G6-A02` |
 | UC-LB-02 | `alt` tier-ineligible reward | `SubmitRedemption` → 422 | `TierAndBalanceValidationModule.validate` | `G6-A02` |
-| UC-LB-02 | `alt` partner fulfilment failure under CON.3 | `SubmitRedemption` → 201 with `state=REVERSED` | `FulfillmentCoordinationModule.dispatch` | `G6-A03` |
+| UC-LB-02 | `alt` partner fulfillment failure under CON.3 | `SubmitRedemption` → 201 with `state=REVERSED` | `FulfillmentCoordinationModule.dispatch` | `G6-A03` |
 | UC-LB-03 Apply tier upgrade | Happy path | none — async, driven by `earning.qp_accrued` (CT-05, CT-06) | `TieringSystemService.onQualifyingPointsAccrued` | `UC-LB-03` |
 | UC-LB-03 | `alt` replayed event ignored | none — async | `TieringSystemService` replay guard | `G6-A04` |
 | UC-LB-04 Generate point liability report | Happy path | `RequestReport` (`GET /reports/point-liability`) → 200, `stale=false` | `AnalyticsReportingService.pointLiabilityReport` | `UC-LB-04` |

@@ -99,7 +99,7 @@ Ownership is enforced, not documented: `store.OwnedStore.assertWriter` throws `s
 | Finance | I-2 actor | Caller of `GET /reports/point-liability` |
 | Support Agent | I-2 actor | No I-11 use case; not built — see section 8 |
 | Core Banking System | I-3 external | `external.CoreBankingSystemMock` — publishes simulated settled events |
-| Partner Systems | I-3 external | `external.PartnerSystemsMock` — fulfilment fake; caller of `POST /partner-earn` |
+| Partner Systems | I-3 external | `external.PartnerSystemsMock` — fulfillment fake; caller of `POST /partner-earn` |
 | CRM & Notification Gateway | I-3 external | `external.CrmNotificationGatewayMock` — records notifications |
 | Enterprise Data Warehouse | I-3 external | `external.EnterpriseDataWarehouseMock` — receives period figures |
 

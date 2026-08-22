@@ -31,7 +31,7 @@ public final class FulfillmentCoordinationModule {
             stateModule.toFulfilled(order);
             return;
         }
-        stateModule.toFailed(order, "partner fulfilment failed");
+        stateModule.toFailed(order, "partner fulfillment failed");
         fifoDebitModule.restore(order.allocations());
         stateModule.toReversed(order);
         crmNotificationGateway.notifyMemberOfReversal(order.memberId, order.orderId);

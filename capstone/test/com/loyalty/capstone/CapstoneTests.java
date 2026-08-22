@@ -241,30 +241,45 @@ public final class CapstoneTests {
                     "Earning Engine Service must not write Data Warehouse");
         });
 
-        runner.check("NEG-I5-02", "I-5 anti-tamper: earn payload sending forged tier field is rejected; server uses authoritative tier", () -> {
+        runner.check("NEG-I5-02", "I-5 anti-tamper: forged tier in earn payload is stripped by gateway; server uses authoritative projected tier", () -> {
             MutableClock clock = new MutableClock(START);
             Platform platform = new Platform(clock);
             ApiGateway gateway = new ApiGateway(platform);
             try {
                 gateway.start(0);
-                String url = "http://localhost:" + gateway.port() + "/partner-earn";
-                // Malicious client sends a forged tier: PLATINUM (2.0x) along with 100 spend amount
-                String forgedPayload = "{\"sourceTransactionId\":\"TXN-FORGE-01\",\"memberId\":\"M-FORGE\",\"amount\":100,\"tier\":\"PLATINUM\"}";
-                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-                        .header("Content-Type", "application/json")
-                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(forgedPayload))
-                        .build();
-                java.net.http.HttpResponse<String> response = java.net.http.HttpClient.newHttpClient()
-                        .send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                String base = "http://localhost:" + gateway.port();
 
-                assertEquals(201, response.statusCode(), "earn transaction created");
-                // Authoritative SILVER (1.0x) * 2.0x campaign * 100 amount = 200 points. If forged PLATINUM (2.0x) was trusted, it would be 400 points.
-                assertTrue(response.body().contains("\"pointsAwarded\":200"),
-                        "awarded points strictly use authoritative SILVER (1.0x = 200 pts), NOT forged PLATINUM (400 pts)");
-                assertEquals(200L, platform.earningEngineService.availablePoints("M-FORGE"),
-                        "ledger balance reflects authoritative tier calculation only");
-                assertEquals("SILVER", platform.earningEngineService.projectedTier("M-FORGE"),
-                        "member tier projection remains authoritative SILVER");
+                // --- Part A: promote a member to GOLD so projected tier != default SILVER ---
+                // Earn enough to cross the GOLD threshold (1000 QP). 600 amount * 1pt/unit * 2x campaign = 1200 QP.
+                java.net.http.HttpResponse<String> legitimateEarn = postJson(base + "/partner-earn",
+                        "{\"sourceTransactionId\":\"TXN-LEGIT-PROMO\",\"memberId\":\"M-FORGE-GOLD\",\"amount\":600}");
+                assertEquals(201, legitimateEarn.statusCode(), "legitimate earn to promote member");
+                assertEquals("GOLD", platform.tieringSystemService.currentTier("M-FORGE-GOLD"),
+                        "member is now GOLD via legitimate tier upgrade");
+                assertEquals("GOLD", platform.earningEngineService.projectedTier("M-FORGE-GOLD"),
+                        "earning service projected tier is GOLD from CT-08 event");
+
+                // --- Part B: send forged PLATINUM for the GOLD member ---
+                // Malicious client sends tier:PLATINUM. If trusted: PLATINUM 2.0x * 2.0x campaign * 100 = 400 pts.
+                // Authoritative GOLD (1.5x) * 2.0x campaign * 100 = 300 pts.
+                java.net.http.HttpResponse<String> forgedGold = postJson(base + "/partner-earn",
+                        "{\"sourceTransactionId\":\"TXN-FORGE-GOLD\",\"memberId\":\"M-FORGE-GOLD\",\"amount\":100,\"tier\":\"PLATINUM\"}");
+                assertEquals(201, forgedGold.statusCode(), "earn accepted despite forged tier field");
+                assertTrue(forgedGold.body().contains("\"pointsAwarded\":300"),
+                        "points use authoritative GOLD (1.5x * 2.0x * 100 = 300), NOT forged PLATINUM (2.0x * 2.0x * 100 = 400)");
+                assertEquals("GOLD", platform.earningEngineService.projectedTier("M-FORGE-GOLD"),
+                        "projected tier unchanged by the forged field — still GOLD");
+
+                // --- Part C: send forged PLATINUM for a new SILVER member ---
+                // If trusted: PLATINUM 2.0x * 2.0x campaign * 100 = 400 pts.
+                // Authoritative SILVER (1.0x) * 2.0x campaign * 100 = 200 pts.
+                java.net.http.HttpResponse<String> forgedSilver = postJson(base + "/partner-earn",
+                        "{\"sourceTransactionId\":\"TXN-FORGE-SILVER\",\"memberId\":\"M-FORGE-SILVER\",\"amount\":100,\"tier\":\"PLATINUM\"}");
+                assertEquals(201, forgedSilver.statusCode(), "earn accepted despite forged tier field");
+                assertTrue(forgedSilver.body().contains("\"pointsAwarded\":200"),
+                        "points use authoritative SILVER (1.0x * 2.0x * 100 = 200), NOT forged PLATINUM (400)");
+                assertEquals("SILVER", platform.earningEngineService.projectedTier("M-FORGE-SILVER"),
+                        "projected tier unchanged by the forged field — still SILVER");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
@@ -347,5 +362,14 @@ public final class CapstoneTests {
         List<DebitAllocation> allocations = new ArrayList<>();
         allocations.add(new DebitAllocation("PT-TEST", 300L, START, START.plusSeconds(86400)));
         return Collections.unmodifiableList(allocations);
+    }
+
+    private static java.net.http.HttpResponse<String> postJson(String url, String body) throws Exception {
+        java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+                .header("Content-Type", "application/json")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return java.net.http.HttpClient.newHttpClient()
+                .send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
     }
 }

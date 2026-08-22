@@ -47,6 +47,14 @@ public final class ApiGateway {
 
     public void stop() { if (server != null) server.stop(0); }
 
+    /**
+     * CT-03/CT-04: Partner Systems → API Gateway → Earning Engine Service.
+     * I-5 anti-tamper defense: the gateway reads only the three contract fields
+     * (sourceTransactionId, memberId, amount). Any extra field — including a forged
+     * {@code tier} — is stripped before the request reaches Earning Engine Service,
+     * which computes points using its own authoritative projected tier from CT-08.
+     * Test NEG-I5-02 sends a forged tier and asserts the runtime ignores it.
+     */
     private void handlePartnerEarn(HttpExchange exchange) throws IOException {
         if (!"POST".equals(exchange.getRequestMethod())) { send(exchange, 405, problem("method not allowed")); return; }
         Map<String, String> body = Json.parseFlat(read(exchange.getRequestBody()));
@@ -57,6 +65,10 @@ public final class ApiGateway {
             send(exchange, 400, problem("sourceTransactionId, memberId and amount are required"));
             return;
         }
+        // Only sourceTransactionId, memberId, and amount are forwarded.
+        // body.get("tier") is intentionally NOT read — the earn multiplier comes from
+        // EarningEngineService.projectedTier(), which is the authoritative local projection
+        // maintained via the asynchronous tiering.tier_changed event (CT-08).
         EarnResult result = platform.earningEngineService.recordEarn(
                 sourceTransactionId, memberId, Platform.PROGRAM_ID, Double.parseDouble(amount));
         int status = result.duplicate ? 409 : 201;

@@ -10,6 +10,7 @@ import com.loyalty.earning_engine.dto.FifoRestoreResponse;
 import com.loyalty.earning_engine.repository.FifoDebitAllocationRepository;
 import com.loyalty.earning_engine.repository.PointBalanceRepository;
 import com.loyalty.earning_engine.repository.PointTransactionRepository;
+import com.loyalty.earning_engine.store.OwnedEarningStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,12 +65,14 @@ class EarningEngineServiceTest {
     @InjectMocks
     private EarnCalculator earnCalculator;
 
+    private OwnedEarningStore ownedEarningStore;
     private EarningLedgerService earningLedgerService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, allocationRepository);
+        ownedEarningStore = new OwnedEarningStore(transactionRepository, balanceRepository, allocationRepository);
+        earningLedgerService = new EarningLedgerService(ownedEarningStore);
         earnCalculator = new EarnCalculator(earningLedgerService, kafkaTemplate);
 
         when(balanceRepository.findByMemberIdAndProgramIdForUpdate(anyString(), anyString()))

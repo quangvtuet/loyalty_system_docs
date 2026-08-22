@@ -1,15 +1,21 @@
 package com.loyalty.earning_engine.store;
 
+import com.loyalty.earning_engine.domain.FifoDebitAllocation;
 import com.loyalty.earning_engine.domain.OwnershipViolationException;
 import com.loyalty.earning_engine.domain.PointBalance;
 import com.loyalty.earning_engine.domain.PointTransaction;
+import com.loyalty.earning_engine.domain.TransactionStatus;
+import com.loyalty.earning_engine.repository.FifoDebitAllocationRepository;
 import com.loyalty.earning_engine.repository.PointBalanceRepository;
 import com.loyalty.earning_engine.repository.PointTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * OwnedEarningStore — I-7 Data Store & I-9 Boundary Defense for Earning DB.
@@ -23,6 +29,9 @@ import java.util.List;
  * Any write attempt from non-owners is refused with an OwnershipViolationException,
  * ensuring zero mutations occur in the underlying Earning DB repository.
  *
+ * All live write paths in EarningLedgerService pass through this store using
+ * callerIdentity = AUTHORIZED_OWNER ("Earning Engine Service").
+ *
  * Spec-trace: I-9, EXC-04, CON.2, T4
  */
 @Component
@@ -35,6 +44,7 @@ public class OwnedEarningStore {
 
     private final PointTransactionRepository transactionRepository;
     private final PointBalanceRepository balanceRepository;
+    private final FifoDebitAllocationRepository allocationRepository;
 
     /**
      * Enforces single I-7 ownership before any write to Earning DB.
@@ -49,6 +59,8 @@ public class OwnedEarningStore {
             throw new OwnershipViolationException(callerIdentity, STORE_NAME);
         }
     }
+
+    // ─── Gated Write Methods (I-9 / EXC-04 / CON.2) ──────────────────────────
 
     /**
      * Appends a PointTransaction to Earning DB, gated by single ownership.
@@ -67,15 +79,44 @@ public class OwnedEarningStore {
     }
 
     /**
-     * Returns total transactions in Earning DB.
+     * Saves a FifoDebitAllocation in Earning DB, gated by single ownership.
      */
+    public FifoDebitAllocation saveAllocation(String callerIdentity, FifoDebitAllocation allocation) {
+        assertWriter(callerIdentity);
+        return allocationRepository.save(allocation);
+    }
+
+    // ─── Query Methods ───────────────────────────────────────────────────────
+
+    public Optional<PointBalance> findBalanceForUpdate(String memberId, String programId) {
+        return balanceRepository.findByMemberIdAndProgramIdForUpdate(memberId, programId);
+    }
+
+    public Optional<PointBalance> findBalance(String memberId, String programId) {
+        return balanceRepository.findByMemberIdAndProgramId(memberId, programId);
+    }
+
+    public List<PointTransaction> findUnexpiredBatchesForFifoDebit(String memberId, String programId,
+                                                                   TransactionStatus status, LocalDateTime now) {
+        return transactionRepository.findUnexpiredBatchesForFifoDebit(memberId, programId, status, now);
+    }
+
+    public Optional<PointTransaction> findTransactionBySourceTxnId(String sourceTxnId) {
+        return transactionRepository.findBySourceTxnId(sourceTxnId);
+    }
+
+    public Optional<PointTransaction> findTransactionById(UUID id) {
+        return transactionRepository.findById(id);
+    }
+
+    public List<FifoDebitAllocation> findAllocationsByOrderId(String orderId) {
+        return allocationRepository.findByOrderIdOrderByCreatedAtAsc(orderId);
+    }
+
     public long getTransactionCount() {
         return transactionRepository.count();
     }
 
-    /**
-     * Returns all transactions in Earning DB.
-     */
     public List<PointTransaction> getAllTransactions() {
         return transactionRepository.findAll();
     }

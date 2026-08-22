@@ -2,8 +2,7 @@ package com.loyalty.earning_engine.service;
 
 import com.loyalty.earning_engine.domain.PointBalance;
 import com.loyalty.earning_engine.domain.PointTransaction;
-import com.loyalty.earning_engine.repository.PointBalanceRepository;
-import com.loyalty.earning_engine.repository.PointTransactionRepository;
+import com.loyalty.earning_engine.store.OwnedEarningStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -14,17 +13,13 @@ import org.mockito.MockitoAnnotations;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class EarningLedgerServiceTest {
 
     @Mock
-    private PointTransactionRepository transactionRepository;
-
-    @Mock
-    private PointBalanceRepository balanceRepository;
+    private OwnedEarningStore earningStore;
 
     @InjectMocks
     private EarningLedgerService earningLedgerService;
@@ -40,20 +35,20 @@ class EarningLedgerServiceTest {
         String programId = "DEFAULT_PROG";
         
         // Mock that balance does not exist yet
-        when(balanceRepository.findByMemberIdAndProgramIdForUpdate(memberId, programId))
+        when(earningStore.findBalanceForUpdate(memberId, programId))
                 .thenReturn(Optional.empty());
 
         earningLedgerService.recordBaseEarn(memberId, 100, "txn-001");
 
-        // Verify transaction is saved
+        // Verify transaction is saved through OwnedEarningStore with AUTHORIZED_OWNER
         ArgumentCaptor<PointTransaction> txnCaptor = ArgumentCaptor.forClass(PointTransaction.class);
-        verify(transactionRepository, times(1)).save(txnCaptor.capture());
+        verify(earningStore, times(1)).appendTransaction(eq(OwnedEarningStore.AUTHORIZED_OWNER), txnCaptor.capture());
         assertEquals(100, txnCaptor.getValue().getAmount());
         assertEquals("EARN", txnCaptor.getValue().getType().name());
 
-        // Verify balance is saved
+        // Verify balance is saved through OwnedEarningStore with AUTHORIZED_OWNER
         ArgumentCaptor<PointBalance> balanceCaptor = ArgumentCaptor.forClass(PointBalance.class);
-        verify(balanceRepository, times(1)).save(balanceCaptor.capture());
+        verify(earningStore, times(1)).updateBalance(eq(OwnedEarningStore.AUTHORIZED_OWNER), balanceCaptor.capture());
         
         PointBalance savedBalance = balanceCaptor.getValue();
         assertEquals(memberId, savedBalance.getMemberId());
@@ -74,21 +69,21 @@ class EarningLedgerServiceTest {
                 .pendingBalance(0L)
                 .build();
                 
-        when(balanceRepository.findByMemberIdAndProgramIdForUpdate(memberId, programId))
+        when(earningStore.findBalanceForUpdate(memberId, programId))
                 .thenReturn(Optional.of(existingBalance));
 
         earningLedgerService.recordBonusEarn(memberId, 200, "txn-002", "SUMMER_BONUS");
 
-        // Verify transaction is saved
+        // Verify transaction is saved through OwnedEarningStore with AUTHORIZED_OWNER
         ArgumentCaptor<PointTransaction> txnCaptor = ArgumentCaptor.forClass(PointTransaction.class);
-        verify(transactionRepository, times(1)).save(txnCaptor.capture());
+        verify(earningStore, times(1)).appendTransaction(eq(OwnedEarningStore.AUTHORIZED_OWNER), txnCaptor.capture());
         assertEquals(200, txnCaptor.getValue().getAmount());
         assertEquals("BONUS", txnCaptor.getValue().getType().name());
         assertEquals("SUMMER_BONUS", txnCaptor.getValue().getCampaignId());
 
-        // Verify balance is saved and incremented
+        // Verify balance is saved through OwnedEarningStore with AUTHORIZED_OWNER
         ArgumentCaptor<PointBalance> balanceCaptor = ArgumentCaptor.forClass(PointBalance.class);
-        verify(balanceRepository, times(1)).save(balanceCaptor.capture());
+        verify(earningStore, times(1)).updateBalance(eq(OwnedEarningStore.AUTHORIZED_OWNER), balanceCaptor.capture());
         
         PointBalance savedBalance = balanceCaptor.getValue();
         assertEquals(memberId, savedBalance.getMemberId());

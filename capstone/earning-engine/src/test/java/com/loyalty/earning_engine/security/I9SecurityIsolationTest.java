@@ -55,8 +55,8 @@ class I9SecurityIsolationTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        ownedEarningStore = new OwnedEarningStore(transactionRepository, balanceRepository);
-        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, allocationRepository);
+        ownedEarningStore = new OwnedEarningStore(transactionRepository, balanceRepository, allocationRepository);
+        earningLedgerService = new EarningLedgerService(ownedEarningStore);
     }
 
     /**

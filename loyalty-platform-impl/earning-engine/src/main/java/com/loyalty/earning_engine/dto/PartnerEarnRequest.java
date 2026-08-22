@@ -21,4 +21,6 @@ public class PartnerEarnRequest {
     private String campaignId;
     
     private String programId;
+
+    private String tier;
 }

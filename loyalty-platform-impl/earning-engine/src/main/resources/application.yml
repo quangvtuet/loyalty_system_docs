@@ -3,22 +3,22 @@ spring:
     name: earning-engine
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/loyalty_db
-    username: ${LOYALTY_DB_USERNAME:loyalty_user}
-    password: ${LOYALTY_DB_PASSWORD:}
+    url: ${EARNING_DB_URL:jdbc:postgresql://${EARNING_DB_HOST:localhost}:${EARNING_DB_PORT:5432}/${EARNING_DB_NAME:earning_db}?currentSchema=earning,public}
+    username: ${EARNING_DB_USERNAME:earning_user}
+    password: ${EARNING_DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${MESSAGE_BROKER_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: earning-engine-group
       auto-offset-reset: earliest
@@ -32,8 +32,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${IDEMPOTENCY_STORE_HOST:localhost}
+      port: ${IDEMPOTENCY_STORE_PORT:6379}
 
 server:
   port: 8081

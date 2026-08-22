@@ -45,11 +45,15 @@ public class PartnerEarnController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
         }
 
+        String memberTier = (request.getTier() != null && !request.getTier().isBlank()) 
+                ? request.getTier() 
+                : "SILVER";
+
         EarnEventResponse response = earnCalculator.processEarn(
                 request.getMemberId(),
                 request.getSpendAmount(),
                 request.getTransactionId(),
-                "SILVER", // Default tier for partner earn in this mock
+                memberTier,
                 request.getCampaignId(),
                 request.getProgramId() != null ? request.getProgramId() : "DEFAULT_PROG"
         );

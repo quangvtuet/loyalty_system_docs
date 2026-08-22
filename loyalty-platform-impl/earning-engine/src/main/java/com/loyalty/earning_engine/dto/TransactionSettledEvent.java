@@ -1,5 +1,7 @@
 package com.loyalty.earning_engine.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +10,8 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TransactionSettledEvent {
     private String sourceTxnId;
     private String memberId;

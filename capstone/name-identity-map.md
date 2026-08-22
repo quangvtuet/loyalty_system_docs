@@ -128,7 +128,7 @@ The capstone slice is I-11 only. These I-1 in-scope items are **N/A**, not a bac
 
 | Item | Why it is out |
 |---|---|
-| Program Admin configuration operations | No I-11 use case names them. `ProgramManagementService` exists only because it owns the rule values the I-11 paths read. |
+| Program Admin configuration operations | No I-11 use case names them, so no route creates or edits a programme, campaign, or catalogue entry. `Program Management Service` is still present and still required: it is the I-7 owner of `LoyaltyProgram` and `Campaign`, and the earn and redemption paths read those rule values from it. Removing it would move domain rules outside their I-7 owner. Its starting values are loaded once by `SimulatedConfiguration`, which stands in for the admin who would otherwise have entered them — see section 9. |
 | Support Agent adjustment and reversal operations | No I-11 use case names them. |
 | Tier downgrade, grace period, point expiry | Lab 2 requirements, but no I-11 use case names them. |
 | Enterprise reporting hand-off | `EnterpriseDataWarehouseMock` exists as the I-3 stub; no I-11 use case drives it. |
@@ -138,6 +138,8 @@ The capstone slice is I-11 only. These I-1 in-scope items are **N/A**, not a bac
 ## 9. Assumptions
 
 Values the Lab 1 index did not fix. Each is simulated and used with one spelling everywhere.
+
+All of these live in one place, `SimulatedConfiguration`, which loads them through each owning container's own API at start-up. No rule value sits in the composition root, and nothing bypasses an I-7 owner to write them.
 
 | `ASSUMPTION` | Value | Where it came from |
 |---|---|---|

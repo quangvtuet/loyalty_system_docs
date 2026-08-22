@@ -4,6 +4,7 @@
 > The only quality gates for this pack are **G1-G6**, and the only role/RACI adoption is [`../lab7-adoption.md`](../lab7-adoption.md).
 > The five-stage gate lifecycle and the nine-role RACI in this document are **not** used by the pack and do not gate, block, or sign off anything.
 > This document was written before the pack was re-sequenced and still uses the old container names and the old constraint set.
+> **Tier 5 and every Spring Boot / Maven / Docker row below describe a five-service implementation spike that no longer exists.** It was deleted from the submission branch; nothing in it is buildable or runnable. The runtime for this pack is [`../capstone/`](../capstone/) — one JDK process, no build tool, no container runtime. Read the rows below as history, not as instructions.
 
 ## Architectural Modeling Hierarchy, Focus Matrix, Quality Gates & RACI Matrix
 
@@ -11,7 +12,7 @@
 **Version**: 1.0  
 **Date**: 2026-08-20  
 **Author**: Enterprise Architecture & Engineering Governance Team  
-**Scope**: All 5 Core Modules (`Earning Engine`, `Tiering System`, `Redemption Engine`, `Program Management`, `Analytics & Reporting`), Cross-Cutting Infrastructure, and Full Codebase Implementation (`loyalty-platform-impl`).
+**Scope**: All 5 Core Modules (`Earning Engine`, `Tiering System`, `Redemption Engine`, `Program Management`, `Analytics & Reporting`), Cross-Cutting Infrastructure, and the former Spring Boot implementation spike (`loyalty-platform-impl`, since removed).
 
 ---
 
@@ -111,7 +112,7 @@ flowchart TB
 Tier 1 establishes the enterprise domain boundaries, business capabilities, and strategic policies governing the loyalty banking ecosystem.
 
 #### 1. Bounded Context Map (DDD)
-The domain is partitioned into 5 autonomous Bounded Contexts following [loyalty_domain.md](../loyalty_domain.md):
+The domain is partitioned into 5 autonomous Bounded Contexts following [loyalty_domain.md](../lab2-requirements.md):
 - **Earning Context**: Core earning mechanics, transactional base calculation, bonus multiplier evaluation, append-only point ledger, expiry scheduling.
 - **Tiering Context**: Qualifying Point (QP) accrual, instant tier elevation, calendar-year evaluation cycles, 30-day grace rescue mechanics.
 - **Redemption Context**: Reward catalog access, tier-restricted rewards, atomic FIFO point debiting, external partner fulfillment orchestration, automated failure compensation/reversal.
@@ -158,7 +159,7 @@ C4Context
 ```
 
 #### Macro Integration Patterns & E2E Flows
-- **Macro Flow Catalog**: 12 end-to-end business flows (`FLOW-01` through `FLOW-12`) connecting upstream banking settlements to downstream fulfillment and accounting ([traceability.md](../traceability.md) §3).
+- **Macro Flow Catalog**: 12 end-to-end business flows (`FLOW-01` through `FLOW-12`) connecting upstream banking settlements to downstream fulfillment and accounting ([traceability.md](../lab2-requirements.md) §3).
 - **Core SLA Targets**: Ingestion SLA $\le 60\text{s}$ from settlement; Processing throughput $\ge 500\text{ TPS}$; Latency $p95 \le 2,000\text{ms}$; Analytics data staleness $\le 10\text{ minutes}$.
 
 ---
@@ -269,7 +270,7 @@ flowchart LR
 
 ### 2.5 Tier 5: Code, Physical Data & Concurrency Architecture (C4 Level 4)
 
-Tier 5 maps directly to the physical codebase in `loyalty-platform-impl/`, defining package conventions, database constraints, concurrency locking mechanisms, and event serialization formats.
+Tier 5 mapped to the physical codebase in `loyalty-platform-impl/`, defining package conventions, database constraints, concurrency locking mechanisms, and event serialization formats. **That codebase has been removed**; this tier is retained as a record of the original intent only.
 
 #### 1. Codebase Package Convention (Spring Boot 3)
 ```
@@ -374,13 +375,13 @@ graph LR
 
 | Architectural View | Primary Artifact Deliverables | Critical Decision Criteria | Target Success KPIs |
 |---|---|---|---|
-| **Business & Domain** | [loyalty_domain.md](../loyalty_domain.md), [requirements/FR-01..05](../requirements) | No ambiguity in earn/tier/redemption calculations | $100\%$ acceptance criteria coverage |
+| **Business & Domain** | [loyalty_domain.md](../lab2-requirements.md), [requirements/FR-01..05](../lab2-requirements.md) | No ambiguity in earn/tier/redemption calculations | $100\%$ acceptance criteria coverage |
 | **Behavioral & Workflow** | [DD-01..05](../design), [entity-lifecycle-models.md](../design/entity-lifecycle-models.md) | All state transitions have explicit trigger events | Zero deadlocked or unhandled entity states |
 | **Data & Storage** | [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) | Strict database-per-service; append-only ledger | $100\%$ schema constraint validation |
 | **Integration & Contracts**| [domain-event-catalog.md](../architecture/domain-event-catalog.md), OpenAPI specs | All events have schema, partition key & idempotency | Zero breaking API/event schema changes |
 | **Security & Governance** | [Security-and-Integration-Architecture.md](../architecture/Security-and-Integration-Architecture.md) | Dual-control for manual balance adjustments | Zero critical security vulnerabilities |
 | **Non-Functional** | [ADR-001](../architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md)..003, [Architecture-Overview.md](../architecture/Architecture-Overview.md) | Ingestion $\le 60\text{s}$; Throughput $\ge 500\text{ TPS}$ | $p95 \le 2,000\text{ms}$; RTO $\le 5\text{min}$; RPO $\le 10\text{min}$ |
-| **Infrastructure & Ops** | [docker-compose.yml](../loyalty-platform-impl/docker-compose.yml), [e2e_test.sh](../loyalty-platform-impl/e2e_test.sh) | One-command local spin-up and verification | $100\%$ passing automated E2E test runs |
+| **Infrastructure & Ops** | `docker-compose.yml` and `e2e_test.sh` — **both removed with the spike** | One-command local spin-up and verification | Historical target; no longer measurable |
 
 ---
 
@@ -419,9 +420,9 @@ Primary Evaluators: System Product Owner (SPO), Solution Architect (SA), Lead Bu
 
 | ID | Quality Criterion | Verification Method | Target Artifact | Mandatory |
 |---|---|---|---|---|
-| `REQ-01` | **Domain Ubiquitous Language**: All business terms (QP, Redeemable Points, FIFO, Breakage, Grace Period) are formally defined without contradiction. | Semantic Review against [loyalty_domain.md](../loyalty_domain.md) | `loyalty_domain.md` | **YES** |
-| `REQ-02` | **Functional Completeness**: All 5 core functional requirement specifications (FR-01 through FR-05) have unambiguous acceptance criteria. | Review against [requirements/](../requirements) | `FR-01..05` | **YES** |
-| `REQ-03` | **Analytics & Financial Metrics**: Formal calculation formulas defined for Point Liability, Breakage Rate, Redemption Rate, and Active Members. | Mathematical review against [analytics/](../analytics) | `AS-01..05` | **YES** |
+| `REQ-01` | **Domain Ubiquitous Language**: All business terms (QP, Redeemable Points, FIFO, Breakage, Grace Period) are formally defined without contradiction. | Semantic Review against [loyalty_domain.md](../lab2-requirements.md) | `loyalty_domain.md` | **YES** |
+| `REQ-02` | **Functional Completeness**: All 5 core functional requirement specifications (FR-01 through FR-05) have unambiguous acceptance criteria. | Review against [requirements/](../lab2-requirements.md) | `FR-01..05` | **YES** |
+| `REQ-03` | **Analytics & Financial Metrics**: Formal calculation formulas defined for Point Liability, Breakage Rate, Redemption Rate, and Active Members. | Mathematical review against [analytics/](../lab2-requirements.md) | `AS-01..05` | **YES** |
 | `REQ-04` | **Edge Cases Specified**: Requirements define exact behavior for transaction reversals, concurrent earn/redeem, and leap-year expiry sweeps. | Review edge-case tables in FR docs | `FR-01..04` | **YES** |
 
 ---
@@ -453,7 +454,7 @@ Primary Evaluators: Technical Lead (TL), Module Architects, QA Lead
 | ID | Quality Criterion | Verification Method | Target Artifact | Mandatory |
 |---|---|---|---|---|
 | `DES-01` | **Component Decomposition**: Every service has a detailed component flowchart matching the C4 Level 3 standard. | Review [DD-01..05](../design) §2 | `DD-01..05` | **YES** |
-| `DES-02` | **Behavioral Sequence Coverage**: All 12 business flows (`FLOW-01` to `FLOW-12`) have complete Mermaid sequence diagrams. | Cross-check [traceability.md](../traceability.md) §3 with DD docs | `DD-01..05`, `traceability.md` | **YES** |
+| `DES-02` | **Behavioral Sequence Coverage**: All 12 business flows (`FLOW-01` to `FLOW-12`) have complete Mermaid sequence diagrams. | Cross-check [traceability.md](../lab2-requirements.md) §3 with DD docs | `DD-01..05`, `traceability.md` | **YES** |
 | `DES-03` | **State Machine Enum Alignment**: All entity state transitions match database `status` column enum and check constraints. | Cross-check [entity-lifecycle-models.md](../design/entity-lifecycle-models.md) with DDL | Lifecycle Models, DDL | **YES** |
 | `DES-04` | **FIFO Debit & Locking Algorithm**: Detailed design specifies atomic step-by-step point consumption with Redis lock and balance rollback on error. | Inspect [DD-03-redemption-engine.md](../design/DD-03-redemption-engine.md) §3 | `DD-03` | **YES** |
 | `DES-05` | **Dual-Control Security Design**: Manual adjustment workflow specifies distinct Creator vs Approver roles with immutable audit logging. | Inspect [Security-and-Integration-Architecture.md](../architecture/Security-and-Integration-Architecture.md) §4 | Security Architecture | **YES** |
@@ -469,7 +470,7 @@ Primary Evaluators: Technical Lead (TL), Senior Developers, Automated CI Pipelin
 
 | ID | Quality Criterion | Verification Method | Codebase Location | Mandatory |
 |---|---|---|---|---|
-| `CODE-01` | **Compilation & Clean Build**: All 5 Maven modules compile cleanly with Java 17 / Spring Boot 3 without errors or deprecated API usage. | `./mvnw clean compile` across all 5 services | `loyalty-platform-impl/` | **YES** |
+| `CODE-01` | **Compilation & Clean Build** — *historical, no longer applicable*: the 5 Maven modules this row described were removed. The pack's runtime compiles with `javac` and no build tool. | Superseded by `javac` over `capstone/src` | `capstone/` | **N/A — spike removed** |
 | `CODE-02` | **Distributed Lock Release Safety**: All Redis locks (`RLock` / Redisson) are released inside mandatory `finally` blocks to prevent deadlocks. | Static analysis / code inspection | `earning-engine/`, `redemption-engine/` | **YES** |
 | `CODE-03` | **Transaction Boundary & Isolation**: Service methods handling point debits and balance updates are annotated with `@Transactional(isolation = Isolation.READ_COMMITTED)`. | Code inspection of `@Transactional` usages | `EarningLedgerService.java`, `RedemptionService.java` | **YES** |
 | `CODE-04` | **Static Code Analysis (SonarQube)**: Zero blocker/critical code smells; zero high/critical security vulnerabilities (OWASP Top 10). | Automated SonarQube scan in CI | CI Pipeline / SonarQube | **YES** |
@@ -486,7 +487,7 @@ Primary Evaluators: QA Lead, SRE Lead, Security Officer, System Product Owner (S
 
 | ID | Quality Criterion | Verification Method | Execution Script / Artifact | Mandatory |
 |---|---|---|---|---|
-| `REL-01` | **Automated E2E Regression Pass**: Full execution of the end-to-end integration test suite passes $100\%$ across all 5 running containers. | Execute [e2e_test.sh](../loyalty-platform-impl/e2e_test.sh) | `e2e_test.sh` | **YES** |
+| `REL-01` | **Automated E2E Regression Pass** — *historical, no longer applicable*: the container suite this row described was removed with the spike. | Superseded by `java -cp out com.loyalty.capstone.CapstoneTests` | `capstone/test/` | **N/A — spike removed** |
 | `REL-02` | **Performance & Latency Benchmark**: Sustained throughput of $\ge 500\text{ TPS}$ with $p95 \le 2,000\text{ms}$ under load test. | Execute k6 / JMeter load test scripts | Performance Test Report | **YES** |
 | `REL-03` | **Failure Recovery & Chaos Resilience**: Kill/restart of Kafka broker or Redis instance results in automatic reconnection without data loss or stuck locks. | Chaos test script in staging environment | Resilience Drill Log | **YES** |
 | `REL-04` | **Audit Trail & Financial Reconciliation**: Automated reconciliation between `point_transaction` ledger sum, `point_balance` snapshot, and `fact_point_transaction` liability matches $100\%$. | Reconciliation batch verification script | Daily Reconciliation Report | **YES** |
@@ -529,7 +530,7 @@ The RACI Matrix establishes clear accountability across the **9 Key Governance R
 | **TL** | Technical Lead / Module Architect | Owns detailed design, component specifications, code reviews, and technical consistency. |
 | **DEV** | Senior / Backend Software Engineers | Implements Spring Boot microservices, JPA repositories, Kafka consumers, and unit tests. |
 | **DE** | Data Engineer / Analytics Specialist | Implements Data Warehouse schemas, CDC pipelines, star schema transformations, and BI reports. |
-| **QA** | Quality Assurance & Test Engineers | Owns automated testing, E2E test suites (`e2e_test.sh`), performance and regression testing. |
+| **QA** | Quality Assurance & Test Engineers | Owns automated testing, performance and regression testing. The `e2e_test.sh` suite named here was removed with the spike. |
 | **SEC** | Information Security & Compliance Officer | Enforces security policies, OAuth 2.0 / RBAC verification, PII protection, and audit logs. |
 | **OPS** | DevOps & Site Reliability Engineer (SRE) | Manages CI/CD pipelines, Docker/Kubernetes infrastructure, multi-AZ deployment, and monitoring. |
 | **FIN** | Finance & Operational Risk Officer | Verifies point liability accounting, breakage rates, manual balance adjustments, and audit reports. |
@@ -546,11 +547,11 @@ The RACI Matrix establishes clear accountability across the **9 Key Governance R
 
 | Modeling Tier / Artifact | SPO | SA | TL | DEV | DE | QA | SEC | OPS | FIN |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Tier 1: Domain Model & Strategy** ([loyalty_domain.md](../loyalty_domain.md)) | **A** | **R** | C | I | C | I | C | I | C |
-| **Tier 1: Functional Requirements** ([FR-01..05](../requirements)) | **A** | C | **R** | I | C | C | C | I | C |
-| **Tier 1: Analytics Specifications** ([AS-01..05](../analytics)) | C | C | C | I | **R** | I | I | I | **A** |
+| **Tier 1: Domain Model & Strategy** ([loyalty_domain.md](../lab2-requirements.md)) | **A** | **R** | C | I | C | I | C | I | C |
+| **Tier 1: Functional Requirements** ([FR-01..05](../lab2-requirements.md)) | **A** | C | **R** | I | C | C | C | I | C |
+| **Tier 1: Analytics Specifications** ([AS-01..05](../lab2-requirements.md)) | C | C | C | I | **R** | I | I | I | **A** |
 | **Tier 2: System Context (C4 L1)** ([Architecture-Overview.md](../architecture/Architecture-Overview.md)) | I | **A** | **R** | I | I | I | C | C | I |
-| **Tier 2: Cross-Module Flows** ([traceability.md](../traceability.md) §3) | I | **A** | **R** | C | C | C | I | I | I |
+| **Tier 2: Cross-Module Flows** ([traceability.md](../lab2-requirements.md) §3) | I | **A** | **R** | C | C | C | I | I | I |
 | **Tier 3: Container Architecture (C4 L2)** ([Architecture-Overview.md](../architecture/Architecture-Overview.md) §3) | I | **A** | **R** | C | C | I | C | C | I |
 | **Tier 3: ADRs (ADR-001, ADR-002, ADR-003)** ([architecture/adrs/](../architecture/adrs)) | I | **A** | **R** | C | C | I | C | C | I |
 | **Tier 3: Data Architecture & DDL** ([Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md)) | I | **A** | C | **R** | C | I | C | C | I |
@@ -558,7 +559,7 @@ The RACI Matrix establishes clear accountability across the **9 Key Governance R
 | **Tier 4: Component Flowcharts (C4 L3)** ([DD-01..05](../design) §2) | I | C | **A** | **R** | I | C | I | I | I |
 | **Tier 4: Sequence Diagrams (FLOW-01..12)** ([DD-01..05](../design)) | I | C | **A** | **R** | I | C | I | I | I |
 | **Tier 4: Entity Lifecycle State Machines** ([entity-lifecycle-models.md](../design/entity-lifecycle-models.md)) | I | C | **A** | **R** | I | C | I | I | I |
-| **Tier 5: Spring Boot Microservices Code** (`loyalty-platform-impl/`) | I | I | **A** | **R** | I | C | C | C | I |
+| **Tier 5: Spring Boot Microservices Code** (`loyalty-platform-impl/`, removed) | I | I | **A** | **R** | I | C | C | C | I |
 | **Tier 5: Redis Distributed Locks & Dedup** (`BalanceLockService.java`) | I | C | **A** | **R** | I | C | I | I | I |
 | **Tier 5: Analytics Star Schema & CDC** (`analytics-reporting/`) | I | I | C | I | **R** | C | I | I | **A** |
 
@@ -592,9 +593,9 @@ The RACI Matrix establishes clear accountability across the **9 Key Governance R
 
 This Architectural Governance Framework provides an uncompromised model-driven foundation for the Loyalty Banking Platform. For related specifications, consult the following core documents:
 
-- **Domain Model & Glossary**: [loyalty_domain.md](../loyalty_domain.md)
-- **Functional Requirements**: [requirements/FR-01-earning-engine.md](../requirements/FR-01-earning-engine.md) to [requirements/FR-05-analytics-reporting.md](../requirements/FR-05-analytics-reporting.md)
-- **Analytics & Financial Specs**: [analytics/AS-01-earning-engine.md](../analytics/AS-01-earning-engine.md) to [analytics/AS-05-analytics-reporting.md](../analytics/AS-05-analytics-reporting.md)
+- **Domain Model & Glossary**: [loyalty_domain.md](../lab2-requirements.md)
+- **Functional Requirements**: [requirements/FR-01-earning-engine.md](../lab2-requirements.md) to [requirements/FR-05-analytics-reporting.md](../lab2-requirements.md)
+- **Analytics & Financial Specs**: [analytics/AS-01-earning-engine.md](../lab2-requirements.md) to [analytics/AS-05-analytics-reporting.md](../lab2-requirements.md)
 - **System Architecture & C4**: [architecture/Architecture-Overview.md](../architecture/Architecture-Overview.md)
 - **Data Architecture & DDL**: [architecture/Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md)
 - **Security & Integrations**: [architecture/Security-and-Integration-Architecture.md](../architecture/Security-and-Integration-Architecture.md)
@@ -602,6 +603,6 @@ This Architectural Governance Framework provides an uncompromised model-driven f
 - **Architecture Decisions**: [architecture/adrs/](../architecture/adrs)
 - **Detailed Design Specs**: [design/DD-01-earning-engine.md](../design/DD-01-earning-engine.md) to [design/DD-05-analytics-reporting.md](../design/DD-05-analytics-reporting.md)
 - **Entity Lifecycle State Machines**: [design/entity-lifecycle-models.md](../design/entity-lifecycle-models.md)
-- **End-to-End Traceability Matrix**: [traceability.md](../traceability.md)
+- **End-to-End Traceability Matrix**: [traceability.md](../lab2-requirements.md)
 - **Model-Driven Design Index**: [mdd-index.md](../mdd-index.md)
-- **Spring Boot 3 Implementation**: [loyalty-platform-impl/](../loyalty-platform-impl)
+- **Runtime**: [capstone/](../capstone/) — one JDK process. The former Spring Boot 3 spike `loyalty-platform-impl/` was removed.

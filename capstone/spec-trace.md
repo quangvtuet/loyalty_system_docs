@@ -34,8 +34,6 @@ UC-LB-03 has no OpenAPI operation because no Lab 3 contract row exposes it throu
 | G6-T03 | `IN_PROGRESS -> FULFILLED` | Redemption Engine Service | `G6-T03` | Yes |
 | G6-T04 | `IN_PROGRESS -> FAILED` | Redemption Engine Service | `G6-T04` | Yes |
 | G6-T05 | `FAILED -> REVERSED` | Redemption Engine Service | `G6-T05` | Yes |
-
-Each of those five runs through `RedemptionEngineService.submitRedemption` and asserts **its own transition**, not the state the order finished in. `RedemptionOrder` records the transitions it actually made, so `G6-T01` proves `PENDING -> IN_PROGRESS` happened even though the order ends `FULFILLED`, and `G6-T04` proves `IN_PROGRESS -> FAILED` happened even though the order ends `REVERSED`. `G6-T04` additionally asserts there is no `PENDING -> FAILED` shortcut, and `G6-T03` and `G6-T05` pin the whole ordered path.
 | G6-A01 | UC-LB-01 duplicate under CON.1 | Earning Engine Service | `G6-A01` | Yes |
 | G6-A02 | UC-LB-02 insufficient balance or tier-ineligible | Redemption Engine Service | `G6-A02` | Yes |
 | G6-A03 | UC-LB-02 partner failure and CON.3 compensation | Redemption Engine Service | `G6-A03` | Yes |
@@ -43,6 +41,8 @@ Each of those five runs through `RedemptionEngineService.submitRedemption` and a
 | G6-A05 | UC-LB-04 stale beyond ten minutes under CON.4 | Analytics & Reporting Service | `G6-A05` | Yes |
 
 Ten of ten Lab 10 G6 rows execute. None is a checklist entry.
+
+Each of those five runs through `RedemptionEngineService.submitRedemption` and asserts **its own transition**, not the state the order finished in. `RedemptionOrder` records the transitions it actually made, so `G6-T01` proves `PENDING -> IN_PROGRESS` happened even though the order ends `FULFILLED`, and `G6-T04` proves `IN_PROGRESS -> FAILED` happened even though the order ends `REVERSED`. `G6-T04` additionally asserts there is no `PENDING -> FAILED` shortcut, and `G6-T03` and `G6-T05` pin the whole ordered path.
 
 ### 2.1 HTTP contract tests
 
@@ -169,7 +169,7 @@ N/A rows are not implemented and are not callable. No N/A row was turned into an
 
 | Package | Purpose | On the trace via |
 |---|---|---|
-| `com.loyalty.capstone` | `Platform` composition root, `Main` | All rows |
+| `com.loyalty.capstone` | `Platform` composition root, `SimulatedConfiguration` start-up values, `Main` | All rows |
 | `com.loyalty.capstone.gateway` | `ApiGateway` routes, `Json` | The three OpenAPI operations |
 | `com.loyalty.capstone.service` | Earning, Tiering, Program Management, Analytics | UC-LB-01, UC-LB-03, UC-LB-04, CT-08 |
 | `com.loyalty.capstone.service.redemption` | The five Lab 9 modules | UC-LB-02 |
@@ -210,4 +210,13 @@ Test count moved from 17 to 27. No I-11 use case, name, operation, or state was 
 | "T01 still asserts `FULFILLED`; T04 still asserts `REVERSED`" — the five G6-T rows ran through the service but each asserted the order's final state, so none proved the transition it claimed | `RedemptionOrder` now records the ordered list of transitions it actually made (`transitions()`, `hasTransition(from, to)`). `G6-T01`…`G6-T05` assert their own row: T01 asserts `PENDING -> IN_PROGRESS` is the first transition, T04 asserts `IN_PROGRESS -> FAILED` occurred and that no `PENDING -> FAILED` shortcut exists, T03 and T05 pin the exact ordered path. No test asserts an end state in place of its transition. |
 
 The transition log is derived state on the I-6 object. It adds no state, no name, and no use case: `OrderState` still holds exactly the six I-6 values, and an out-of-I-6 transition still throws before anything is recorded.
+
+### Fourth review round — pass 11
+
+| Review point | Change |
+|---|---|
+| "`architecture/` / `design/` link rewrites (some still cite the deleted Spring e2e)" | Every link in `architecture/`, `design/`, and `quality-gates/` was resolved: 83 rewritten, 3 de-linked. Links to files folded into Lab 2 (`loyalty_domain.md`, `requirements/`, `analytics/`, `traceability.md`) now point at `lab2-requirements.md`; `file:///d:/learn/loyalty/...` absolute paths from the original author's machine are now repo-relative; links to the removed spike are de-linked and marked removed. **The pack now has zero broken links.** An empty `loyalty-platform-impl/` directory left behind by the earlier delete was also removed, and the governance framework's navigation index now points at `capstone/`. |
+| "`ProgramManagementService` seed" | Rule values and catalogue entries moved out of the `Platform` composition root into `SimulatedConfiguration`, which states that it stands in for the Program Admin operations that are N/A in this slice and loads everything **through each owning container's own API**. `Platform` is now wiring only. I-7 ownership is unchanged: `Program Management Service` still writes `Program Mgmt DB`, `Redemption Engine Service` still writes `Redemption DB`. Each value carries the Lab 2 requirement id that fixed it, or is marked `ASSUMPTION`. |
+
+No use case, name, operation, state, or container was added. Test count is unchanged.
 

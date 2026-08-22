@@ -7,7 +7,7 @@
 **Domain**: Loyalty Banking
 **Version**: 1.1
 **Date**: 2026-08-14
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | FR-01..05 | AS-01..05
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | FR-01..05 | AS-01..05
 
 ---
 
@@ -341,4 +341,4 @@ Compliance              Validation               Sign-Off                  Accur
 
 ---
 
-*Source documents: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) · [FR-01](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md) · [FR-02](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md) · [FR-03](file:///d:/learn/loyalty/requirements/FR-03-redemption-engine.md) · [FR-04](file:///d:/learn/loyalty/requirements/FR-04-program-management.md) · [FR-05](file:///d:/learn/loyalty/requirements/FR-05-analytics-reporting.md) · [AS-01](file:///d:/learn/loyalty/analytics/AS-01-earning-engine.md) · [AS-02](file:///d:/learn/loyalty/analytics/AS-02-tiering-system.md) · [AS-03](file:///d:/learn/loyalty/analytics/AS-03-redemption-engine.md) · [AS-04](file:///d:/learn/loyalty/analytics/AS-04-program-management.md) · [AS-05](file:///d:/learn/loyalty/analytics/AS-05-analytics-reporting.md)*
+*Source documents: [loyalty_domain.md](../lab2-requirements.md) · [FR-01](../lab2-requirements.md) · [FR-02](../lab2-requirements.md) · [FR-03](../lab2-requirements.md) · [FR-04](../lab2-requirements.md) · [FR-05](../lab2-requirements.md) · [AS-01](../lab2-requirements.md) · [AS-02](../lab2-requirements.md) · [AS-03](../lab2-requirements.md) · [AS-04](../lab2-requirements.md) · [AS-05](../lab2-requirements.md)*

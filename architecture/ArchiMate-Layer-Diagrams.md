@@ -15,14 +15,14 @@
 
 | Document / Asset | Category | Key Contents & Architecture Scope | Repository Link |
 |---|---|---|---|
-| **C4 Level 1: System Context Diagram** | *C4 Model* | High-level system context diagram showing customer channels, core banking, partners, and external services. | [context.png](file:///d:/learn/loyalty/architecture/C4/context.png) |
-| **C4 Level 2: Container Diagram** | *C4 Model* | Container architecture decomposition into API Gateway, 5 microservices, Kafka event bus, and polyglot DBs. | [container.png](file:///d:/learn/loyalty/architecture/C4/container.png) |
-| **C4 Level 3: Component Diagram** | *C4 Model* | Internal component diagram showing Spring Boot controllers, domain rules, Kafka listeners, and Redlock managers. | [component.png](file:///d:/learn/loyalty/architecture/C4/component.png) |
-| **Loyalty Domain Specification** | *Domain Rules* | Base earn rates, tier multipliers (Silver 1.0x, Gold 1.5x, Platinum 2.0x), 30-day grace period, FIFO debiting, and breakage liability rules. | [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) |
-| **Architecture Overview** | *C4 Model* | C4 System Context & Container diagrams, 5 domain microservices decomposition, synchronous vs asynchronous communication patterns. | [Architecture-Overview.md](file:///d:/learn/loyalty/architecture/Architecture-Overview.md) |
-| **Data Architecture & Schema** | *Database & DW* | PostgreSQL Database-per-Service schemas, immutable point ledger, mutable snapshot tables, Redis Redlock configurations, and ClickHouse Star Schema. | [Data-Architecture-and-Schema.md](file:///d:/learn/loyalty/architecture/Data-Architecture-and-Schema.md) |
-| **Security & Integration** | *Security & Ingress* | OAuth 2.0 Client Credentials flow for partners, API rate limiting policies (1,000 req/min/partner), and supervisor Dual-Control threshold approval (> 500 pts). | [Security-and-Integration-Architecture.md](file:///d:/learn/loyalty/architecture/Security-and-Integration-Architecture.md) |
-| **Domain Event Catalog** | *Kafka Messaging* | Apache Kafka topic taxonomy, Avro/JSON event schemas, partition key strategy (`member_id`), consumer groups, and dead-letter queues (DLQ). | [domain-event-catalog.md](file:///d:/learn/loyalty/architecture/domain-event-catalog.md) |
+| **C4 Level 1: System Context Diagram** | *C4 Model* | High-level system context diagram showing customer channels, core banking, partners, and external services. | [context.png](C4/context.png) |
+| **C4 Level 2: Container Diagram** | *C4 Model* | Container architecture decomposition into API Gateway, 5 microservices, Kafka event bus, and polyglot DBs. | [container.png](C4/container.png) |
+| **C4 Level 3: Component Diagram** | *C4 Model* | Internal component diagram showing Spring Boot controllers, domain rules, Kafka listeners, and Redlock managers. | [component.png](C4/component.png) |
+| **Loyalty Domain Specification** | *Domain Rules* | Base earn rates, tier multipliers (Silver 1.0x, Gold 1.5x, Platinum 2.0x), 30-day grace period, FIFO debiting, and breakage liability rules. | [loyalty_domain.md](../lab2-requirements.md) |
+| **Architecture Overview** | *C4 Model* | C4 System Context & Container diagrams, 5 domain microservices decomposition, synchronous vs asynchronous communication patterns. | [Architecture-Overview.md](Architecture-Overview.md) |
+| **Data Architecture & Schema** | *Database & DW* | PostgreSQL Database-per-Service schemas, immutable point ledger, mutable snapshot tables, Redis Redlock configurations, and ClickHouse Star Schema. | [Data-Architecture-and-Schema.md](Data-Architecture-and-Schema.md) |
+| **Security & Integration** | *Security & Ingress* | OAuth 2.0 Client Credentials flow for partners, API rate limiting policies (1,000 req/min/partner), and supervisor Dual-Control threshold approval (> 500 pts). | [Security-and-Integration-Architecture.md](Security-and-Integration-Architecture.md) |
+| **Domain Event Catalog** | *Kafka Messaging* | Apache Kafka topic taxonomy, Avro/JSON event schemas, partition key strategy (`member_id`), consumer groups, and dead-letter queues (DLQ). | [domain-event-catalog.md](domain-event-catalog.md) |
 | **The Open Group ArchiMate 3.2** | *Standard Spec* | Official Enterprise Architecture Modeling Language standard defining Motivation, Strategy, Business, Application, and Technology metamodels. | [ArchiMate Specification](https://www.opengroup.org/archimate-forum/archimate-overview) |
 
 ---

@@ -3,7 +3,7 @@
 **Domain**: Loyalty Banking  
 **Version**: 1.0  
 **Date**: 2026-08-16  
-**Source**: [loyalty_domain.md](../loyalty_domain.md) | [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) | [FR-01..05](../requirements/) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) | [FR-01..05](../lab2-requirements.md) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 
@@ -339,4 +339,4 @@ flowchart LR
 
 ---
 
-*Source: [loyalty_domain.md](../loyalty_domain.md) · [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) · FR-01..05 · Quality-Gates-Design.md*
+*Source: [loyalty_domain.md](../lab2-requirements.md) · [Data-Architecture-and-Schema.md](../architecture/Data-Architecture-and-Schema.md) · FR-01..05 · Quality-Gates-Design.md*

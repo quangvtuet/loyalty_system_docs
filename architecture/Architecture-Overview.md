@@ -3,7 +3,7 @@
 **Domain**: Loyalty Banking  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-01..05](file:///d:/learn/loyalty/requirements/) | [AS-01..05](file:///d:/learn/loyalty/analytics/) | [Quality-Gates-Architecture.md](file:///d:/learn/loyalty/quality-gates/Quality-Gates-Architecture.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-01..05](../lab2-requirements.md) | [AS-01..05](../lab2-requirements.md) | [Quality-Gates-Architecture.md](../quality-gates/Quality-Gates-Architecture.md)
 
 ---
 

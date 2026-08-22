@@ -56,7 +56,7 @@ All events published to Apache Kafka follow a standard metadata envelope:
 | **Partition Key** | `member_id` |
 | **Ordering** | Per-member ordered (same partition) |
 | **Idempotency** | Consumer-side: SHA-256(`source_txn_id` + `program_id`) in Redis (TTL: 24h) |
-| **SLA** | ≤ 60 seconds from settlement ([FR-01-001](../requirements/FR-01-earning-engine.md)) |
+| **SLA** | ≤ 60 seconds from settlement ([FR-01-001](../lab2-requirements.md)) |
 | **Triggers** | PointTransaction lifecycle: `[*] → PENDING` or `[*] → CONFIRMED` |
 
 **Payload Schema**:
@@ -369,7 +369,7 @@ All events published to Apache Kafka follow a standard metadata envelope:
 | **Consumer(s)** | Analytics & Reporting Service (DW Stream Loader) |
 | **Partition Key** | Source table primary key |
 | **Ordering** | Per-table per-key ordered (WAL sequence) |
-| **SLA** | End-to-end lag ≤ 10 minutes ([NFR-05-003](../requirements/FR-05-analytics-reporting.md)) |
+| **SLA** | End-to-end lag ≤ 10 minutes ([NFR-05-003](../lab2-requirements.md)) |
 
 **Payload**: Standard Debezium change event (before/after row state, operation type, source metadata).
 

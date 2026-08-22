@@ -1,9 +1,6 @@
 package com.loyalty.capstone;
 
 import com.loyalty.capstone.broker.MessageBroker;
-import com.loyalty.capstone.domain.Campaign;
-import com.loyalty.capstone.domain.LoyaltyProgram;
-import com.loyalty.capstone.domain.RewardItem;
 import com.loyalty.capstone.external.CoreBankingSystemMock;
 import com.loyalty.capstone.external.CrmNotificationGatewayMock;
 import com.loyalty.capstone.external.EnterpriseDataWarehouseMock;
@@ -28,10 +25,10 @@ import java.time.Clock;
  */
 public final class Platform {
 
-    public static final String PROGRAM_ID = "BANK-REWARDS";
-    public static final String REWARD_DIGITAL_VOUCHER = "RI-VOUCHER-300";
-    public static final String REWARD_PLATINUM_LOUNGE = "RI-LOUNGE-500";
-    public static final String REWARD_OUT_OF_STOCK = "RI-OUTOFSTOCK-300";
+    public static final String PROGRAM_ID = SimulatedConfiguration.PROGRAM_ID;
+    public static final String REWARD_DIGITAL_VOUCHER = SimulatedConfiguration.REWARD_DIGITAL_VOUCHER;
+    public static final String REWARD_PLATINUM_LOUNGE = SimulatedConfiguration.REWARD_PLATINUM_LOUNGE;
+    public static final String REWARD_OUT_OF_STOCK = SimulatedConfiguration.REWARD_OUT_OF_STOCK;
 
     public final MessageBroker messageBroker;
     public final IdempotencyStore idempotencyStore;
@@ -81,19 +78,12 @@ public final class Platform {
         seed();
     }
 
+    /**
+     * Loads the starting configuration through the owning containers.
+     * The values live in {@link SimulatedConfiguration}, not in this composition root.
+     */
     private void seed() {
-        programManagementService.saveProgram(new LoyaltyProgram(
-                PROGRAM_ID, 1.0d, 1000L, 3000L, 100L, 0.01d, 365));
-        programManagementService.saveCampaign(new Campaign(
-                "CMP-DOUBLE-POINTS", PROGRAM_ID, 2.0d, 1, true));
-
-        redemptionEngineService.seedRewardItem(
-                new RewardItem(REWARD_DIGITAL_VOUCHER, "Digital Voucher", 300L, "SILVER"));
-        redemptionEngineService.seedRewardItem(
-                new RewardItem(REWARD_PLATINUM_LOUNGE, "Lounge Pass", 500L, "PLATINUM"));
-        redemptionEngineService.seedRewardItem(
-                new RewardItem(REWARD_OUT_OF_STOCK, "Out Of Stock Voucher", 300L, "SILVER"));
-
-        partnerSystems.makeRewardItemFail(REWARD_OUT_OF_STOCK);
+        SimulatedConfiguration.loadInto(programManagementService, redemptionEngineService, partnerSystems);
     }
+
 }

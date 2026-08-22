@@ -3,7 +3,7 @@
 **Module**: Tiering System  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-02](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md) | [AS-02](file:///d:/learn/loyalty/analytics/AS-02-tiering-system.md) | [Quality-Gates-Design.md](file:///d:/learn/loyalty/quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-02](../lab2-requirements.md) | [AS-02](../lab2-requirements.md) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 

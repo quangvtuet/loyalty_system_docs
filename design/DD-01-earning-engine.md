@@ -3,7 +3,7 @@
 **Module**: Earning Engine  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-01](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md) | [AS-01](file:///d:/learn/loyalty/analytics/AS-01-earning-engine.md) | [Quality-Gates-Design.md](file:///d:/learn/loyalty/quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-01](../lab2-requirements.md) | [AS-01](../lab2-requirements.md) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 

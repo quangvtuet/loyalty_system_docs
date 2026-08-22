@@ -3,7 +3,7 @@
 **Module**: Analytics & Reporting  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-05](file:///d:/learn/loyalty/requirements/FR-05-analytics-reporting.md) | [AS-05](file:///d:/learn/loyalty/analytics/AS-05-analytics-reporting.md) | [Quality-Gates-Design.md](file:///d:/learn/loyalty/quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-05](../lab2-requirements.md) | [AS-05](../lab2-requirements.md) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 

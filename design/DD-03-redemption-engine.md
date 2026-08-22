@@ -3,7 +3,7 @@
 **Module**: Redemption Engine  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-03](file:///d:/learn/loyalty/requirements/FR-03-redemption-engine.md) | [AS-03](file:///d:/learn/loyalty/analytics/AS-03-redemption-engine.md) | [Quality-Gates-Design.md](file:///d:/learn/loyalty/quality-gates/Quality-Gates-Design.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-03](../lab2-requirements.md) | [AS-03](../lab2-requirements.md) | [Quality-Gates-Design.md](../quality-gates/Quality-Gates-Design.md)
 
 ---
 

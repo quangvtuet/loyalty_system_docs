@@ -3,7 +3,7 @@
 **Domain**: Loyalty Banking  
 **Version**: 1.0  
 **Date**: 2026-08-14  
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | [FR-01..05](file:///d:/learn/loyalty/requirements/) | [AS-01..05](file:///d:/learn/loyalty/analytics/) | [ADR-001](file:///d:/learn/loyalty/architecture/adrs/ADR-001-module-boundaries-and-data-isolation.md)
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | [FR-01..05](../lab2-requirements.md) | [AS-01..05](../lab2-requirements.md) | [ADR-001](adrs/ADR-001-module-boundaries-and-data-isolation.md)
 
 ---
 

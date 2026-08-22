@@ -153,7 +153,7 @@ Following **ADR-001 (Module Boundaries & Polyglot Persistence)**, each module op
 
 ## 5. Component Diagrams (C4 Level 3)
 
-The following diagrams decompose each domain service container (from §3) into its internal components. Detailed specifications per component are in the respective Detailed Design documents ([DD-01](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-01-earning-engine.md)–[DD-05](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/DD-05-analytics-reporting.md)).
+The following diagrams decompose each domain service container (from §3) into its internal components. Detailed specifications per component are in the respective Detailed Design documents ([DD-01](../design/DD-01-earning-engine.md)–[DD-05](../design/DD-05-analytics-reporting.md)).
 
 ### 5.1 Earning Engine — Internal Components
 

@@ -4,47 +4,64 @@
 
 **Rules:** English. Simulated scenario only — no real customer data, no internal production system names, no production credentials.
 
-Keep **two packs** of the same architecture and design:
+Do labs **one at a time, from Lab 1 to Lab 10**. Finish Lab *n* (Done when) before opening Lab *n+1*. Do not skip. Do not parallelize. Do not apply the Guide until Lab 7.
 
-| Pack | What |
-|------|------|
-| **Before modeling** | Labs 1, 2, 5, 6, 8, 9, 10 as first drawn. Current style allowed. Archive unchanged. |
-| **Modeling** | Lab 7 — adopt the Guide in this file (do not rewrite it). |
-| **After modeling** | Lab 4 restyles the same views. One language, Input names, header + RACI. |
-| **Compare** | Lab 4 comparison note — what modeling changed. |
+This is how you live the **messy then standardized** journey: Labs **1–6** in your current style, archive that pack, Lab **7** adopts the Guide, Labs **8–10** draw to the standard.
 
-Do not delete the before pack.
+```
+1 → 2 → 3 → 4 → 5 → 6  →  ARCHIVE  →  7 → 8 → 9 → 10
+     messy (current style)              Guide, then after views
+```
+
+| Pack | When | What |
+|------|------|------|
+| **Before modeling** | Labs 1–6 | Scope, requirements, spec, first cleanup, UML, ecosystem — current style allowed. **Archive unchanged.** |
+| **Modeling** | Lab 7 | Adopt the Guide. Do **not** start this until Labs 1–6 are archived. |
+| **After modeling** | Labs 8–10 | ArchiMate, C4, UML to the Guide: one language, Input names, header + RACI. |
+| **Compare** | Lab 10 (and Lab 4 note) | Lab 5 messy UML vs Lab 10; Lab 4 note on what you cleaned in 1–3. |
+
+**Fail the pack if:** a lab is skipped or started before the previous is Done; Lab 7 starts before Labs 1–6 are archived; the Guide / header / RACI is applied on Labs 1–6; the before pack is deleted or overwritten.
 
 | Go to | What it is |
 |-------|------------|
+| **[Order](#order-lab-1-to-lab-10)** | Mandatory: Lab 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 |
 | **[Labs](#labs)** | Ten labs — Input, Output, Done when, Fail if |
 | [Input](#input) | Blank tables — fill for *this* topic (Lab 1) |
-| [Guide](#guide) | Method. Adopt in Lab 7. Enforce on the **after** pack |
+| [Guide](#guide) | Method. Open in Lab 7. Enforce on the **after** pack |
 | [Legend](#legend) | Short names (`I-*`, `CON.*`, `G1–G6`, `L1–L3`, …) |
-| [Submit](#submit-checklist) | End-of-pack checklist |
+| [Submit](#submit-checklist) | Checklist Lab 1 → 10 |
 
-## Labs at a glance
+## Order: Lab 1 to Lab 10
 
-Full Input / Output / Done / Fail for each lab is **immediately below**. Worksheets: [Input](#input). Method: [Guide](#guide). Short names: [Legend](#legend).
+One lab at a time. **Start only after** the previous lab is Done. Worksheets: [Input](#input). Method: [Guide](#guide) (open in Lab 7, not before). Short names: [Legend](#legend).
 
-| Lab | Title | You deliver |
-|-----|--------|-------------|
-| [1](#lab-1) | Scopes with concrete values | Fill [Input](#input) I-1–I-11 |
-| [2](#lab-2) | Requirements, analysis, quality gates | Requirements, analysis, trace, G1–G6 register (after pass) |
-| [3](#lab-3) | Implement architecture, design, and test | Build list, Component, sequence, contracts, exception spec, test spec |
-| [4](#lab-4) | Standardize following modeling-driven design | After pack + comparison note (same views restyled) |
-| [5](#lab-5) | Low-level design (UML) | Sequence, activity, state for named use cases only |
-| [6](#lab-6) | Integration ecosystem (model, do not build) | Gateway / bus / adapter as containers; labels only |
-| [7](#lab-7) | Hierarchy, focus matrix, quality gates, RACI | Adoption record — Guide as written |
-| [8](#lab-8) | ArchiMate views (named set) | Four views: Motivation or Strategy, Process, Application, Technology |
-| [9](#lab-9) | C4 Context and Container | One Context (L1) + one Container (L2); optional one Component |
-| [10](#lab-10) | UML low-level design for named C4 use cases | Sequence (+ state if not Lab 5) for I-11 use cases |
+| Lab | Phase | This sitting | Start only after |
+|-----|-------|--------------|------------------|
+| [1](#lab-1) | Lock | Fill [Input](#input) I-1–I-11 | Topic assigned |
+| [2](#lab-2) | Messy | Requirements in current language. **No** G1–G6 | Lab 1 Done |
+| [3](#lab-3) | Messy | Build list, Component, sequence, contracts, exception spec, test spec — Lab 1 names | Lab 2 Done |
+| [4](#lab-4) | Messy | First cleanup of Labs 1–3 with **your** method. Keep copies. Not the Guide | Lab 3 Done |
+| [5](#lab-5) | Messy | UML sequence, activity, state for named use cases | Lab 4 Done |
+| [6](#lab-6) | Messy | Gateway / bus / adapter as containers. **Then archive Labs 1–6** | Lab 5 Done |
+| [7](#lab-7) | Modeling | Adopt the Guide as written. Map Lab 2 requirements to G1–G6 | Labs 1–6 archived |
+| [8](#lab-8) | After | Four ArchiMate views — Guide, header, RACI | Lab 7 Done |
+| [9](#lab-9) | After | One Context + one Container — Guide | Lab 8 Done |
+| [10](#lab-10) | After | UML vs C4 names; restyle Lab 5; comparison note | Lab 9 Done |
+
+### If you get stuck
+
+Do not jump ahead.
+
+1. **Missing an Input value?** Invent a plausible simulated one, mark it `ASSUMPTION`, and carry on.
+2. **Disagree on a name?** The Lab 1 index wins. Change it in [Input](#input) once, then use it everywhere.
+3. **Tempted to open the Guide during Labs 1–6?** That is the trap. Messy is the point — defects become the Lab 4 note and the Lab 10 comparison.
+4. **Still blocked after 10 minutes?** Ask the facilitator. Do not skip. Do not start the next lab.
 
 ---
 
 # Labs
 
-Fill [Input](#input) for your topic. Deliver each lab’s Output. Architecture and design may be drawn **before** Lab 7; Lab 4 produces the **after** pack for comparison.
+Follow **[Lab 1 to Lab 10](#order-lab-1-to-lab-10)**. One lab at a time. Labs **1–6** are the before pack (messy). Lab **7** is the Guide. Labs **8–10** are the after pack.
 
 ---
 
@@ -52,6 +69,7 @@ Fill [Input](#input) for your topic. Deliver each lab’s Output. Architecture a
 
 ## Lab 1 — Scopes with concrete values
 
+**Run:** Lab 1 of 10. **Start only after:** topic assigned. Next: Lab 2.  
 **Bound form:** lock the initiative. Empty cells are not allowed.
 
 **R:** BA / SA · **A:** Owner
@@ -68,7 +86,7 @@ Fill [Input](#input) for your topic. Deliver each lab’s Output. Architecture a
 Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream view may use **only** these strings.
 
 **Done when:** every Input field is filled; names do not collide; in/out do not overlap.  
-**Fail if:** vague system (“the new app”); real vendor/host IDs; two masters for one data object; process steps that name containers not listed.
+**Fail if:** vague system (“the new app”); real vendor/host IDs; two masters for one data object; process steps that name containers not listed; any later lab started before this index is complete.
 
 ---
 
@@ -76,16 +94,15 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 2 — Requirements, analysis, quality gates
 
-**Bound form:** write requirements and analysis for the topic. **After** Lab 7, regenerate against G1–G6 in the [Guide](#guide). Keep both files. Do not invent a second gate set.
+**Run:** Lab 2 of 10. **Start only after:** Lab 1 Done. Next: Lab 3.  
+**Bound form:** one file, current language. **No** G1–G6 (those are filled in Lab 7). Do not invent a second gate set later.
 
-**R:** BA (requirements) · EA (trace to Motivation) · **A:** Owner
+**R:** BA (requirements) · **A:** Owner
 
 ### Input
 
 - Lab 1 scope index (I-1, I-5, I-6, I-10).
-- **Before modeling:** no gate table required. Write requirements and analysis in the team’s current language.
-- **After modeling:** G1–G6 from the Guide. Pass-rule *wording* may be adjusted to the product; gates may not be skipped or replaced.
-- Stakeholders who will sign G1 (Owner) and G2 (BA + Test) on the after pass.
+- Current language. Do not open the Guide to “fix” this file.
 
 ### Output
 
@@ -93,11 +110,10 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 |----------|---------|
 | Requirements list | Each requirement traces to Goal, a CON.*, a process step, or a state |
 | Analysis | As-is vs to-be; capabilities implied by the goal; exception paths named |
-| Gate register (after pass) | G1–G6 rows: pass rule (product wording), evidence artifact, Pass? |
 | Trace table | Requirement ID → process step → CON.* → named object/state |
 
-**Done when:** every Lab 1 goal / outcome / CON.* appears in the requirements list. After pass: G1–G2 evidence is named; before and after files both kept; no extra gate table.  
-**Fail if:** the before file is deleted; a new G7+ on the after pass; requirements that add systems not in Lab 1.
+**Done when:** requirements + analysis + trace exist in current language; every Lab 1 goal / outcome / CON.* appears; **no** gate register yet.  
+**Fail if:** the Guide was used to rewrite this file; requirements that add systems not in Lab 1; Lab 3 started before this is Done.
 
 ---
 
@@ -105,15 +121,16 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 3 — Implement architecture, design, and test
 
+**Run:** Lab 3 of 10. **Start only after:** Lab 2 Done. Next: Lab 4. Use Lab 1 names only (no C4 diagram yet).  
 **Bound form:** specification of what will be built and tested. Same names as Lab 1. One selected container from I-11.
+
+The six artifacts below are **design evidence** for later gates G4–G6 — models and tables, not runtime proof. You still do not code, run tests, or deploy anything.
 
 **R:** Dev (build list, Component, contracts) · Test (test spec) · **A:** SA
 
 ### Input
 
 - Lab 1: I-4 containers, I-8 integration, I-9 deployment, I-11 selected container, I-6 states, I-10 CON.*.
-- Lab 9: C4 Container (and Component if drawn).
-- Lab 5 / Lab 10: sequence and state for named use cases.
 - Lab 2: requirements and CON.* for exception paths.
 
 ### Output
@@ -121,14 +138,14 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 | Artifact | Content |
 |----------|---------|
 | Build list | Every I-4 container: owner (Dev name), build order (1…n), environment from I-9 |
-| To-be Component | C4 Component inside the **one** I-11 container; neighbours as black boxes |
-| To-be sequence | Named use case for that container; each message owned by a Component module or a neighbour container |
-| Contract register (G4) | One row per Container relationship: producer, consumer, sync or async, operation or event name |
+| To-be Component | Modules inside the **one** I-11 container; neighbours as black boxes |
+| To-be sequence | Named use case for that container; each message owned by a module or a neighbour container |
+| Contract register (G4) | One row per I-8 relationship: producer, consumer, sync or async, operation or event name |
 | Exception spec (G5) | Critical failure path from CON.*: trigger, compensating action, who performs it |
-| Test spec (G6) | One row per state transition and per sequence `alt`: ID, SUT (C4 name), expected result |
+| Test spec (G6) | One row per I-6 transition and per sequence `alt`: ID, SUT (I-4 name), expected result |
 
-**Done when:** all six artifacts are filled; every contract row matches a Lab 9 / I-8 edge; every test row maps to I-6 or a sequence `alt`; SUT names = I-4.  
-**Fail if:** a contract invents an external not in I-3; a test SUT is not a C4 container name; Component internals for a container that is not I-11.
+**Done when:** all six artifacts are filled; every contract row matches an I-8 edge; every test row maps to I-6 or a sequence `alt`; SUT names = I-4.  
+**Fail if:** this lab started before Lab 2; a contract invents an external not in I-3; a test SUT is not an I-4 name; Component internals for a container that is not I-11; the Guide was applied.
 
 ---
 
@@ -136,30 +153,29 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 4 — Standardize following modeling-driven design
 
-**Bound form:** restyle the **before** architecture and design with the Guide. Keep both packs and compare.
+**Run:** Lab 4 of 10. **Start only after:** Lab 3 Done. Next: Lab 5.  
+**Bound form:** first cleanup of Labs **1–3** with **your current method**. Keep copies of 1–3 as they were. Do **not** open the Guide (that is Lab 7). Do not draw ArchiMate / C4 / UML here (those are Labs 8–10).
 
 **R:** SA · **A:** EA
 
 ### Input
 
-- Lab 1 name-identity index.
-- Lab 7 adoption (Guide in this file).
-- **Before pack** — copies of Labs 8, 9, 10, 5, 6 as first drawn (do not edit in place).
+- Lab 1 name-identity index (as filled).
+- Lab 2 requirements file.
+- Lab 3 spec (build list, contracts, test spec).
+- Copies of Labs 1–3 **before** this cleanup (do not edit those copies in place).
 
 ### Output
 
 | Artifact | Content |
 |----------|---------|
-| After pack | Same views as before, restyled: one language, Lab 1 names, header + RACI |
-| Name-identity check | Every box / lifeline string = Lab 1; no forks |
-| Language check | One viewpoint per canvas; no mixed relationships |
-| Defect list (before) | Failures found on the before pack, each with owner |
-| Comparison note | What changed: names, layers, language mix, missing legend/RACI, internals on Context |
+| Cleaned 1–3 pack | Same artifacts, names made consistent; one list of containers/actors |
+| Name-identity check | Every string in Labs 2–3 = Lab 1; no forks |
+| Defect list (before) | Failures found on Labs 1–3 as first written, each with owner |
+| Comparison note | What you cleaned — and what you still do not know how to standardize |
 
-**Automatic fail (after pack only):** mixed languages; forked names; missing legend; missing RACI letters; two **A**s; internals on Context; sequence participants that are not C4 Container names.
-
-**Done when:** before pack is archived unchanged; after pack exists; comparison note lists before vs after.  
-**Fail if:** the before pack is overwritten; after pack is a new landscape instead of the same views restyled.
+**Done when:** copies of messy 1–3 exist; cleaned pack exists; comparison note is written.  
+**Fail if:** this lab started before Lab 3; the Guide was used; messy copies were overwritten; ArchiMate / C4 / UML diagrams were drawn here.
 
 ---
 
@@ -167,28 +183,31 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 5 — Low-level design (UML)
 
+**Run:** Lab 5 of 10. **Start only after:** Lab 4 Done. Next: Lab 6. **Before pack** — current style. Do not apply the Guide, header, or RACI.  
 **Bound form:** UML for **named use cases only**. MVP is not trainee output.
+
+**Lab 5 vs Lab 10:** Lab 5 **creates** the behaviour (sequence, activity, state) from Lab 1 names. Lab 10 **audits and restyles** those diagrams against Lab 9 C4 names. Do not skip Lab 5 because Lab 10 exists.
 
 **R:** Dev (sequence) · Test (activity/state) · **A:** SA (sequence) · BA (activity/state)
 
 ### Input
 
-- Lab 1: I-11 use cases; I-6 object + states + terminals.
-- Container names: Lab 9 if drawn, else I-4.
-- Lab 2 CON.* for `alt` / decision branches (if written).
-- Lab 8 process if drawn.
+- Lab 1: I-11 use cases; I-6 object + states + terminals; I-4 container names; I-2 actors.
+- Lab 2: CON.* for `alt` / decision branches.
+- Lab 3 to-be sequence (may be messy — you may redraw).
+- Happy path = I-5 (no Lab 8 yet).
 
 ### Output
 
 | Artifact | Rules |
 |----------|--------|
-| UML Sequence (one per named use case) | One use case per canvas; one `alt` minimum; participants ⊆ I-4 / Lab 9 containers + I-2 actors |
-| UML Activity | Same happy path as I-5 / Lab 8; decisions show CON.* |
+| UML Sequence (one per named use case) | One use case per canvas; one `alt` minimum; participants ⊆ I-4 + I-2 |
+| UML Activity | Same happy path as I-5; decisions show CON.* |
 | UML State | **One** object per machine; states = I-6 |
 | G6 checklist | Each transition and each `alt` has a planned test (not executed) |
 
-**Done when:** every I-11 use case has a sequence; the named object has a state machine; G6 checklist filled.  
-**Fail if:** after pack uses lifelines not in I-4 / Lab 9; several objects on one state machine; happy path only; MVP or source code; before pack deleted.
+**Done when:** every I-11 use case has a sequence; the named object has a state machine; G6 checklist filled. Archive in the before pack.  
+**Fail if:** Guide / header / RACI applied; Lab 7 started already; several objects on one state machine; happy path only; MVP or source code.
 
 ---
 
@@ -196,27 +215,28 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 6 — Integration ecosystem (model, do not build)
 
+**Run:** Lab 6 of 10. **Start only after:** Lab 5 Done. Next: archive Labs 1–6, then Lab 7. **Before pack.** Product names are labels. Do not install. Do not apply the Guide.  
 **Bound form:** draw gateway / event bus / adapter **as containers**. Product names (Kong, Apigee, Kafka, Keycloak, …) are **labels only**. Do not install.
 
-**R:** SA · **A:** SA · **C:** Sec, Ops
+**R:** SA · **A:** EA · **C:** Sec, Ops — the drawer never approves their own view
 
 ### Input
 
 - Lab 1: I-4 containers, I-8 integration, I-9 deployment.
-- Lab 9 Container or Lab 8 Application Cooperation if already drawn.
+- Lab 3 contract register (I-8 edges).
 - AuthN rule: if AuthN already sits on the API gateway, do **not** add a separate IAM product as a system.
 
 ### Output
 
 | Artifact | Rules |
 |----------|--------|
-| Ecosystem on Container / Application Cooperation | Gateway, event bus, adapter **only if** they are in I-4 |
+| Ecosystem sketch | Gateway, event bus, adapter **only if** they are in I-4 |
 | Edge labels | Protocol + **sync vs async**; event names if an event bus exists |
 | Label note | Optional product label on the container; not a second box |
 | Negative evidence | No Docker, no cluster, no IAM realm, no broker admin |
 
-**Done when:** every I-8 pattern is visible; no extra product-system; nothing installed.  
-**Fail if:** a running Kong / Keycloak / Kafka stack; IAM added as a new system while AuthN is on the gateway; internals of the broker on Context.
+**Done when:** every I-8 pattern is visible; no extra product-system; nothing installed; **Labs 1–6 archived** as the before pack.  
+**Fail if:** Guide applied; a running Kong / Keycloak / Kafka stack; IAM added as a new system while AuthN is on the gateway; archive skipped.
 
 ---
 
@@ -224,25 +244,28 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 7 — Hierarchy, focus matrix, quality gates, RACI
 
-**Bound form:** **adopt** the [Guide](#guide) in this file as written. Do not rewrite G1–G6 or invent a parallel RACI. Does not block Labs 1, 2, 5, 6, 8, 9, 10.
+**Run:** Lab 7 of 10. **Start only after:** Labs 1–6 archived. Next: Lab 8. Do **not** start this lab first.  
+**Bound form:** **adopt** the [Guide](#guide) in this file as written. Do not rewrite G1–G6 or invent a parallel RACI.
 
 **R:** EA · **A:** Owner
 
 ### Input
 
-- The **Guide** section of this file.
+- The **Guide** section of this file (open it **now**, not during Labs 1–6).
 - Group roster: who plays EA, SA, Dev, Test (one person may hold two roles).
-- Before pack if already drawn (useful for Lab 4).
+- Archived before pack (Labs 1–6) — required.
+- Lab 2 requirements (to map onto G1–G6).
 
 ### Output
 
 | Artifact | Content |
 |----------|---------|
 | Adoption record | Names mapped to EA / SA / Dev / Test; statement that the Guide (G1–G6 and RACI) is used as written |
-| RACI line template | Copied onto every **after** diagram header |
+| RACI line template | Copied onto every **after** diagram header (Labs 8–10) |
+| Gate register | G1–G6 rows: pass rule (product wording), evidence artifact (will be Labs 8–10), Pass? |
 
-**Done when:** roster + adoption record exist; no competing gate list.  
-**Fail if:** a custom quality-gate table; two A’s on an after view; treating C4 as an EA language.
+**Done when:** roster + adoption record + gate register exist; no competing gate list; before pack still archived unchanged.  
+**Fail if:** this lab started before Labs 1–6; a custom quality-gate table; a new G7+; the before pack was edited to look like the Guide.
 
 ---
 
@@ -250,6 +273,7 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 8 — ArchiMate views (named set)
 
+**Run:** Lab 8 of 10. **Start only after:** Lab 7 Done. Next: Lab 9. **After pack** — Guide, header, RACI required.  
 **Bound form:** **four named views**, not every ArchiMate layer.
 
 **R:** EA (Motivation/Strategy) · BA (Process) · SA (Application Cooperation) · Ops/SA (Technology) · **A:** Owner (Motivation, Process)
@@ -257,21 +281,20 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 ### Input
 
 - Lab 1: I-1 goal/outcome, I-5 process, I-4 containers, I-9 deployment, I-10 CON.*.
-- Lab 2 requirements if already written.
-- **Before:** draw in the team’s current style; keep copies.
-- **After:** ArchiMate only; header + RACI from the Guide.
+- Lab 2 requirements; Lab 7 gate register (G1 on view 1, G2 on view 2).
+- Lab 7 header + RACI template.
 
 ### Output
 
 | # | View | Must show | Must not show |
 |---|------|-----------|----------------|
-| 1 | Motivation **or** Strategy | Goal, outcome, CON.* (G1) | Protocol, pods, JDBC, container internals |
-| 2 | Business Process | Happy path I-5; CON.* on branches (G2) | C4 containers as process boxes; sync/async labels |
-| 3 | Application Cooperation | Containers = I-4; same strings as C4 Container | UML messages; mixed C4 notation |
+| 1 | Motivation **or** Strategy | Goal, outcome, CON.* (**G1**) | Protocol, pods, JDBC, container internals |
+| 2 | Business Process | Happy path I-5; CON.* on branches (**G2**) | C4 containers as process boxes; sync/async labels |
+| 3 | Application Cooperation | Containers = I-4; same strings as later C4 Container | UML messages; mixed C4 notation |
 | 4 | Technology / hybrid | Locations from I-9; no forbidden path | Channel (or equivalent) writing the core ledger DB |
 
-**Done when:** four views exist. After pack: headers, names = Lab 1, G1 on view 1, G2 on view 2.  
-**Fail if:** “all layers”; after pack mixes languages or forks Lab 1 names; before pack deleted.
+**Done when:** four views exist; headers + RACI; names = Lab 1; G1 on view 1, G2 on view 2.  
+**Fail if:** “all layers”; missing header/RACI; mixed languages; Lab 7 skipped.
 
 ---
 
@@ -279,16 +302,25 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 9 — C4 Context and Container
 
+**Run:** Lab 9 of 10. **Start only after:** Lab 8 Done. Next: Lab 10. **After pack** — Guide required.  
 **Bound form:** **one** Context (L1) + **one** Container (L2). Optional: **one** Component inside **one** container.
 
-**R:** SA · **A:** Owner (Context) · SA (Container) · Dev **R** / SA **A** (optional Component)
+**RACI — one R and one A per artifact** (this lab has three artifacts, so three separate rows; that is not "two A's on one view"):
+
+| Artifact | R (draws) | A (approves) |
+|----------|-----------|--------------|
+| C4 Context (L1) | SA | Owner |
+| C4 Container (L2) | SA | EA |
+| C4 Component (optional, L3) | Dev | SA |
+
+R and A must be **different people** on every row. If your group is too small, split the artifact rather than letting one person approve their own drawing.
 
 ### Input
 
 - Lab 1: I-1 system-in-focus, I-2 actors, I-3 externals, I-4 containers, I-8 sync/async, I-11 optional Component container.
-- Lab 8 Application Cooperation if it exists.
-- **Before:** draw in the team’s current style; keep copies.
-- **After:** no internals on Context; do not mix L1+L2+L3 on one canvas.
+- Lab 8 Application Cooperation (name identity).
+- Lab 6 ecosystem sketch (gateway / bus / adapter must appear **only if** they are in I-4).
+- Lab 7 header + RACI template.
 
 ### Output
 
@@ -298,8 +330,8 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 | **C4 Container (L2)** | I-4 containers; externals as needed; protocol + **sync vs async** | Exploding every container; unnamed externals |
 | **C4 Component (optional)** | Internals of **one** I-11 container; neighbours as black boxes | Those components on Context; a second container exploded |
 
-**Done when:** one Context + one Container exist. After pack: G3 (no internals; sync/async; names = Lab 1).  
-**Fail if:** several Context diagrams; after pack internals on Context or mixed L1+L2+L3; new externals not in I-3; before pack deleted.
+**Done when:** one Context + one Container exist; no internals on Context; sync/async labeled; names = Lab 1 (**G3**); header + RACI.  
+**Fail if:** several Context diagrams; mixed L1+L2+L3; new externals not in I-3; Lab 7 skipped; missing header/RACI.
 
 ---
 
@@ -307,32 +339,40 @@ Completed **[Input I-1–I-11](#input)** (name-identity index). Every downstream
 
 ## Lab 10 — UML low-level design for named C4 use cases
 
+**Run:** Lab 10 of 10. **Start only after:** Lab 9 Done. **After pack.** Restyle Lab 5 against Lab 9 names. Write the comparison note.  
 **Bound form:** LLD for **named use cases**, not every C4 component.
+
+**Relation to Lab 5:** take the Lab 5 sequences and **audit** them — every lifeline must resolve to an I-4 / Lab 9 container string. Add module lifelines only inside the **one** I-11 container. Correct Lab 5; do not invent a second set of use cases.
 
 **R:** Dev · **A:** SA · **C:** Test, BA
 
 ### Input
 
 - Lab 1: I-11 use cases; I-6 states.
-- Lab 9 Container names if drawn; else I-4. Optional Component internals for **one** container only.
+- Lab 9 Container names. Optional Component internals for **one** container only.
 - Lab 6 gateway / event bus names if they are participants.
+- Lab 5 sequences / activity / state (before pack).
 - Lab 2 CON.* for exception branches.
+- Lab 7 header + RACI template.
 
 ### Output
 
 | Artifact | Rules |
 |----------|--------|
-| Sequence for each named use case | Participants ⊆ I-4 / Lab 9 (+ actors). Component modules only inside the one selected container |
-| State (if not already done in Lab 5) | One object; I-6 states |
+| Audited sequence per named use case | The Lab 5 sequence, corrected: participants ⊆ I-4 / Lab 9 (+ actors). Component modules only inside the one selected container |
+| State (only if Lab 5 did not produce it) | One object; I-6 states |
 | Participant = SUT map | Each lifeline → I-4 string |
 | Coverage note | G6: every `alt` and every state transition listed |
+| Comparison note | Lab 5 (messy) vs this sitting (Guide): names, mixed language, missing header/RACI |
 
-**Done when:** every named use case has a sequence; participants match I-4 / Lab 9; G6 note complete.  
-**Fail if:** “all components”; after pack lifeline not in I-4 / Lab 9; Component details of a container that was not selected; before pack deleted.
+**Done when:** every named use case has a sequence; participants match Lab 9; G6 note complete; header + RACI; comparison note written.  
+**Fail if:** “all components”; Lab 5 skipped; Lab 7 skipped; Component details of a container that was not selected; before pack deleted.
 
 ---
 
 # Guide
+
+**Open this section in Lab 7, not during Labs 1–6.** Using it early skips the messy-then-standardized journey.
 
 Use this standard from Lab 7 onward. The **after** pack must follow it. The **before** pack may not.
 
@@ -423,6 +463,8 @@ RACI is per **artifact**, not a job title. One person may hold two roles; the ar
 
 Typically one **R**. If two roles share the pen, split the artifact.
 
+**R ≠ A.** Every artifact needs a second pair of eyes, so the person who draws never signs their own view. One person may hold two roles, but not both seats on the same artifact — split the artifact or pass **A** to EA.
+
 | Abbr. | Role |
 | --- | --- |
 | **Owner** | Business Owner |
@@ -441,9 +483,9 @@ Typically one **R**. If two roles share the pen, split the artifact.
 | Motivation / Strategy | R | C | C | I | C | I | I | I | A |
 | Business Process | C | C | R | I | C | I | C | I | A |
 | C4 Context | C | R | C | I | C | I | I | I | A |
-| C4 Container | I | R | I | C | C | C | I | C | I |
+| C4 Container | A | R | I | C | C | C | I | C | I |
 | C4 Component | I | A | I | C | C | R | C | I | I |
-| Application Cooperation | C | R | I | C | C | C | I | I | I |
+| Application Cooperation | A | R | I | C | C | C | I | I | I |
 | UML Sequence | I | A | C | I | C | R | C | I | I |
 | UML Activity / State | I | C | A | I | C | C | R | I | I |
 | Technology / Deployment | I | A | I | I | C | C | I | R | I |
@@ -479,7 +521,8 @@ Out of Design pack: a second landscape; exploding every L2 container at once; ne
 Title:      ________________________________
 Viewpoint:  ArchiMate / C4 / UML ___________
 Layer(s):   Strategy / Business / App / Tech
-As-Is | To-Be | Transition:  _______________
+As-Is | To-Be | Transition:  ______ (circle one; this pack = To-Be
+            unless the view is the Lab 2 as-is analysis)
 Owner:      Role ________  Name ____________
 RACI:       R ____  A ____  C ____  I ____
 Version:    v____  Date ________  Status Draft|Review|Approved
@@ -504,6 +547,16 @@ Do **not** install Docker or stand up those products. Do **not** add a security 
 | SA | C4 Context + Container, Application Cooperation |
 | Dev | One C4 Component **or** UML sequence for a named use case |
 | Test | State of the named business object + G6 coverage checklist |
+
+### Doubling up in a group of three
+
+Four seats, three people. Pair them like this:
+
+| Group size | Works | Avoid | Why |
+|------------|-------|-------|-----|
+| 4 | one seat each | — | cleanest |
+| 3 | **EA + BA** (both upstream, same readers) or **Dev + Test** (both delivery grain) | **SA + Dev** | SA approves the C4 Component that Dev draws — one person would sign their own work |
+| 3 | Owner played by the facilitator | Owner played by a team member who also draws | Owner is **A** on Motivation, Process, and Context |
 
 ---
 
@@ -565,11 +618,19 @@ Numbered steps. Name the business object that moves.
 
 ## I-6. Named object states (use exactly on UML State)
 
-**Object:** _______________
+**Object:** _______________ (one business / data object — not a container)
 
-States and transitions:
+| State | Trigger / event | Next state | Terminal? |
+|-------|-----------------|------------|-----------|
+| | | | |
+| | | | |
+| | | | |
 
-Terminal states:
+**Terminal states** (list them; every machine needs at least one):
+
+-
+
+Use these exact state strings on the UML State machine (Lab 5 / Lab 10) and in the Lab 3 test spec.
 
 ## I-7. Source of truth
 
@@ -671,6 +732,15 @@ Full pass rules stay in the Guide. Do not add **G7**.
 | **⊆** | Participants are a **subset** of named containers (and actors) |
 | **LLD** | Low-level design (UML), not an MVP |
 
+### Lab wording
+
+| Short | Means |
+|-------|--------|
+| **Bound form** | The deliverable shape is fixed. Produce exactly the listed artifacts — no substitutes, no extras, no free-form slide deck instead |
+| **Before pack** | Labs 1, 2 (before), 8, 9, 6, 5, 10 as first drawn, in your current style. Archived unchanged |
+| **After pack** | The same views from Lab 4, restyled to the Guide |
+| **Sitting** | One lab worked start-to-finish. Finish Done-when before opening the next |
+
 ### Other
 
 | Short | Means |
@@ -684,15 +754,17 @@ Full pass rules stay in the Guide. Do not add **G7**.
 
 # Submit checklist
 
-- [ ] **Before pack** archived (Labs 1, 2, 5, 6, 8, 9, 10 as first drawn) — not deleted
-- [ ] Input I-1–I-11 complete (Lab 1)
-- [ ] Lab 2 requirements: before file kept; after file against G1–G6 (no new gates)
-- [ ] Lab 3: build list, to-be Component, to-be sequence, contract register, exception spec, test spec
-- [ ] Lab 7 adoption record (Guide as written)
-- [ ] Lab 4 after pack + comparison note (same views restyled)
-- [ ] Lab 8: four named ArchiMate views only
-- [ ] Lab 9: one Context (no internals after) + one Container (sync/async)
-- [ ] Lab 5 / Lab 10: UML for named use cases only; one object per state machine
-- [ ] Lab 6: ecosystem modeled, not built
+Complete **Lab 1 then 2 then 3 … then 10**. Tick a row only when that lab is Done.
+
+- [ ] **Lab 1:** Input I-1–I-11 complete
+- [ ] **Lab 2:** requirements in current language; **no** G1–G6
+- [ ] **Lab 3:** build list, to-be Component, to-be sequence, contract register, exception spec, test spec
+- [ ] **Lab 4:** messy 1–3 copies kept; cleaned pack + comparison note (Guide not used)
+- [ ] **Lab 5:** UML for named use cases; one object per state machine; archived
+- [ ] **Lab 6:** ecosystem modeled, not built; **Labs 1–6 archived**
+- [ ] **Lab 7:** adoption record + G1–G6 register. Not started before archive
+- [ ] **Lab 8:** four named ArchiMate views; header + RACI; G1 / G2
+- [ ] **Lab 9:** one Context (no internals) + one Container (sync/async); header + RACI
+- [ ] **Lab 10:** Lab 5 UML audited vs C4 names; G6 note; comparison note
 - [ ] After views: header + RACI + legend; English; simulated names only
 - [ ] No MVP; no Kong / Keycloak / Kafka stand-up

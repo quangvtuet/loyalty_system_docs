@@ -76,7 +76,7 @@ $$\text{WinningCampaign} = \arg\min_{c \in \text{MatchedCampaigns}} (c.\text{pri
 
 ## 4. Entity Lifecycle State Machines
 
-Full lifecycle specifications with transition rules: [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md) §5–§7.
+Full lifecycle specifications with transition rules: [entity-lifecycle-models.md](./entity-lifecycle-models.md) §5–§7.
 
 ### 4.1 LoyaltyProgram Lifecycle
 

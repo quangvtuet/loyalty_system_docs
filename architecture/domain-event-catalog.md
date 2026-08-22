@@ -3,7 +3,7 @@
 **Domain**: Loyalty Banking  
 **Version**: 1.0  
 **Date**: 2026-08-16  
-**Source**: [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) §5.2 | [ADR-002](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) | [ADR-003](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md)
+**Source**: [Architecture-Overview.md](../architecture/Architecture-Overview.md) §5.2 | [ADR-002](../architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) | [ADR-003](../architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md)
 
 ---
 
@@ -56,7 +56,7 @@ All events published to Apache Kafka follow a standard metadata envelope:
 | **Partition Key** | `member_id` |
 | **Ordering** | Per-member ordered (same partition) |
 | **Idempotency** | Consumer-side: SHA-256(`source_txn_id` + `program_id`) in Redis (TTL: 24h) |
-| **SLA** | ≤ 60 seconds from settlement ([FR-01-001](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-01-earning-engine.md)) |
+| **SLA** | ≤ 60 seconds from settlement ([FR-01-001](../requirements/FR-01-earning-engine.md)) |
 | **Triggers** | PointTransaction lifecycle: `[*] → PENDING` or `[*] → CONFIRMED` |
 
 **Payload Schema**:
@@ -369,7 +369,7 @@ All events published to Apache Kafka follow a standard metadata envelope:
 | **Consumer(s)** | Analytics & Reporting Service (DW Stream Loader) |
 | **Partition Key** | Source table primary key |
 | **Ordering** | Per-table per-key ordered (WAL sequence) |
-| **SLA** | End-to-end lag ≤ 10 minutes ([NFR-05-003](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/requirements/FR-05-analytics-reporting.md)) |
+| **SLA** | End-to-end lag ≤ 10 minutes ([NFR-05-003](../requirements/FR-05-analytics-reporting.md)) |
 
 **Payload**: Standard Debezium change event (before/after row state, operation type, source metadata).
 
@@ -410,4 +410,4 @@ flowchart LR
 
 ---
 
-*Source: [Architecture-Overview.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/Architecture-Overview.md) · [ADR-002](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) · [ADR-003](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md) · [entity-lifecycle-models.md](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md)*
+*Source: [Architecture-Overview.md](../architecture/Architecture-Overview.md) · [ADR-002](../architecture/adrs/ADR-002-event-driven-earn-ingestion-and-idempotency.md) · [ADR-003](../architecture/adrs/ADR-003-data-warehouse-and-analytics-isolation.md) · [entity-lifecycle-models.md](../design/entity-lifecycle-models.md)*

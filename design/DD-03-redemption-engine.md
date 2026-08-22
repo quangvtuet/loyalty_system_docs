@@ -85,7 +85,7 @@ If fulfillment returns `FAILED`:
 
 ## 4. RedemptionOrder Lifecycle State Machine
 
-The `RedemptionOrder` entity follows a strict lifecycle corresponding to the `status` column in `redemption_db.redemption_order`. Full specification with cross-entity interactions: [entity-lifecycle-models.md §3](file:///Users/dusainbolt/Documents/vcb/loyalty_system_docs/design/entity-lifecycle-models.md).
+The `RedemptionOrder` entity follows a strict lifecycle corresponding to the `status` column in `redemption_db.redemption_order`. Full specification with cross-entity interactions: [entity-lifecycle-models.md §3](./entity-lifecycle-models.md).
 
 ```mermaid
 stateDiagram-v2

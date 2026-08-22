@@ -24,6 +24,9 @@ public class PointTransaction {
     @Column(name = "member_id", nullable = false)
     private String memberId;
 
+    @Column(name = "program_id")
+    private String programId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;

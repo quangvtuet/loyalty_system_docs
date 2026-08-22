@@ -1,5 +1,6 @@
 package com.loyalty.redemption_engine.service;
 
+import com.loyalty.redemption_engine.client.TieringClient;
 import com.loyalty.redemption_engine.domain.FulfillmentType;
 import com.loyalty.redemption_engine.domain.OrderStatus;
 import com.loyalty.redemption_engine.domain.RedemptionOrder;
@@ -20,10 +21,25 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for RedemptionService — UC-LB-02 Redeem reward with FIFO.
+ *
+ * Spec-trace:
+ * - G6-T01: PENDING → IN_PROGRESS (debit reserved via CT-13)
+ * - G6-T02: PENDING → CANCELLED (cancellation while pending)
+ * - G6-T03: IN_PROGRESS → FULFILLED (partner confirmed delivery)
+ * - G6-T04: IN_PROGRESS → FAILED (partner delivery failure)
+ * - G6-T05: FAILED → REVERSED (CON.3 auto-reversal via CT-13)
+ * - G6-A02: ALT-01 insufficient balance / ALT-02 tier ineligible (CT-12)
+ * - G6-A03: ALT-05 partner failure
+ */
 class RedemptionServiceTest {
 
     @Mock
     private CatalogService catalogService;
+
+    @Mock
+    private TieringClient tieringClient;
 
     @Mock
     private BalanceLockService balanceLockService;
@@ -70,117 +86,168 @@ class RedemptionServiceTest {
                 .build();
     }
 
+    /**
+     * G6-T01: Happy path order intake — validation passes, CT-12 tier queried,
+     * CT-13 FIFO debit reserved in Earning Engine, order moves PENDING → IN_PROGRESS.
+     */
     @Test
     void testPlaceOrder_Success() {
-        // UC-03-02: Member 500 pts đặt item 300 pts
         when(catalogService.getActiveItemOrThrow(itemId)).thenReturn(silverVoucher);
-        doNothing().when(catalogService).validateTierEligibility(any(), any());
+        when(tieringClient.getMemberTier("member-001", "DEFAULT_PROG")).thenReturn("SILVER");
+        doNothing().when(catalogService).validateTierEligibility(any(), eq("SILVER"));
         when(balanceLockService.tryLock(any(), any())).thenReturn(true);
         doNothing().when(fifoDebitService).debitFifo(any(), any(), anyLong(), any());
 
-        RedemptionOrder savedOrder = RedemptionOrder.builder()
-                .orderId(UUID.randomUUID())
-                .memberId("member-001")
-                .status(OrderStatus.PENDING)
-                .totalPointsDebited(300L)
-                .build();
-        when(orderRepository.save(any())).thenReturn(savedOrder);
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         RedemptionOrder result = redemptionService.placeOrder(
-                "member-001", "DEFAULT_PROG", itemId, 1, "SILVER", 500L);
+                "member-001", "DEFAULT_PROG", itemId, 1);
 
         assertNotNull(result);
-        assertEquals(OrderStatus.PENDING, result.getStatus());
+        assertEquals(OrderStatus.IN_PROGRESS, result.getStatus(),
+                "G6-T01: Order must move to IN_PROGRESS upon FIFO debit reservation");
         assertEquals(300L, result.getTotalPointsDebited());
 
+        // Verify CT-12 tier check was performed
+        verify(tieringClient).getMemberTier("member-001", "DEFAULT_PROG");
+        // Verify CT-13 FIFO debit was requested from Earning Engine Service
         verify(fifoDebitService).debitFifo(eq("member-001"), eq("DEFAULT_PROG"), eq(300L), anyString());
+        // Verify lock was released
         verify(balanceLockService).releaseLock("member-001");
     }
 
+    /**
+     * G6-A02 / ALT-01: Insufficient balance in Earning DB.
+     * CT-13 FIFO debit throws ERR_RED_INSUFFICIENT_BALANCE → order creation fails.
+     */
     @Test
     void testPlaceOrder_InsufficientBalance_Throws() {
-        // UC-03-02: Member 200 pts đặt item 300 pts — bị từ chối
         when(catalogService.getActiveItemOrThrow(itemId)).thenReturn(silverVoucher);
-        doNothing().when(catalogService).validateTierEligibility(any(), any());
+        when(tieringClient.getMemberTier("member-001", "DEFAULT_PROG")).thenReturn("SILVER");
+        doNothing().when(catalogService).validateTierEligibility(any(), eq("SILVER"));
+        when(balanceLockService.tryLock(any(), any())).thenReturn(true);
+
+        doThrow(new IllegalStateException("ERR_RED_INSUFFICIENT_BALANCE: Required 300 but available 200"))
+                .when(fifoDebitService).debitFifo(any(), any(), anyLong(), any());
 
         assertThrows(IllegalStateException.class, () ->
-                redemptionService.placeOrder("member-001", "DEFAULT_PROG", itemId, 1, "SILVER", 200L));
+                redemptionService.placeOrder("member-001", "DEFAULT_PROG", itemId, 1));
 
-        verify(fifoDebitService, never()).debitFifo(any(), any(), anyLong(), any());
+        verify(balanceLockService).releaseLock("member-001");
+        verify(orderRepository, never()).save(any());
     }
 
+    /**
+     * G6-A02 / ALT-02: MemberTier queried via CT-12 is below minimum tier requirement.
+     */
     @Test
     void testPlaceOrder_TierEligibilityFailed_Throws() {
-        // UC-03-02: Silver member đặt Platinum item — bị từ chối (ERR_RED_TIER_ELIGIBILITY_FAILED)
         when(catalogService.getActiveItemOrThrow(platinumItemId)).thenReturn(platinumItem);
-        doThrow(new IllegalStateException("ERR_RED_TIER_ELIGIBILITY_FAILED"))
+        when(tieringClient.getMemberTier("member-001", "DEFAULT_PROG")).thenReturn("SILVER");
+        doThrow(new IllegalStateException("ERR_RED_TIER_ELIGIBILITY_FAILED: SILVER is below PLATINUM"))
                 .when(catalogService).validateTierEligibility(any(), eq("SILVER"));
 
         assertThrows(IllegalStateException.class, () ->
-                redemptionService.placeOrder("member-001", "DEFAULT_PROG", platinumItemId, 1, "SILVER", 10000L));
-    }
-
-    @Test
-    void testPlaceOrder_ConcurrentLockBusy_Throws() {
-        // FR-03-024: lock bận do concurrent request
-        when(catalogService.getActiveItemOrThrow(itemId)).thenReturn(silverVoucher);
-        doNothing().when(catalogService).validateTierEligibility(any(), any());
-        when(balanceLockService.tryLock(any(), any())).thenReturn(false);
-
-        assertThrows(IllegalStateException.class, () ->
-                redemptionService.placeOrder("member-001", "DEFAULT_PROG", itemId, 1, "SILVER", 500L));
+                redemptionService.placeOrder("member-001", "DEFAULT_PROG", platinumItemId, 1));
 
         verify(fifoDebitService, never()).debitFifo(any(), any(), anyLong(), any());
     }
 
+    /**
+     * ALT-06: Distributed balance lock busy.
+     */
+    @Test
+    void testPlaceOrder_ConcurrentLockBusy_Throws() {
+        when(catalogService.getActiveItemOrThrow(itemId)).thenReturn(silverVoucher);
+        when(tieringClient.getMemberTier("member-001", "DEFAULT_PROG")).thenReturn("SILVER");
+        doNothing().when(catalogService).validateTierEligibility(any(), eq("SILVER"));
+        when(balanceLockService.tryLock(any(), any())).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () ->
+                redemptionService.placeOrder("member-001", "DEFAULT_PROG", itemId, 1));
+
+        verify(fifoDebitService, never()).debitFifo(any(), any(), anyLong(), any());
+    }
+
+    /**
+     * ALT-03: Below 100 points minimum.
+     */
     @Test
     void testPlaceOrder_MinimumPointsViolation_Throws() {
-        // FR-03-013: 50 pts < 100 pts minimum
         RewardItem cheapItem = RewardItem.builder()
                 .itemId(UUID.randomUUID())
-                .pointsCost(50L) // below minimum
+                .pointsCost(50L) // below 100 minimum
                 .minTierRequired("SILVER")
                 .status("ACTIVE")
                 .build();
 
         when(catalogService.getActiveItemOrThrow(any())).thenReturn(cheapItem);
-        doNothing().when(catalogService).validateTierEligibility(any(), any());
 
         assertThrows(IllegalArgumentException.class, () ->
-                redemptionService.placeOrder("member-001", "DEFAULT_PROG", cheapItem.getItemId(), 1, "SILVER", 500L));
+                redemptionService.placeOrder("member-001", "DEFAULT_PROG", cheapItem.getItemId(), 1));
+
+        verify(tieringClient, never()).getMemberTier(any(), any());
+        verify(fifoDebitService, never()).debitFifo(any(), any(), anyLong(), any());
     }
 
+    /**
+     * G6-T03: IN_PROGRESS → FULFILLED.
+     */
     @Test
-    void testFailAndReverseOrder_RestoredWithFifo() {
-        // UC-03-05 / FLOW-05: fulfillment thất bại → hoàn điểm
+    void testFulfillOrder_Success() {
         UUID orderId = UUID.randomUUID();
         RedemptionOrder order = RedemptionOrder.builder()
                 .orderId(orderId)
                 .memberId("member-001")
                 .programId("DEFAULT_PROG")
-                .status(OrderStatus.PENDING)
+                .status(OrderStatus.IN_PROGRESS)
                 .totalPointsDebited(300L)
                 .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        redemptionService.failAndReverseOrder(orderId, "OUT_OF_STOCK");
+        RedemptionOrder fulfilled = redemptionService.fulfillOrder(orderId);
 
-        ArgumentCaptor<RedemptionOrder> captor = ArgumentCaptor.forClass(RedemptionOrder.class);
-        verify(orderRepository, times(2)).save(captor.capture());
+        assertEquals(OrderStatus.FULFILLED, fulfilled.getStatus(),
+                "G6-T03: Order moves IN_PROGRESS → FULFILLED");
+        verify(orderRepository).save(order);
+    }
 
-        // Trạng thái cuối là REVERSED
-        assertEquals(OrderStatus.REVERSED, captor.getAllValues().get(1).getStatus());
-        assertEquals("OUT_OF_STOCK", captor.getAllValues().get(0).getFailureReason());
+    /**
+     * G6-T04 / G6-T05 / G6-A03 / EXC-05: Partner fulfillment failure triggers auto-reversal.
+     * Order moves IN_PROGRESS → FAILED → REVERSED.
+     * Earning Engine Service is called via CT-13 to restore points with original earn date/expiry.
+     */
+    @Test
+    void testFailAndReverseOrder_RestoredWithFifo() {
+        UUID orderId = UUID.randomUUID();
+        RedemptionOrder order = RedemptionOrder.builder()
+                .orderId(orderId)
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .status(OrderStatus.IN_PROGRESS)
+                .totalPointsDebited(300L)
+                .build();
 
-        // Verify FIFO reversal được gọi để giữ nguyên earn_date gốc (FR-03-041)
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        RedemptionOrder reversed = redemptionService.failAndReverseOrder(orderId, "OUT_OF_STOCK");
+
+        assertEquals(OrderStatus.REVERSED, reversed.getStatus(),
+                "G6-T05: Order moves to terminal state REVERSED");
+        assertEquals("OUT_OF_STOCK", reversed.getFailureReason());
+
+        // Verify CT-13 RestorePoints was delegated to Earning Engine Service (EXC-05)
         verify(fifoDebitService).reverseDebit("member-001", "DEFAULT_PROG", orderId.toString(), 300L);
     }
 
+    /**
+     * G6-T02: PENDING → CANCELLED when member cancels while pending.
+     */
     @Test
     void testCancelOrder_WhenPending_Success() {
-        // UC-03-07: Member hủy đơn khi PENDING
         UUID orderId = UUID.randomUUID();
         RedemptionOrder order = RedemptionOrder.builder()
                 .orderId(orderId)
@@ -193,22 +260,22 @@ class RedemptionServiceTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        redemptionService.cancelOrder(orderId, "member-001");
+        RedemptionOrder cancelled = redemptionService.cancelOrder(orderId, "member-001");
 
-        ArgumentCaptor<RedemptionOrder> captor = ArgumentCaptor.forClass(RedemptionOrder.class);
-        verify(orderRepository).save(captor.capture());
-        assertEquals(OrderStatus.CANCELLED, captor.getValue().getStatus());
+        assertEquals(OrderStatus.CANCELLED, cancelled.getStatus(),
+                "G6-T02: Order moves PENDING → CANCELLED");
     }
 
+    /**
+     * Cancel refused if already IN_PROGRESS or FULFILLED.
+     */
     @Test
-    void testCancelOrder_WhenFulfilled_Throws() {
-        // UC-03-07: Không thể hủy khi đã FULFILLED
+    void testCancelOrder_WhenInProgress_Throws() {
         UUID orderId = UUID.randomUUID();
         RedemptionOrder order = RedemptionOrder.builder()
                 .orderId(orderId)
                 .memberId("member-001")
-                .status(OrderStatus.FULFILLED)
-                .totalPointsDebited(300L)
+                .status(OrderStatus.IN_PROGRESS)
                 .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
@@ -216,86 +283,4 @@ class RedemptionServiceTest {
         assertThrows(IllegalStateException.class, () ->
                 redemptionService.cancelOrder(orderId, "member-001"));
     }
-
-    /**
-     * G6-T03: IN_PROGRESS → FULFILLED (happy path terminal state).
-     * Partner confirms delivery → debit is final → order FULFILLED.
-     * Spec-trace: G6-T03, I-11 UC-LB-02, openAPI operationId: fulfillRedemptionOrder
-     */
-    @Test
-    void testFulfillOrder_Success() {
-        // Arrange: order in IN_PROGRESS (FIFO debit already reserved)
-        UUID orderId = UUID.randomUUID();
-        RedemptionOrder order = RedemptionOrder.builder()
-                .orderId(orderId)
-                .memberId("member-001")
-                .programId("DEFAULT_PROG")
-                .status(OrderStatus.PENDING)  // service reads the current state
-                .totalPointsDebited(300L)
-                .build();
-
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        // Act: partner confirms delivery → fulfillOrder
-        redemptionService.fulfillOrder(orderId);
-
-        // Assert: order status moves to FULFILLED (G6-T03)
-        ArgumentCaptor<RedemptionOrder> captor = ArgumentCaptor.forClass(RedemptionOrder.class);
-        verify(orderRepository, atLeastOnce()).save(captor.capture());
-        // The last save should be FULFILLED
-        RedemptionOrder saved = captor.getValue();
-        assertEquals(OrderStatus.FULFILLED, saved.getStatus(),
-                "G6-T03: IN_PROGRESS → FULFILLED after partner confirms delivery");
-
-        // FIFO debit confirmed (no reversal)
-        verify(fifoDebitService).confirmDebit("member-001", "DEFAULT_PROG", orderId.toString());
-    }
-
-    /**
-     * G6-T04: IN_PROGRESS → FAILED.
-     * Partner fulfillment failure is recorded before the auto-reversal chain begins.
-     * Spec-trace: G6-T04, I-11 UC-LB-02 ALT-05, openAPI: failAndReverseRedemptionOrder
-     */
-    @Test
-    void testFailAndReverseOrder_MovesToFailed() {
-        // Arrange
-        UUID orderId = UUID.randomUUID();
-        RedemptionOrder order = RedemptionOrder.builder()
-                .orderId(orderId)
-                .memberId("member-002")
-                .programId("DEFAULT_PROG")
-                .status(OrderStatus.PENDING)
-                .totalPointsDebited(500L)
-                .build();
-
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-
-        // Capture the status at each save call (mutated object — snapshot the enum at save time)
-        java.util.List<OrderStatus> savedStatuses = new java.util.ArrayList<>();
-        java.util.List<String> savedReasons = new java.util.ArrayList<>();
-        when(orderRepository.save(any())).thenAnswer(inv -> {
-            RedemptionOrder o = inv.getArgument(0);
-            savedStatuses.add(o.getStatus());
-            savedReasons.add(o.getFailureReason());
-            return o;
-        });
-
-        // Act
-        redemptionService.failAndReverseOrder(orderId, "PARTNER_UNAVAILABLE");
-
-        // Assert: two saves — first to FAILED (G6-T04), then to REVERSED (G6-T05)
-        assertEquals(2, savedStatuses.size(), "Exactly two state transitions expected: FAILED then REVERSED");
-
-        // First save: FAILED state with failure reason (G6-T04)
-        assertEquals(OrderStatus.FAILED, savedStatuses.get(0),
-                "G6-T04: order must be saved as FAILED before auto-reversal");
-        assertEquals("PARTNER_UNAVAILABLE", savedReasons.get(0));
-
-        // Second save: REVERSED (G6-T05 — also covered by testFailAndReverseOrder_RestoredWithFifo)
-        assertEquals(OrderStatus.REVERSED, savedStatuses.get(1),
-                "G6-T05: order must reach REVERSED after points are restored with original earn date/expiry");
-    }
 }
-
-

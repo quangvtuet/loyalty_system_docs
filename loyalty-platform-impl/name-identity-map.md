@@ -5,42 +5,63 @@
 > Scope: I-11 only. Names are exact Lab 1 strings. No product names.
 > **R** Dev (Lê Huy Du) · **A** SA (Vũ Trường Quang)
 
-## I-4 Container → Implementation
+---
+
+## 1. I-4 Container → Implementation
 
 | Lab 1 I-4 Container Name | I-9 Zone | Port | Java Module (directory) | Java Package | Primary Class(es) |
 |---|---|---|---|---|---|
-| API Gateway | Edge & Ingestion Zone | — | *(simulated via direct HTTP calls in tests; not a separate Java module in this implementation)* | — | — |
-| Message Broker | Edge & Ingestion Zone | 9092 | *(Kafka — provided by `docker-compose.yml`)* | — | `loyalty.earning.qp_accrued` topic, `loyalty.tiering.tier_changed` topic |
-| Earning Engine Service | Domain Services Zone | 8081 | `earning-engine/` | `com.loyalty.earning_engine` | `EarningEngineApplication`, `EarnCalculator`, `EarningLedgerService`, `IdempotencyService` |
+| API Gateway | Edge & Ingestion Zone | — | *(simulated via direct HTTP routing in Spring Web layer)* | — | `PartnerEarnController`, `RedemptionController`, `ReportingController` |
+| Message Broker | Edge & Ingestion Zone | 9092 | *(Kafka message bus)* | — | `loyalty.earning.qp_accrued` topic, `loyalty.tiering.tier_changed` topic |
+| Earning Engine Service | Domain Services Zone | 8081 | `earning-engine/` | `com.loyalty.earning_engine` | `EarningEngineApplication`, `EarnCalculator`, `EarningLedgerService`, `FifoDebitController`, `PartnerEarnController`, `IdempotencyService` |
 | Tiering System Service | Domain Services Zone | 8082 | `tiering-system/` | `com.loyalty.tiering_system` | `TieringSystemApplication`, `MemberTierController`, `QpLedgerService`, `TierUpgradeService`, `GracePeriodService` |
-| Redemption Engine Service | Domain Services Zone | 8083 | `redemption-engine/` | `com.loyalty.redemption_engine` | `RedemptionEngineApplication`, `RedemptionService`, `CatalogService`, `BalanceLockService`, `FifoDebitService` |
+| Redemption Engine Service | Domain Services Zone | 8083 | `redemption-engine/` | `com.loyalty.redemption_engine` | `RedemptionEngineApplication`, `RedemptionController`, `RedemptionService`, `CatalogService`, `BalanceLockService`, `FifoDebitService`, `TieringClient` |
 | Program Management Service | Domain Services Zone | 8084 | `program-management/` | `com.loyalty.program_management` | `ProgramManagementApplication`, `ProgramService`, `CampaignService`, `AuditLogService` |
-| Analytics & Reporting Service | Analytics Zone | 8085 | `analytics-reporting/` | `com.loyalty.analytics_reporting` | `AnalyticsReportingApplication`, `ReportingService` |
-| Idempotency Store | Data Services Zone | 6379 | *(Redis — provided by `docker-compose.yml`)* | `com.loyalty.earning_engine.service` | `IdempotencyService` (earning), `BalanceLockService` (redemption) |
-| Earning DB | Data Services Zone | 5432 | *(PostgreSQL — provided by `docker-compose.yml`)* | `com.loyalty.earning_engine.domain` | `PointTransaction`, `PointBalance` |
-| Tiering DB | Data Services Zone | 5432 | *(PostgreSQL — shared instance, separate schema prefix)* | `com.loyalty.tiering_system.domain` | `QpLedger`, `MemberTier` |
-| Redemption DB | Data Services Zone | 5432 | *(PostgreSQL — shared instance)* | `com.loyalty.redemption_engine.domain` | `RedemptionOrder`, `RewardItem` |
-| Program Mgmt DB | Data Services Zone | 5432 | *(PostgreSQL — shared instance)* | `com.loyalty.program_management.domain` | `LoyaltyProgram`, `Campaign`, `ConfigVersionLog` |
-| Data Warehouse | Analytics Zone | 5432 | *(PostgreSQL — shared instance; star schema)* | `com.loyalty.analytics_reporting.domain` | `FactPointTransaction` |
+| Analytics & Reporting Service | Analytics Zone | 8085 | `analytics-reporting/` | `com.loyalty.analytics_reporting` | `AnalyticsReportingApplication`, `ReportingController`, `ReportingService` |
+| Idempotency Store | Data Services Zone | 6379 | *(Redis key-value store)* | `com.loyalty.earning_engine.service` | `IdempotencyService` (earning CON.1), `BalanceLockService` (redemption ALT-06) |
+| Earning DB | Data Services Zone | 5432 | *(PostgreSQL — schema: public/earning)* | `com.loyalty.earning_engine.domain` | `PointTransaction`, `PointBalance` |
+| Tiering DB | Data Services Zone | 5432 | *(PostgreSQL — schema: tiering)* | `com.loyalty.tiering_system.domain` | `QpLedger`, `MemberTier` |
+| Redemption DB | Data Services Zone | 5432 | *(PostgreSQL — schema: redemption)* | `com.loyalty.redemption_engine.domain` | `RedemptionOrder`, `RewardItem` |
+| Program Mgmt DB | Data Services Zone | 5432 | *(PostgreSQL — schema: program)* | `com.loyalty.program_management.domain` | `LoyaltyProgram`, `Campaign`, `ConfigVersionLog` |
+| Data Warehouse | Analytics Zone | 5432 | *(PostgreSQL — schema: analytics)* | `com.loyalty.analytics_reporting.domain` | `FactPointTransaction` |
 
-## I-3 External System → Mock Strategy
+---
+
+## 2. Documented Deployment Collapse & Infrastructure Mappings
+
+Per capstone rules, all deployable consolidations are explicitly mapped below so no unauthorized identities exist:
+
+| Collapsed Infrastructure | Represents I-4 Container(s) | Stand-in / Realization Strategy | I-9 Zone Mapped |
+|---|---|---|---|
+| Shared PostgreSQL Instance | `Earning DB`, `Tiering DB`, `Redemption DB`, `Program Mgmt DB`, `Data Warehouse` | 5 logical databases consolidated onto one PostgreSQL DBMS using isolated schema namespaces. Each schema is strictly owned by its single microservice. | Data Services Zone (transactional DBs) & Analytics Zone (Data Warehouse) |
+| Kafka Cluster (KRaft / Zookeeper) | `Message Broker` | Message Broker container provides asynchronous event topics (`earning.qp_accrued`, `tiering.tier_changed`). Zookeeper is purely an internal clustering coordinator for Kafka, NOT a new container identity. | Edge & Ingestion Zone |
+| Redis Instance | `Idempotency Store` | Key-value store providing distributed locking (Redemption M4) and idempotency deduplication (Earning CON.1). | Data Services Zone |
+| Direct HTTP Endpoint Routing | `API Gateway` | In this POC runtime, API Gateway routing is simulated via direct REST requests to each microservice's `@RestController` port. | Edge & Ingestion Zone |
+
+---
+
+## 3. I-3 External System → Mock Strategy
 
 Per capstone rules: **I-3 mocked** — no real host names, no production credentials.
 
 | Lab 1 I-3 External System | Mock strategy | Location |
 |---|---|---|
 | Core Banking System | Simulated via `POST /api/v1/partners/earn` in tests and `e2e_test.sh` | `TransactionSettledConsumer` (Kafka consumer path) |
-| Partner Systems | Simulated response via `RedemptionService.fulfillOrder()` / `failAndReverseOrder()` API calls | `RedemptionController` — PATCH endpoints |
-| CRM & Notification Gateway | Logged only (`log.info(...)` in `RedemptionService`) — no real HTTP call | `RedemptionService.failAndReverseOrder()` |
-| Enterprise Data Warehouse | Not connected — `FactPointTransactionRepository` reads from the local analytical schema | `ReportingService` |
+| Partner Systems | Simulated response via `RedemptionService.fulfillOrder()` / `failAndReverseOrder()` PATCH endpoints | `RedemptionController` (`PATCH /api/v1/redemptions/orders/{orderId}/fulfill`, `.../fail`) |
+| CRM & Notification Gateway | Logged only (`log.info(...)` in `RedemptionService`) — no real external HTTP call | `RedemptionService.failAndReverseOrder()` |
+| Enterprise Data Warehouse | Not connected — `FactPointTransactionRepository` reads from local analytical schema | `ReportingService` |
 
-## I-6 Object → Implementing Entity
+---
+
+## 4. I-6 Object → Implementing Entity
 
 | Lab 1 I-6 Object | Source of Truth (I-7) | Implementing JPA Entity | States |
 |---|---|---|---|
 | `RedemptionOrder` | Redemption DB | `com.loyalty.redemption_engine.domain.RedemptionOrder` | `PENDING`, `IN_PROGRESS`, `FULFILLED`, `FAILED`, `REVERSED`, `CANCELLED` |
 
-## I-7 Data Object → Implementing Entity
+---
+
+## 5. I-7 Data Object → Implementing Entity
 
 | Lab 1 I-7 Data Object | Source of Truth | Implementing JPA Entity | Table Name |
 |---|---|---|---|
@@ -52,15 +73,17 @@ Per capstone rules: **I-3 mocked** — no real host names, no production credent
 | `Campaign` | Program Mgmt DB | `com.loyalty.program_management.domain.Campaign` | `campaign` |
 | `FactPointTransaction` | Data Warehouse | `com.loyalty.analytics_reporting.domain.FactPointTransaction` | `fact_point_transaction` |
 
-## Lab 3 Module (M-series) → Implementing Class
+---
+
+## 6. Lab 3 Module (M-series) → Implementing Class
 
 | Lab 3 Module | Responsibility | Implementing Class |
 |---|---|---|
 | M1 Catalog Query | Serves reward catalogue | `com.loyalty.redemption_engine.service.CatalogService` |
-| M2 Order Intake | Creates `RedemptionOrder` in `PENDING` | `com.loyalty.redemption_engine.service.RedemptionService.placeOrder()` |
-| M3 Eligibility Check | Tier and balance validation | `com.loyalty.redemption_engine.service.CatalogService.validateTierEligibility()` + inline balance check in `RedemptionService` |
+| M2 Order Intake | Creates `RedemptionOrder` and transitions `PENDING` → `IN_PROGRESS` | `com.loyalty.redemption_engine.service.RedemptionService.placeOrder()` |
+| M3 Eligibility Check | Tier validation via Tiering System Service (CT-12) & item cost checks | `com.loyalty.redemption_engine.client.TieringClient` + `CatalogService.validateTierEligibility()` |
 | M4 Balance Lock | Distributed per-member debit lock | `com.loyalty.redemption_engine.service.BalanceLockService` |
-| M5 FIFO Debit Request | Oldest-points-first debit | `com.loyalty.redemption_engine.service.FifoDebitService.debitFifo()` |
-| M6 Order State Keeper | State transitions + persistence | `com.loyalty.redemption_engine.service.RedemptionService` (all state transitions) |
+| M5 FIFO Debit Request | Requests oldest-points-first debit from Earning Engine Service (CT-13) | `com.loyalty.redemption_engine.service.FifoDebitService.debitFifo()` → `com.loyalty.earning_engine.service.EarningLedgerService.debitPointsFifo()` |
+| M6 Order State Keeper | State transitions + persistence (`PENDING` → `IN_PROGRESS` → `FULFILLED` / `FAILED` → `REVERSED` / `CANCELLED`) | `com.loyalty.redemption_engine.service.RedemptionService` |
 | M7 Fulfilment Dispatch | Sends fulfillment request | `com.loyalty.redemption_engine.api.RedemptionController.fulfillOrder()` (simulated callback) |
-| M8 Reversal Handler | Point restoration on failure | `com.loyalty.redemption_engine.service.RedemptionService.failAndReverseOrder()` + `FifoDebitService.reverseDebit()` |
+| M8 Reversal Handler | Point restoration on failure via Earning Engine Service (CT-13) | `com.loyalty.redemption_engine.service.FifoDebitService.reverseDebit()` → `com.loyalty.earning_engine.service.EarningLedgerService.restorePoints()` |

@@ -115,7 +115,7 @@ class PartnerEarnControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("ERR_EARN_DUPLICATE"));
+                .andExpect(jsonPath("$.errorCode").value("ERR_EARN_DUPLICATE"));
 
         // Assert: EarnCalculator NOT called — no second PointTransaction written (CON.1)
         verify(earnCalculator, never()).processEarn(any(), any(), any(), any(), any(), any());

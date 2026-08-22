@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/loyalty_db
-    username: loyalty_user
-    password: loyalty_password
+    username: ${LOYALTY_DB_USERNAME:loyalty_user}
+    password: ${LOYALTY_DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -24,6 +24,11 @@ spring:
 
 server:
   port: 8083
+
+loyalty:
+  services:
+    tiering-base-url: ${LOYALTY_TIERING_BASE_URL:http://localhost:8082}
+    earning-base-url: ${LOYALTY_EARNING_BASE_URL:http://localhost:8081}
 
 logging:
   level:

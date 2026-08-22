@@ -1,9 +1,9 @@
-# Loyalty Platform - Implementation
+# Loyalty Platform — Implementation Runtime
 
-> **Not a lab artifact — outside the modeling pack.**
-> This folder is a side spike the team wrote to explore the domain. It is **not** submitted for any lab and is **not** evidence for any lab.
-> The Lab 3 specification lives in [`../lab3-spec.md`](../lab3-spec.md) as tables only — build list, component, sequence, contract register, exception spec, and test spec.
-> Nothing in this folder is required to be built, run, or deployed for the pack.
+> **Official Implementation Runtime — Loyalty Banking Platform Modernization (Capstone Project — Team 2)**  
+> Realizes the I-11 use case slice (`UC-LB-01` through `UC-LB-04`) designed in Labs 1–10.  
+> Source of truth: [`../loyalty.md`](../loyalty.md), [`../lab3-spec.md`](../lab3-spec.md), [`../lab-10-uml-after.md`](../lab-10-uml-after.md).  
+> **RACI:** Dev **R** Lê Huy Du · SA **A** Vũ Trường Quang · Test **C** Lê Huy Du
 
 Dự án triển khai thực tế các module của hệ thống **Loyalty Banking Platform**, phát triển bằng **Java Spring Boot 3**.
 
@@ -97,12 +97,7 @@ cd redemption-engine/
 ./mvnw spring-boot:run
 ```
 
-**Program Management** (Port 8084) — mở terminal mới:
-```bash
-cd program-management/
-./mvnw spring-boot:run
-```
-
+Program Management (Port 8084) is outside the I-11 capstone runtime and is not started by the capstone run.
 **Analytics & Reporting** (Port 8085) — mở terminal mới:
 ```bash
 cd analytics-reporting/
@@ -141,21 +136,7 @@ curl -X POST http://localhost:8081/api/v1/partners/earn \
 
 ---
 
-**Khởi tạo dữ liệu mẫu catalog cho Redemption Engine:**
-```bash
-# Thêm phần thưởng Silver (300 điểm = $3)
-curl -X POST http://localhost:8083/api/v1/catalog/items \
-  -H "Content-Type: application/json" \
-  -d '{
-    "programId": "DEFAULT_PROG",
-    "name": "Coffee Voucher",
-    "category": "VOUCHER",
-    "pointsCost": 300,
-    "currencyValue": 3.00,
-    "fulfillmentType": "DIGITAL",
-    "minTierRequired": "SILVER"
-  }'
-```
+Catalog administration is outside I-11. Load reward items through a local test fixture before running the smoke script.
 
 **Đổi điểm (Redemption Order):**
 ```bash
@@ -165,13 +146,11 @@ curl -X POST http://localhost:8083/api/v1/redemptions/orders \
     "memberId": "member-001",
     "programId": "DEFAULT_PROG",
     "rewardItemId": "<item-id-from-catalog>",
-    "quantity": 1,
-    "memberTier": "SILVER",
-    "availableBalance": 500
+    "quantity": 1
   }'
 ```
 
-*Kết quả mong đợi:* Trả về `201 Created` kèm `orderId` và `status: PENDING`.
+*Kết quả mong đợi:* Trả về `201 Created` kèm `orderId` và `status: IN_PROGRESS` after CT-12 and CT-13 succeed.
 
 ## Kiểm tra dữ liệu trong Database
 
@@ -212,7 +191,7 @@ Hoặc bạn có thể dùng một công cụ quản lý CSDL (như DBeaver, Dat
 - **Port**: `5432`
 - **Database**: `loyalty_db`
 - **User**: `loyalty_user`
-- **Password**: `loyalty_password`
+- **Password**: set `LOYALTY_DB_PASSWORD` in the local environment; no password is committed.
 
 
 ## Thiết kế nổi bật

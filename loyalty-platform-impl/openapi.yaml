@@ -6,7 +6,8 @@ info:
     Public contract for the four I-11 use cases (UC-LB-01 through UC-LB-04).
     Scope: I-11 only. Names are Lab 1 I-4 container names.
     I-3 external systems (Core Banking System, Partner Systems, CRM & Notification Gateway,
-    Enterprise Data Warehouse) are mocked — no production credentials or real host names.
+    Enterprise Data Warehouse) are simulated at the integration boundary; no production credentials
+    or real host names are used.
 
     **Constraint reference:**
     - CON.1 — No duplicate point posting for the same source transaction
@@ -156,6 +157,106 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
+  # ── CT-13: DebitPointsFifo (Redemption Engine Service → Earning Engine Service)
+  /api/v1/earning/fifo/debit:
+    post:
+      operationId: debitPointsFifo
+      tags:
+        - UC-LB-01 Earning Engine Service
+      summary: CT-13 — Debit points in FIFO order from oldest unexpired batches
+      description: |
+        Contract CT-13: Redemption Engine Service delegates FIFO debit to Earning Engine Service.
+        PointTransaction and PointBalance are owned by Earning Engine Service (I-7 single ownership).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FifoDebitRequest'
+      responses:
+        "200":
+          description: FIFO debit reserved successfully in Earning DB.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FifoDebitResponse'
+        "422":
+          description: Insufficient balance in Earning DB.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        "503":
+          description: Earning Engine Service unavailable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  # ── CT-13: RestorePoints (CON.3 / EXC-05 Reversal)
+  /api/v1/earning/fifo/restore:
+    post:
+      operationId: restorePoints
+      tags:
+        - UC-LB-01 Earning Engine Service
+      summary: CT-13 — Auto-reversal restoring points to original batches with earn date preserved (CON.3 / EXC-05)
+      description: |
+        Contract CT-13 / EXC-05: When partner fulfillment fails, Redemption Engine Service
+        calls Earning Engine Service to restore the debited points.
+        Original earn_date and expiry_date are preserved under CON.3.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FifoRestoreRequest'
+      responses:
+        "200":
+          description: Points restored successfully to original FIFO batches.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FifoRestoreResponse'
+        "422":
+          description: Unknown or invalid persisted debit allocation.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  # ── CT-13 Read Path: Get Member Balance
+  /api/v1/earning/members/{memberId}/balance:
+    get:
+      operationId: getMemberBalance
+      tags:
+        - UC-LB-01 Earning Engine Service
+      summary: CT-13 — Query confirmed point balance from Earning DB (I-7 Source of Truth)
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: programId
+          schema:
+            type: string
+            default: "DEFAULT_PROG"
+      responses:
+        "200":
+          description: Current confirmed balance.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberId:
+                    type: string
+                  programId:
+                    type: string
+                  confirmedBalance:
+                    type: integer
+
   # ─────────────────────────────────────────────────────────────────
   # UC-LB-02 — Redeem reward with FIFO (CT-11 CreateRedemptionOrder)
   # Server: http://localhost:8083
@@ -190,13 +291,11 @@ paths:
               programId: "DEFAULT_PROG"
               rewardItemId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
               quantity: 1
-              memberTier: "SILVER"
-              availableBalance: 500
       responses:
         "201":
           description: |
-            Created. RedemptionOrder is in PENDING state.
-            Happy path UC-LB-02 (G6-T01 step: PENDING → IN_PROGRESS triggered after this).
+             Created. RedemptionOrder is in IN_PROGRESS after authoritative CT-12 eligibility
+             and CT-13 FIFO debit succeed.
           content:
             application/json:
               schema:
@@ -220,8 +319,8 @@ paths:
             Unprocessable — one of the validation alts fired:
             - ALT-01: ERR_RED_INSUFFICIENT_BALANCE — balance < reward cost (T-06)
             - ALT-02: ERR_RED_TIER_ELIGIBILITY_FAILED — MemberTier below minimum (T-07)
-            - ALT-03: ERR_RED_MIN_POINTS — below 100-point minimum (T-08)
-            No points are debited in any of these cases. RedemptionOrder moves PENDING → CANCELLED.
+             - ALT-03: ERR_RED_MIN_POINTS — below 100-point minimum (T-08)
+             No points are debited in any of these cases; no order is persisted before debit succeeds.
           content:
             application/problem+json:
               schema:
@@ -532,13 +631,14 @@ components:
     # ── UC-LB-02 ─────────────────────────────────────────
     RedemptionOrderRequest:
       type: object
-      required: [memberId, programId, rewardItemId, quantity, memberTier, availableBalance]
+      required: [memberId, rewardItemId]
       properties:
         memberId:
           type: string
           example: "member-001"
         programId:
           type: string
+          default: "DEFAULT_PROG"
           example: "DEFAULT_PROG"
         rewardItemId:
           type: string
@@ -546,16 +646,87 @@ components:
         quantity:
           type: integer
           minimum: 1
+          default: 1
           example: 1
-        memberTier:
+
+    # ── CT-13 FIFO Debit & Restoration Schemas ───────────
+    FifoDebitRequest:
+      type: object
+      required: [memberId, pointsRequired, orderId]
+      properties:
+        memberId:
           type: string
-          enum: [SILVER, GOLD, PLATINUM]
-          description: Member's current tier — checked against reward minimum tier (M3 Eligibility Check).
-          example: "SILVER"
-        availableBalance:
+          example: "member-001"
+        programId:
+          type: string
+          default: "DEFAULT_PROG"
+        pointsRequired:
           type: integer
-          description: Member's current available point balance (M3 balance check).
-          example: 500
+          minimum: 1
+          example: 300
+        orderId:
+          type: string
+          example: "order-123"
+
+    FifoDebitResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        memberId:
+          type: string
+        pointsDebited:
+          type: integer
+        status:
+          type: string
+          enum: [RESERVED]
+        debitedBatchesCount:
+          type: integer
+        allocationId:
+          type: string
+          description: Stable persisted allocation identity used by RestorePoints.
+        message:
+          type: string
+
+    FifoRestoreRequest:
+      type: object
+      required: [memberId, orderId, pointsToRestore]
+      properties:
+        memberId:
+          type: string
+        programId:
+          type: string
+          default: "DEFAULT_PROG"
+        orderId:
+          type: string
+        allocationId:
+          type: string
+        pointsToRestore:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          example: "OUT_OF_STOCK"
+
+    FifoRestoreResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        memberId:
+          type: string
+        pointsRestored:
+          type: integer
+        status:
+          type: string
+          enum: [RESTORED]
+        reason:
+          type: string
+        allocationId:
+          type: string
+          description: Stable persisted allocation identity used for idempotent restoration.
+        message:
+          type: string
 
     RedemptionOrderResponse:
       type: object

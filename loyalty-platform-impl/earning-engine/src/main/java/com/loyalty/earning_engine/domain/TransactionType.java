@@ -4,6 +4,7 @@ public enum TransactionType {
     EARN,
     BONUS,
     REDEEM,
+    REVERSAL,
     EXPIRED,
     ADJUSTMENT
 }

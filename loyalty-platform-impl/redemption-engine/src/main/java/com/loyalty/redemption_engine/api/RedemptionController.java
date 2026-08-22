@@ -4,21 +4,34 @@ import com.loyalty.redemption_engine.domain.RedemptionOrder;
 import com.loyalty.redemption_engine.domain.RewardItem;
 import com.loyalty.redemption_engine.service.CatalogService;
 import com.loyalty.redemption_engine.service.RedemptionService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Redemption REST Controller — theo DD-03 Section 2.
- * FLOW-04: POST /api/v1/redemptions/orders
- * FLOW-09: Tier eligibility check embedded in order placement
+ * Redemption REST Controller — UC-LB-02 Redeem reward with FIFO.
+ *
+ * Contract CT-11: API Gateway → Redemption Engine Service (Sync/HTTPS REST).
+ * Operations:
+ * - CreateRedemptionOrder (POST /api/v1/redemptions/orders)
+ * - FulfillRedemptionOrder (PATCH /api/v1/redemptions/orders/{orderId}/fulfill)
+ * - FailAndReverseRedemptionOrder (PATCH /api/v1/redemptions/orders/{orderId}/fail)
+ * - CancelRedemptionOrder (PATCH /api/v1/redemptions/orders/{orderId}/cancel)
+ *
+ * SUT: Redemption Engine Service
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -31,9 +44,6 @@ public class RedemptionController {
 
     // ─── Catalog API ───────────────────────────────────────────────
 
-    /**
-     * Lấy catalog phù hợp với tier của member (FR-03-002, FR-03-005).
-     */
     @GetMapping("/catalog")
     public ResponseEntity<List<RewardItem>> getCatalog(
             @RequestParam String programId,
@@ -42,11 +52,8 @@ public class RedemptionController {
         return ResponseEntity.ok(items);
     }
 
-    /**
-     * Thêm item vào catalog (dùng khi seed data).
-     */
     @PostMapping("/catalog/items")
-    public ResponseEntity<RewardItem> addCatalogItem(@RequestBody AddItemRequest request) {
+    public ResponseEntity<RewardItem> addCatalogItem(@Valid @RequestBody AddItemRequest request) {
         RewardItem item = RewardItem.builder()
                 .programId(request.getProgramId())
                 .name(request.getName())
@@ -66,32 +73,38 @@ public class RedemptionController {
     // ─── Redemption Order API ───────────────────────────────────────
 
     /**
-     * Tạo redemption order — FLOW-04 (UC-03-02).
+     * POST /api/v1/redemptions/orders (operationId: createRedemptionOrder).
+     * Server validates balance & tier from I-7 sources of truth (CT-12, CT-13).
      */
     @PostMapping("/redemptions/orders")
-    public ResponseEntity<?> placeOrder(@RequestBody PlaceOrderRequest request) {
+    public ResponseEntity<?> placeOrder(@Valid @RequestBody PlaceOrderRequest request) {
         try {
             RedemptionOrder order = redemptionService.placeOrder(
                     request.getMemberId(),
                     request.getProgramId(),
                     UUID.fromString(request.getRewardItemId()),
-                    request.getQuantity(),
-                    request.getMemberTier(),
-                    request.getAvailableBalance()
+                    request.getQuantity()
             );
             return ResponseEntity.status(HttpStatus.CREATED).body(order);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(new ErrorResponse(e.getMessage()));
+            String msg = e.getMessage();
+            HttpStatus status = msg.contains("ERR_RED_CONCURRENT_REQUEST") ? HttpStatus.CONFLICT
+                    : (msg.startsWith("ERR_RED_TIER_SERVICE_UNAVAILABLE") || msg.startsWith("ERR_RED_EARNING_SERVICE_UNAVAILABLE")
+                    ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.UNPROCESSABLE_ENTITY);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, msg);
+            problem.setType(URI.create("https://loyalty.internal/errors/" + (status == HttpStatus.CONFLICT ? "concurrent-request" :
+                    status == HttpStatus.SERVICE_UNAVAILABLE ? "upstream-unavailable" : "validation-failed")));
+            problem.setTitle(status == HttpStatus.CONFLICT ? "Balance Lock Busy" :
+                    status == HttpStatus.SERVICE_UNAVAILABLE ? "Upstream Service Unavailable" : "Validation Failed");
+            return ResponseEntity.status(status).body(problem);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(e.getMessage()));
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+            problem.setType(URI.create("https://loyalty.internal/errors/bad-request"));
+            problem.setTitle("Bad Request");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
         }
     }
 
-    /**
-     * Xem lịch sử đổi điểm của member (FR-03-050, FR-03-051).
-     */
     @GetMapping("/redemptions/orders")
     public ResponseEntity<List<RedemptionOrder>> getHistory(
             @RequestParam String memberId,
@@ -100,67 +113,98 @@ public class RedemptionController {
     }
 
     /**
-     * Hủy đơn (FR-03-043 — chỉ khi PENDING).
+     * PATCH /api/v1/redemptions/orders/{orderId}/cancel (operationId: cancelRedemptionOrder).
      */
-    @DeleteMapping("/redemptions/orders/{orderId}")
+    @PatchMapping("/redemptions/orders/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
             @PathVariable String orderId,
-            @RequestParam String memberId) {
+            @RequestBody(required = false) CancelOrderRequest request) {
         try {
-            redemptionService.cancelOrder(UUID.fromString(orderId), memberId);
-            return ResponseEntity.noContent().build();
+            String memberId = (request != null && request.getMemberId() != null) ? request.getMemberId() : "member-001";
+            RedemptionOrder order = redemptionService.cancelOrder(UUID.fromString(orderId), memberId);
+            return ResponseEntity.ok(order);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ErrorResponse(e.getMessage()));
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+            problem.setType(URI.create("https://loyalty.internal/errors/cancel-not-allowed"));
+            problem.setTitle("Cancellation Not Allowed");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+        } catch (IllegalArgumentException e) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+            problem.setType(URI.create("https://loyalty.internal/errors/order-not-found"));
+            problem.setTitle("Order Not Found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
         }
     }
 
     /**
-     * Webhook callback khi fulfillment thành công (FR-03-032).
+     * PATCH /api/v1/redemptions/orders/{orderId}/fulfill (operationId: fulfillRedemptionOrder).
      */
-    @PostMapping("/redemptions/orders/{orderId}/fulfill")
-    public ResponseEntity<Void> fulfillOrder(@PathVariable String orderId) {
-        redemptionService.fulfillOrder(UUID.fromString(orderId));
-        return ResponseEntity.ok().build();
+    @PatchMapping("/redemptions/orders/{orderId}/fulfill")
+    public ResponseEntity<?> fulfillOrder(@PathVariable String orderId) {
+        try {
+            RedemptionOrder order = redemptionService.fulfillOrder(UUID.fromString(orderId));
+            return ResponseEntity.ok(order);
+        } catch (IllegalArgumentException e) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+            problem.setType(URI.create("https://loyalty.internal/errors/order-not-found"));
+            problem.setTitle("Order Not Found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        }
     }
 
     /**
-     * Webhook callback khi fulfillment thất bại — tự động reverse (FR-03-040, FR-03-041).
+     * PATCH /api/v1/redemptions/orders/{orderId}/fail (operationId: failAndReverseRedemptionOrder).
      */
-    @PostMapping("/redemptions/orders/{orderId}/fail")
-    public ResponseEntity<Void> failOrder(
+    @PatchMapping("/redemptions/orders/{orderId}/fail")
+    public ResponseEntity<?> failOrder(
             @PathVariable String orderId,
-            @RequestParam(defaultValue = "FULFILLMENT_FAILED") String reason) {
-        redemptionService.failAndReverseOrder(UUID.fromString(orderId), reason);
-        return ResponseEntity.ok().build();
+            @RequestBody(required = false) FailOrderRequest request) {
+        try {
+            String reason = (request != null && request.getReason() != null) ? request.getReason() : "FULFILLMENT_FAILED";
+            RedemptionOrder order = redemptionService.failAndReverseOrder(UUID.fromString(orderId), reason);
+            return ResponseEntity.ok(order);
+        } catch (IllegalArgumentException e) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+            problem.setType(URI.create("https://loyalty.internal/errors/order-not-found"));
+            problem.setTitle("Order Not Found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        }
     }
 
-    // ─── Request/Response DTOs ──────────────────────────────────────
+    // ─── Request DTOs ──────────────────────────────────────────────
 
     @Data
-    static class PlaceOrderRequest {
+    public static class PlaceOrderRequest {
+        @NotBlank(message = "memberId is required")
         private String memberId;
-        private String programId;
+        private String programId = "DEFAULT_PROG";
+        @NotBlank(message = "rewardItemId is required")
         private String rewardItemId;
+        @Min(value = 1, message = "quantity must be at least 1")
         private int quantity = 1;
-        private String memberTier;
-        private long availableBalance;
     }
 
     @Data
-    static class AddItemRequest {
-        private String programId;
+    public static class CancelOrderRequest {
+        private String memberId;
+    }
+
+    @Data
+    public static class FailOrderRequest {
+        private String reason;
+    }
+
+    @Data
+    public static class AddItemRequest {
+        private String programId = "DEFAULT_PROG";
+        @NotBlank
         private String name;
         private String category;
+        @NotNull
         private Long pointsCost;
         private double currencyValue;
         private String fulfillmentType = "DIGITAL";
         private String minTierRequired = "SILVER";
         private Integer stockQuantity;
-    }
-
-    @Data
-    static class ErrorResponse {
-        private final String error;
     }
 }

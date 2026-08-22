@@ -8,9 +8,11 @@ import com.loyalty.earning_engine.service.IdempotencyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -34,11 +36,13 @@ public class PartnerEarnController {
         
         boolean isDuplicate = idempotencyService.isDuplicate(request.getTransactionId(), "PARTNER");
         if (isDuplicate) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                    "status", 409,
-                    "error", "ERR_EARN_DUPLICATE",
-                    "message", "Duplicate transaction detected under CON.1"
-            ));
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                    HttpStatus.CONFLICT, "Duplicate transaction detected under CON.1");
+            problem.setType(URI.create("https://loyalty.internal/errors/earn-duplicate"));
+            problem.setTitle("Duplicate Transaction");
+            problem.setProperty("errorCode", "ERR_EARN_DUPLICATE");
+            problem.setProperty("status", 409);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
         }
 
         EarnEventResponse response = earnCalculator.processEarn(
@@ -68,10 +72,10 @@ public class PartnerEarnController {
                     "message", "PointTransaction cancelled and balance corrected under CON.1"
             ));
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                "status", 404,
-                "error", "ERR_TRANSACTION_NOT_FOUND",
-                "message", "Source transaction not found or already cancelled"
-        ));
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, "Source transaction not found or already cancelled");
+        problem.setType(URI.create("https://loyalty.internal/errors/transaction-not-found"));
+        problem.setTitle("Transaction Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
     }
 }

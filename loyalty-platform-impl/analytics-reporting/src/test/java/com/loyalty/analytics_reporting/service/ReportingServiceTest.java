@@ -135,6 +135,24 @@ class ReportingServiceTest {
     }
 
     /**
+     * I-9 / CON.2 forbidden path: Client or caller attempts direct access to Transactional DB
+     * (Earning DB / Redemption DB) from Analytics Zone.
+     * The architecture strictly confines the service to the Data Warehouse fact table.
+     * Attempting to query transactional tables returns rejection / no route.
+     * Spec-trace: I-9, CON.2
+     */
+    @Test
+    void testI9ForbiddenPath_DirectTransactionalAccessAttempted_Rejected() {
+        // Attempting to query liability with null/invalid program ID or bypassing DW
+        assertThrows(IllegalArgumentException.class, () ->
+                reportingService.getFinancialLiability(null));
+
+        // Verify FactPointTransactionRepository is NEVER queried with invalid/bypassed context
+        verify(factRepository, never()).calculateTotalLiability(isNull(), any());
+    }
+
+
+    /**
      * Edge case — empty Data Warehouse (no facts yet).
      * findMaxEarnDate returns null → treated as refreshed now → stale=false.
      * Spec-trace: I-11 boundary

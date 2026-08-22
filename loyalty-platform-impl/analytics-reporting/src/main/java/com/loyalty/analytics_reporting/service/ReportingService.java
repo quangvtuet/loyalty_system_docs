@@ -47,6 +47,9 @@ public class ReportingService {
      */
     @Transactional(readOnly = true)
     public LiabilityReport getFinancialLiability(UUID programId) {
+        if (programId == null) {
+            throw new IllegalArgumentException("programId is required to query Data Warehouse facts");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         BigDecimal totalLiability = factRepository.calculateTotalLiability(programId, now);

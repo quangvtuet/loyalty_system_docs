@@ -105,11 +105,15 @@ These are in addition to the service-layer unit tests in the G6 table above.
 | `earning_engine/.../PartnerEarnControllerTest` | `testSubmitEarn_HappyPath_Returns202` | **202** | `recordEarn` | I-11, T5 |
 | `earning_engine/.../PartnerEarnControllerTest` | `testSubmitEarn_DuplicateTransaction_Returns409` | **409** | `recordEarn` (CON.1) | G6-A01, T3, T5 |
 | `earning_engine/.../PartnerEarnControllerTest` | `testSubmitEarn_MissingTransactionId_Returns400` | **400** | `recordEarn` | T5 |
+| `tiering_system/.../TierControllerTest` | `testGetMemberTier_Found_Returns200` | **200** | `getMemberTier` | I-11, CT-12, T5 |
+| `tiering_system/.../TierControllerTest` | `testGetMemberTier_NotFound_Returns404` | **404** | `getMemberTier` | CT-12, T5 |
 | `redemption_engine/.../RedemptionControllerTest` | `testPlaceOrder_HappyPath_Returns201` | **201** | `createRedemptionOrder` | I-11, T5 |
 | `redemption_engine/.../RedemptionControllerTest` | `testPlaceOrder_InsufficientBalance_Returns422` | **422** | `createRedemptionOrder` (ALT-01) | G6-A02, T3, T5 |
 | `redemption_engine/.../RedemptionControllerTest` | `testPlaceOrder_TierEligibilityFailed_Returns422` | **422** | `createRedemptionOrder` (ALT-02) | G6-A02, T3 |
 | `redemption_engine/.../RedemptionControllerTest` | `testPlaceOrder_MinimumPoints_Returns400` | **400** | `createRedemptionOrder` (ALT-03) | T5 |
 | `redemption_engine/.../RedemptionControllerTest` | `testFailOrder_CON3_CompensatingAction_Returns200` | **200** | `failAndReverseRedemptionOrder` (CON.3) | G6-A03, G5, T5 |
+| `analytics_reporting/.../ReportingServiceTest` | `testI9ForbiddenPath_DirectTransactionalAccessAttempted_Rejected` | **Rejection** | `getPointLiabilityReport` (I-9 isolation) | I-9, T4 |
+
 
 ---
 

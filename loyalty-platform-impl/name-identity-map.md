@@ -64,3 +64,24 @@ Per capstone rules: **I-3 mocked** — no real host names, no production credent
 | M6 Order State Keeper | State transitions + persistence | `com.loyalty.redemption_engine.service.RedemptionService` (all state transitions) |
 | M7 Fulfilment Dispatch | Sends fulfillment request | `com.loyalty.redemption_engine.api.RedemptionController.fulfillOrder()` (simulated callback) |
 | M8 Reversal Handler | Point restoration on failure | `com.loyalty.redemption_engine.service.RedemptionService.failAndReverseOrder()` + `FifoDebitService.reverseDebit()` |
+
+## ASSUMPTION Values
+
+Per `capstone.md` rule: *"If an Input cell is missing, invent a plausible simulated value, mark `ASSUMPTION` on the name map, and use that one string everywhere."*
+
+| Simulated Value | Purpose / Context | Marked as ASSUMPTION Since | Usage Across Artifacts |
+|---|---|---|---|
+| `DEFAULT_PROG` | Default loyalty program ID used in test fixtures, API parameters, and `e2e_test.sh` | Day 1 Design | Consistent in `openapi.yaml`, all unit/integration tests, `e2e_test.sh` |
+| `member-001` | Sample member identifier for happy path tests | Day 1 Design | Consistent across all 4 service test suites |
+| `DOUBLE_POINTS_AUG` | Sample promotional campaign ID for bonus earn test | Day 1 Design | Used in `EarningEngineServiceTest` |
+| `100` | Minimum point threshold for redemption orders (FR-03-013) | Lab 3 Spec | Enforced in `RedemptionService`, tested in `RedemptionControllerTest` |
+
+## I-11 Container SUT Boundaries (A8 Clarification)
+
+Per capstone scope:
+- **Redemption Engine Service** is the primary I-11 SUT for UC-LB-02 (drilling all M1–M8 components).
+- **Earning Engine Service** is the SUT for UC-LB-01 (drilling EarnCalculator + EarningLedgerService).
+- **Tiering System Service** is the SUT for UC-LB-03 (drilling QpLedgerService + TierUpgradeService).
+- **Analytics & Reporting Service** is the SUT for UC-LB-04 (drilling ReportingService).
+- Cross-service dependencies in tests are strictly mocked via `@MockitoBean` / `@Mock` — each service's tests treat neighboring services as black boxes.
+

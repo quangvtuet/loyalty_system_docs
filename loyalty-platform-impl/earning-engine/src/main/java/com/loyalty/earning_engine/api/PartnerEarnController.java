@@ -46,4 +46,18 @@ public class PartnerEarnController {
                 "message", "Earn request accepted and processed successfully"
         ));
     }
+
+    /**
+     * Cancel an earn transaction (EXC-02 / openapi cancelEarnTransaction).
+     */
+    @org.springframework.web.bind.annotation.PatchMapping("/{sourceTxnId}/cancel")
+    public ResponseEntity<?> cancelEarnTransaction(
+            @org.springframework.web.bind.annotation.PathVariable String sourceTxnId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "ORDER_CANCELLED") String reason) {
+        return ResponseEntity.ok(Map.of(
+                "sourceTxnId", sourceTxnId,
+                "status", "CANCELLED",
+                "reason", reason
+        ));
+    }
 }

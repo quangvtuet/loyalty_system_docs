@@ -100,14 +100,14 @@ public class RedemptionController {
     }
 
     /**
-     * Hủy đơn (FR-03-043 — chỉ khi PENDING).
+     * Hủy đơn (FR-03-043 — chỉ khi PENDING). Supports DELETE and PATCH /cancel.
      */
     @DeleteMapping("/redemptions/orders/{orderId}")
     public ResponseEntity<?> cancelOrder(
             @PathVariable String orderId,
-            @RequestParam String memberId) {
+            @RequestParam(required = false) String memberId) {
         try {
-            redemptionService.cancelOrder(UUID.fromString(orderId), memberId);
+            redemptionService.cancelOrder(UUID.fromString(orderId), memberId != null ? memberId : "unknown");
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -115,23 +115,44 @@ public class RedemptionController {
         }
     }
 
+    @PatchMapping("/redemptions/orders/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrderPatch(
+            @PathVariable String orderId,
+            @RequestBody(required = false) CancelOrderRequest request) {
+        try {
+            String memberId = (request != null && request.getMemberId() != null) ? request.getMemberId() : "unknown";
+            redemptionService.cancelOrder(UUID.fromString(orderId), memberId);
+            return ResponseEntity.ok(Map.of(
+                    "orderId", orderId,
+                    "status", "CANCELLED"
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     /**
-     * Webhook callback khi fulfillment thành công (FR-03-032).
+     * Webhook callback khi fulfillment thành công (FR-03-032 / openapi fulfillRedemptionOrder).
+     * Supports both PATCH and POST.
      */
-    @PostMapping("/redemptions/orders/{orderId}/fulfill")
+    @RequestMapping(value = "/redemptions/orders/{orderId}/fulfill", method = {RequestMethod.POST, RequestMethod.PATCH})
     public ResponseEntity<Void> fulfillOrder(@PathVariable String orderId) {
         redemptionService.fulfillOrder(UUID.fromString(orderId));
         return ResponseEntity.ok().build();
     }
 
     /**
-     * Webhook callback khi fulfillment thất bại — tự động reverse (FR-03-040, FR-03-041).
+     * Webhook callback khi fulfillment thất bại — tự động reverse (FR-03-040, FR-03-041 / openapi failAndReverseRedemptionOrder).
+     * Supports both PATCH and POST, with reason via body or param.
      */
-    @PostMapping("/redemptions/orders/{orderId}/fail")
+    @RequestMapping(value = "/redemptions/orders/{orderId}/fail", method = {RequestMethod.POST, RequestMethod.PATCH})
     public ResponseEntity<Void> failOrder(
             @PathVariable String orderId,
-            @RequestParam(defaultValue = "FULFILLMENT_FAILED") String reason) {
-        redemptionService.failAndReverseOrder(UUID.fromString(orderId), reason);
+            @RequestParam(required = false) String reason,
+            @RequestBody(required = false) FailOrderRequest body) {
+        String finalReason = (body != null && body.getReason() != null) ? body.getReason() : (reason != null ? reason : "FULFILLMENT_FAILED");
+        redemptionService.failAndReverseOrder(UUID.fromString(orderId), finalReason);
         return ResponseEntity.ok().build();
     }
 
@@ -163,4 +184,15 @@ public class RedemptionController {
     static class ErrorResponse {
         private final String error;
     }
+
+    @Data
+    public static class CancelOrderRequest {
+        private String memberId;
+    }
+
+    @Data
+    public static class FailOrderRequest {
+        private String reason;
+    }
 }
+

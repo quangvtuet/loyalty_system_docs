@@ -99,6 +99,7 @@ Gateway --> Program : HTTPS REST / gRPC / sync
 Gateway --> Analytics : HTTPS REST / gRPC / sync
 Earning --> Broker : QP accrual event / async
 Broker --> Tiering : QP accrual event / async
+Broker --> Earning : tier change event / async
 Broker --> Analytics : CDC events / async
 Earning --> Idempotency : idempotency check / sync
 Redemption --> Idempotency : balance lock / sync

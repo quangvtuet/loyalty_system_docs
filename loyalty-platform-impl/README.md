@@ -1,9 +1,9 @@
 # Loyalty Platform - Implementation
 
-> **Not a lab artifact — outside the modeling pack.**
-> This folder is a side spike the team wrote to explore the domain. It is **not** submitted for any lab and is **not** evidence for any lab.
-> The Lab 3 specification lives in [`../lab3-spec.md`](../lab3-spec.md) as tables only — build list, component, sequence, contract register, exception spec, and test spec.
-> Nothing in this folder is required to be built, run, or deployed for the pack.
+> **Superseded — not a lab artifact and not the capstone.**
+> This folder is an early spike written against the **old** documentation: old container names, the old three-constraint set, and a Vietnamese README. It is **not** submitted for any lab and is **not** the capstone deliverable.
+> The capstone implementation of the I-11 slice is [`../capstone/`](../capstone/), built against the current Lab 1 index and the after pack.
+> Nothing here is required to be built, run, or deployed.
 
 Dự án triển khai thực tế các module của hệ thống **Loyalty Banking Platform**, phát triển bằng **Java Spring Boot 3**.
 

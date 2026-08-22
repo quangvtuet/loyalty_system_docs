@@ -1,40 +1,50 @@
 openapi: 3.0.3
 
-# G4 for the capstone sitting.
-# Every operation below is an in-scope row of the Lab 3 contract register in ../lab3-spec.md.
-# No operation exists here that the four I-11 use cases do not need.
+# G4 Contract for the Loyalty Banking Platform Capstone Sitting.
+# Realizes all in-scope Lab 3 contract rows (CT-04, CT-11, CT-12, CT-13, CT-14, CT-26)
+# Served by the 4 in-scope Spring Boot microservices behind the simulated API Gateway.
+# Simulated scenario: No real hosts, no live credentials.
 
 info:
-  title: Loyalty Banking Platform — capstone runtime
+  title: Loyalty Banking Platform — Capstone Runtime
   version: "1.0.0"
   description: >
-    Public contract of the collapsed runtime. Every path is served by the I-4 container
-    API Gateway. Simulated scenario only: no real host, no production credential.
+    Public and inter-service contract for the Loyalty Banking Platform capstone sitting.
+    Covers the I-11 slice: UC-LB-01 (Earn), UC-LB-02 (Redeem FIFO), UC-LB-03 (Tiering), and UC-LB-04 (Analytics Reporting).
 
 servers:
-  - url: http://localhost:8080
-    description: Local capstone runtime
+  - url: http://localhost:8081
+    description: Earning Engine Service (Port 8081)
+  - url: http://localhost:8082
+    description: Tiering System Service (Port 8082)
+  - url: http://localhost:8083
+    description: Redemption Engine Service (Port 8083)
+  - url: http://localhost:8085
+    description: Analytics & Reporting Service (Port 8085)
 
 tags:
   - name: UC-LB-01
-    description: Process settled earn event
+    description: Process settled earn event (Earning Engine Service — CT-04)
   - name: UC-LB-02
-    description: Redeem reward with FIFO
+    description: Redeem reward with FIFO (Redemption Engine Service — CT-11, CT-13, CT-14)
+  - name: UC-LB-03
+    description: Apply tier upgrade (Tiering System Service — CT-12)
   - name: UC-LB-04
-    description: Generate point liability report
+    description: Generate point liability report (Analytics & Reporting Service — CT-26)
 
 paths:
 
-  /partner-earn:
+  # ─── UC-LB-01: Earning Engine Service ───────────────────────────────
+
+  /api/v1/partners/earn:
     post:
       tags: [UC-LB-01]
-      operationId: SubmitPartnerEarn
-      summary: Submit a partner earn event
+      operationId: recordEarn
+      summary: Submit a partner earn event (CT-04)
       description: >
-        Lab 3 contract rows CT-03 (Partner Systems to API Gateway, adapter, sync) and
-        CT-04 (API Gateway to Earning Engine Service, sync).
-        A source transaction that has already been rewarded is refused under CON.1;
-        the original result is returned and no second PointTransaction is written.
+        Validates event, checks CON.1 idempotency in Idempotency Store, calculates base
+        and campaign points (with server-side CT-12 tier query), writes PointTransaction,
+        and publishes QP event to Message Broker.
       requestBody:
         required: true
         content:
@@ -42,202 +52,663 @@ paths:
             schema:
               $ref: '#/components/schemas/PartnerEarnRequest'
       responses:
-        '201':
-          description: Points awarded and a PointTransaction written
+        '202':
+          description: Earn request accepted and processed into ledger
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EarnResult'
+                $ref: '#/components/schemas/EarnEventResponse'
         '409':
-          description: >
-            CON.1 duplicate. The source transaction was already rewarded.
-            The body carries the original pointTransactionId and duplicate is true.
+          description: CON.1 duplicate transaction detected under idempotency check
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EarnResult'
+                $ref: '#/components/schemas/ProblemDetail'
         '400':
-          description: sourceTransactionId, memberId or amount missing
+          description: Validation error in request body
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Problem'
-        '405':
-          description: Method not allowed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+                $ref: '#/components/schemas/ProblemDetail'
 
-  /redemptions:
+  /api/v1/partners/earn/{sourceTxnId}/cancel:
+    patch:
+      tags: [UC-LB-01]
+      operationId: cancelEarnTransaction
+      summary: Cancel settled earn transaction on source reversal (CON.1 / EXC-02)
+      description: Reverses previously confirmed PointTransaction and corrects PointBalance.
+      parameters:
+        - name: sourceTxnId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction cancelled and balance corrected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sourceTxnId:
+                    type: string
+                  outcome:
+                    type: string
+                    example: CANCELLED
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+        '404':
+          description: Transaction not found or already cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/earning/fifo/debit:
     post:
       tags: [UC-LB-02]
-      operationId: SubmitRedemption
-      summary: Submit a redemption order
+      operationId: debitPointsFifo
+      summary: Debit points oldest-first via FIFO (CT-13)
       description: >
-        Lab 3 contract rows CT-10 (Member to API Gateway, sync) and
-        CT-11 (API Gateway to Redemption Engine Service, sync).
-        Points are consumed oldest earned first. The three named I-11 alternates are
-        insufficient balance, tier-ineligible reward, and partner fulfillment failure.
-        On fulfillment failure the order ends REVERSED after the CON.3 compensating action.
+        Called by Redemption Engine Service. Allocates points from oldest confirmed
+        PointTransaction batches and updates PointBalance in Earning DB.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RedemptionRequest'
+              $ref: '#/components/schemas/FifoDebitRequest'
+      responses:
+        '200':
+          description: FIFO debit successfully allocated and persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FifoDebitResponse'
+        '422':
+          description: Insufficient balance in member account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/earning/fifo/restore:
+    post:
+      tags: [UC-LB-02]
+      operationId: restorePoints
+      summary: Auto-reversal point restoration on fulfillment failure (CON.3 / CT-13)
+      description: >
+        Restores debited points back to their original PointTransaction batches,
+        preserving original earn_date and expiry_date under CON.3.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FifoRestoreRequest'
+      responses:
+        '200':
+          description: Points restored with original FIFO metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FifoRestoreResponse'
+        '422':
+          description: Restoration failed or unknown allocation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/earning/members/{memberId}/balance:
+    get:
+      tags: [UC-LB-02]
+      operationId: getMemberBalance
+      summary: Query confirmed point balance from Earning DB (CT-13)
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: programId
+          in: query
+          required: false
+          schema:
+            type: string
+            default: DEFAULT_PROG
+      responses:
+        '200':
+          description: Current member point balance snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberBalanceResponse'
+
+  # ─── UC-LB-03: Tiering System Service ───────────────────────────────
+
+  /api/v1/tiering/members/{memberId}/tier:
+    get:
+      tags: [UC-LB-03]
+      operationId: getMemberTier
+      summary: Query authoritative MemberTier state from Tiering DB (CT-12)
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: programId
+          in: query
+          required: false
+          schema:
+            type: string
+            default: DEFAULT_PROG
+      responses:
+        '200':
+          description: Authoritative member tier status and validity dates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberTierResponse'
+
+  # ─── UC-LB-02: Redemption Engine Service ────────────────────────────
+
+  /api/v1/redemptions/orders:
+    post:
+      tags: [UC-LB-02]
+      operationId: createRedemptionOrder
+      summary: Place a new redemption order (CT-10, CT-11)
+      description: >
+        Member submits redemption request. Validates tier eligibility (CT-12), acquires
+        balance lock in Idempotency Store, debits points via FIFO (CT-13), and transitions
+        RedemptionOrder from PENDING to IN_PROGRESS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
       responses:
         '201':
-          description: >
-            Order accepted. state is FULFILLED on delivery, or REVERSED when Partner Systems
-            failed and the CON.3 compensating action restored the original point batches.
+          description: Order accepted and transitioned to IN_PROGRESS
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RedemptionOrder'
         '422':
-          description: >
-            Order CANCELLED before any debit. reason names the cause:
-            insufficient balance or a tier below the reward minimum.
+          description: Validation failed (insufficient balance or tier ineligible)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Balance lock busy (concurrent request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '400':
+          description: Invalid request body or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Upstream dependency unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/redemptions/orders/{orderId}/cancel:
+    patch:
+      tags: [UC-LB-02]
+      operationId: cancelRedemptionOrder
+      summary: Cancel pending redemption order before fulfillment
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderRequest'
+      responses:
+        '200':
+          description: Order cancelled (state CANCELLED)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RedemptionOrder'
+        '409':
+          description: Cancellation not allowed in current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
         '404':
-          description: Unknown reward item
+          description: Order not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Problem'
-        '400':
-          description: memberId or rewardItemId missing
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '405':
-          description: Method not allowed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+                $ref: '#/components/schemas/ProblemDetail'
 
-  /reports/point-liability:
-    get:
-      tags: [UC-LB-04]
-      operationId: RequestReport
-      summary: Request the point liability report
-      description: >
-        Lab 3 contract rows CT-25 (Finance to API Gateway, sync) and
-        CT-26 (API Gateway to Analytics & Reporting Service, sync).
-        Read from Data Warehouse only. When the warehouse is more than ten minutes behind,
-        stale is true and Finance is alerted — the report is never presented as current.
+  /api/v1/redemptions/orders/{orderId}/fulfill:
+    patch:
+      tags: [UC-LB-02]
+      operationId: fulfillRedemptionOrder
+      summary: Partner confirms reward fulfillment (CT-14)
+      description: Transitions RedemptionOrder from IN_PROGRESS to FULFILLED.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
-          description: >
-            Liability figures. stale is true when the CON.4 ten-minute limit is exceeded.
+          description: Order fulfilled successfully (state FULFILLED)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PointLiabilityReport'
-        '405':
-          description: Method not allowed
+                $ref: '#/components/schemas/RedemptionOrder'
+        '409':
+          description: Invalid order state for fulfillment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Problem'
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/redemptions/orders/{orderId}/fail:
+    patch:
+      tags: [UC-LB-02]
+      operationId: failAndReverseRedemptionOrder
+      summary: Partner fulfillment fails; triggers CON.3 auto-reversal (CT-13, CT-14)
+      description: >
+        Transitions RedemptionOrder from IN_PROGRESS to FAILED, invokes Earning Engine Service
+        (CT-13) to restore debited FIFO batches with original earn date, and transitions
+        order to terminal state REVERSED under CON.3.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailOrderRequest'
+      responses:
+        '200':
+          description: Order failed and reversed (state REVERSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedemptionOrder'
+        '409':
+          description: Order restoration failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  # ─── UC-LB-04: Analytics & Reporting Service ────────────────────────
+
+  /api/v1/analytics/liability/{programId}:
+    get:
+      tags: [UC-LB-04]
+      operationId: getPointLiabilityReport
+      summary: Generate point liability report from Data Warehouse (CT-26)
+      description: >
+        Queries analytical star schema in Data Warehouse. If warehouse data staleness exceeds
+        10 minutes (CON.4 / EXC-07), returns 200 OK with stale=true and stalenessWarning populated.
+      parameters:
+        - name: programId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Financial liability report (inspect stale flag for CON.4 SLA)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiabilityReport'
+
+# ─── Components / Schemas ─────────────────────────────────────────────
 
 components:
   schemas:
 
     PartnerEarnRequest:
       type: object
-      required: [sourceTransactionId, memberId, amount]
+      required: [transactionId, memberId, spendAmount]
       properties:
-        sourceTransactionId:
+        transactionId:
           type: string
           example: TXN-1001
         memberId:
           type: string
-          example: M-1001
-        amount:
-          type: number
-          format: double
-          example: 200
-
-    EarnResult:
-      type: object
-      required: [pointTransactionId, pointsAwarded, duplicate]
-      properties:
-        pointTransactionId:
-          type: string
-        pointsAwarded:
+          example: member-001
+        spendAmount:
           type: integer
-          format: int64
-        duplicate:
-          type: boolean
-        constraint:
+          minimum: 1
+          example: 1000
+        campaignId:
           type: string
           nullable: true
-          enum: [CON.1, null]
-          description: CON.1 when the posting was refused as a duplicate
+          example: DOUBLE_PTS
+        programId:
+          type: string
+          nullable: true
+          example: DEFAULT_PROG
+        tier:
+          type: string
+          nullable: true
+          description: Client-supplied tier; overridden by server-side CT-12 check under I-5.
+          example: SILVER
 
-    RedemptionRequest:
+    EarnEventResponse:
       type: object
-      required: [memberId, rewardItemId]
+      properties:
+        sourceTxnId:
+          type: string
+        memberId:
+          type: string
+        basePoints:
+          type: integer
+          format: int64
+        bonusPoints:
+          type: integer
+          format: int64
+        totalPoints:
+          type: integer
+          format: int64
+        outcome:
+          type: string
+          example: CONFIRMED
+        status:
+          type: integer
+          example: 202
+        message:
+          type: string
+
+    FifoDebitRequest:
+      type: object
+      required: [memberId, pointsRequired, orderId]
       properties:
         memberId:
           type: string
-          example: M-1001
-        rewardItemId:
+        programId:
           type: string
-          example: RI-VOUCHER-300
+          default: DEFAULT_PROG
+        pointsRequired:
+          type: integer
+          format: int64
+          minimum: 1
+        orderId:
+          type: string
 
-    RedemptionOrder:
+    FifoDebitResponse:
       type: object
-      required: [orderId, memberId, state]
       properties:
         orderId:
           type: string
         memberId:
           type: string
-        state:
+        pointsDebited:
+          type: integer
+          format: int64
+        remainingBalance:
+          type: integer
+          format: int64
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FifoAllocationDto'
+
+    FifoRestoreRequest:
+      type: object
+      required: [memberId, orderId, pointsToRestore, reason]
+      properties:
+        memberId:
           type: string
-          description: The six I-6 states. No other value is produced.
-          enum: [PENDING, IN_PROGRESS, FULFILLED, FAILED, CANCELLED, REVERSED]
+        programId:
+          type: string
+          default: DEFAULT_PROG
+        orderId:
+          type: string
+        pointsToRestore:
+          type: integer
+          format: int64
+          minimum: 1
         reason:
           type: string
-          nullable: true
-        constraint:
-          type: string
-          nullable: true
-          enum: [CON.3, null]
-          description: CON.3 when the order was reversed after a fulfillment failure
 
-    PointLiabilityReport:
+    FifoRestoreResponse:
       type: object
-      required: [outstandingPoints, liabilityUsd, stale, dataAgeSeconds]
       properties:
-        outstandingPoints:
+        orderId:
+          type: string
+        memberId:
+          type: string
+        pointsRestored:
           type: integer
           format: int64
-        liabilityUsd:
+        newBalance:
+          type: integer
+          format: int64
+        allocationsRestored:
+          type: integer
+
+    FifoAllocationDto:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        pointsDebited:
+          type: integer
+        earnDate:
+          type: string
+          format: date-time
+        expiryDate:
+          type: string
+          format: date-time
+
+    MemberBalanceResponse:
+      type: object
+      properties:
+        memberId:
+          type: string
+        programId:
+          type: string
+        confirmedBalance:
+          type: integer
+          format: int64
+
+    MemberTierResponse:
+      type: object
+      properties:
+        memberId:
+          type: string
+        programId:
+          type: string
+        currentTier:
+          type: string
+          enum: [SILVER, GOLD, PLATINUM]
+        previousTier:
+          type: string
+          nullable: true
+        cumulativeQp:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [ACTIVE, IN_GRACE_PERIOD, DOWNGRADED]
+        effectiveFrom:
+          type: string
+          format: date-time
+        tierPeriodEnd:
+          type: string
+          format: date
+
+    PlaceOrderRequest:
+      type: object
+      required: [memberId, rewardItemId]
+      properties:
+        memberId:
+          type: string
+        programId:
+          type: string
+          default: DEFAULT_PROG
+        rewardItemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+
+    CancelOrderRequest:
+      type: object
+      required: [memberId]
+      properties:
+        memberId:
+          type: string
+
+    FailOrderRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    RedemptionOrder:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+        programId:
+          type: string
+        rewardItemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        pointsSpent:
+          type: integer
+          format: int64
+        status:
+          type: string
+          description: Six I-6 states
+          enum: [PENDING, IN_PROGRESS, FULFILLED, FAILED, REVERSED, CANCELLED]
+        failureReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        fulfilledAt:
+          type: string
+          format: date-time
+          nullable: true
+        reversedAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    LiabilityReport:
+      type: object
+      properties:
+        totalLiabilityUsd:
           type: number
           format: double
-        stale:
-          type: boolean
-        dataAgeSeconds:
+        unspent0to3Months:
           type: integer
           format: int64
-        constraint:
+        unspent3to6Months:
+          type: integer
+          format: int64
+        unspent6to12Months:
+          type: integer
+          format: int64
+        unspentOver12Months:
+          type: integer
+          format: int64
+        lastRefreshedAt:
+          type: string
+          format: date-time
+          nullable: true
+        stale:
+          type: boolean
+          description: True when data warehouse staleness exceeds 10 minutes (CON.4)
+        stalenessWarning:
           type: string
           nullable: true
-          enum: [CON.4, null]
-          description: CON.4 when the warehouse is more than ten minutes behind
 
-    Problem:
+    ProblemDetail:
       type: object
-      required: [detail]
+      required: [type, title, status, detail]
       properties:
+        type:
+          type: string
+          format: uri
+          example: https://loyalty.internal/errors/insufficient-balance
+        title:
+          type: string
+          example: Insufficient Balance
+        status:
+          type: integer
+          example: 422
         detail:
           type: string
+          example: Available balance is insufficient for reward redemption.
+        instance:
+          type: string
+          format: uri
+          nullable: true

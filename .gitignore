@@ -11,3 +11,10 @@ capstone/out/
 team2_capstone_feedback_pass5.md
 
 .vscode/settings.json
+.mcp.json
+GEMINI.md
+.claude/CLAUDE.md
+.claude/settings.json
+.codegraph/
+.cursor/mcp.json
+.gemini/settings.json

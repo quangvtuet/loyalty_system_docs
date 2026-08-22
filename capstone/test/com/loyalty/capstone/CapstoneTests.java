@@ -5,6 +5,7 @@ import com.loyalty.capstone.domain.IllegalStateTransition;
 import com.loyalty.capstone.domain.OrderState;
 import com.loyalty.capstone.domain.PointTransaction;
 import com.loyalty.capstone.domain.RedemptionOrder;
+import com.loyalty.capstone.gateway.ApiGateway;
 import com.loyalty.capstone.service.EarnResult;
 import com.loyalty.capstone.service.PointLiabilityReport;
 import com.loyalty.capstone.store.OwnershipViolation;
@@ -240,14 +241,35 @@ public final class CapstoneTests {
                     "Earning Engine Service must not write Data Warehouse");
         });
 
-        runner.check("NEG-I5-02", "I-5 anti-tamper: earn multiplier is authoritative, not client-supplied", () -> {
+        runner.check("NEG-I5-02", "I-5 anti-tamper: earn payload sending forged tier field is rejected; server uses authoritative tier", () -> {
             MutableClock clock = new MutableClock(START);
             Platform platform = new Platform(clock);
-            // Member starts with default SILVER (1.0x). A client trying to forge PLATINUM tier on earn cannot bypass server
-            EarnResult result = platform.earningEngineService.recordEarn("TXN-TAMPER", "M-UNRANKED", Platform.PROGRAM_ID, 100d);
-            // Base = 100 * 1.0 (SILVER) * 2.0 (winning campaign) = 200 points
-            assertEquals(200L, result.pointsAwarded, "awarded points use authoritative SILVER tier (1.0x), not forged tier");
-            assertEquals("SILVER", platform.earningEngineService.projectedTier("M-UNRANKED"), "member tier projection remains SILVER");
+            ApiGateway gateway = new ApiGateway(platform);
+            try {
+                gateway.start(0);
+                String url = "http://localhost:" + gateway.port() + "/partner-earn";
+                // Malicious client sends a forged tier: PLATINUM (2.0x) along with 100 spend amount
+                String forgedPayload = "{\"sourceTransactionId\":\"TXN-FORGE-01\",\"memberId\":\"M-FORGE\",\"amount\":100,\"tier\":\"PLATINUM\"}";
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+                        .header("Content-Type", "application/json")
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(forgedPayload))
+                        .build();
+                java.net.http.HttpResponse<String> response = java.net.http.HttpClient.newHttpClient()
+                        .send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+
+                assertEquals(201, response.statusCode(), "earn transaction created");
+                // Authoritative SILVER (1.0x) * 2.0x campaign * 100 amount = 200 points. If forged PLATINUM (2.0x) was trusted, it would be 400 points.
+                assertTrue(response.body().contains("\"pointsAwarded\":200"),
+                        "awarded points strictly use authoritative SILVER (1.0x = 200 pts), NOT forged PLATINUM (400 pts)");
+                assertEquals(200L, platform.earningEngineService.availablePoints("M-FORGE"),
+                        "ledger balance reflects authoritative tier calculation only");
+                assertEquals("SILVER", platform.earningEngineService.projectedTier("M-FORGE"),
+                        "member tier projection remains authoritative SILVER");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                gateway.stop();
+            }
         });
 
         runner.check("NEG-I6-01", "a transition outside I-6 is refused by the type", () -> {

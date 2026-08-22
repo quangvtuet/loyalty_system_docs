@@ -5,14 +5,14 @@ Implementation of the I-11 slice of the after pack. Not a modeling lab, and not 
 **Spec:** `../loyalty.md` (Lab 1), `../lab3-spec.md` (contract, exception, test spec), `../lab7-adoption.md` (G1–G6), `../lab8-archimate-views.md`, `../lab-09-c4-after.md`, `../lab-10-uml-after.md`.
 **R** Dev Lê Huy Du · **A** SA Vũ Trường Quang · **C** Test Lê Huy Du. Labs 1–10 are unchanged by this sitting, apart from decision D-4 in `SIGN-OFF.md`.
 
-> This runtime is **not yet SA-accepted**. See `SIGN-OFF.md`.
+> This runtime is **SA-accepted** for the current `feature/capstone_temp` worktree. See `SIGN-OFF.md`.
 
 | Document | What it is |
 |---|---|
 | `openapi.yaml` | G4 — the public contract, three operations, all from the Lab 3 register |
 | `name-identity-map.md` | Code identity to Lab 1 string, collapse rows, assumptions |
 | `spec-trace.md` | Each in-scope path → OpenAPI operation → test id, plus the non-public and N/A rows |
-| `SIGN-OFF.md` | SA acceptance record — **PENDING** until the SA signs section 4 |
+| `SIGN-OFF.md` | SA acceptance record — **ACCEPTED** for the current worktree |
 
 ---
 

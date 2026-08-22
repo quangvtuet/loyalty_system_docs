@@ -21,7 +21,7 @@ public class EarnCalculator {
     private final org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
-    public void processEarn(String memberId, Integer spendAmount, String sourceTxnId, String tier, String campaignId, String programId) {
+    public com.loyalty.earning_engine.dto.EarnEventResponse processEarn(String memberId, Integer spendAmount, String sourceTxnId, String tier, String campaignId, String programId) {
         log.info("Processing earn for member: {}, spend: {}, tier: {}", memberId, spendAmount, tier);
         
         // 1. Calculate Base Points
@@ -40,13 +40,25 @@ public class EarnCalculator {
         log.info("Published QP event for member: {}, qpAmount: {}", memberId, basePoints);
 
         // 2. Calculate Bonus Points (if applicable)
+        int bonusPoints = 0;
         if (campaignId != null && !campaignId.isEmpty()) {
             double bonusMultiplier = getCampaignMultiplier(campaignId);
             if (bonusMultiplier > 1.0) {
-                int bonusPoints = (int) Math.floor(basePoints * (bonusMultiplier - 1.0));
+                bonusPoints = (int) Math.floor(basePoints * (bonusMultiplier - 1.0));
                 ledgerService.recordBonusEarn(memberId, bonusPoints, sourceTxnId, campaignId);
             }
         }
+
+        return com.loyalty.earning_engine.dto.EarnEventResponse.builder()
+                .sourceTxnId(sourceTxnId)
+                .memberId(memberId)
+                .basePoints((long) basePoints)
+                .bonusPoints((long) bonusPoints)
+                .totalPoints((long) (basePoints + bonusPoints))
+                .outcome("CONFIRMED")
+                .status(202)
+                .message("Earn request accepted and processed successfully")
+                .build();
     }
 
     private double getTierMultiplier(String tier) {

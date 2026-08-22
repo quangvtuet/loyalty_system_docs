@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface PointTransactionRepository extends JpaRepository<PointTransaction, UUID> {
     Optional<PointTransaction> findByIdempotencyKey(String idempotencyKey);
+    Optional<PointTransaction> findBySourceTxnId(String sourceTxnId);
 }

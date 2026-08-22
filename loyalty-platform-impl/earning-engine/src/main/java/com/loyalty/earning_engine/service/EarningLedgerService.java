@@ -80,4 +80,27 @@ public class EarningLedgerService {
         balanceRepository.save(balance);
         log.info("[Point Balance] Updated balance for member {}: new balance = {}", memberId, balance.getConfirmedBalance());
     }
+
+    /**
+     * Hủy giao dịch tích điểm khi Core Banking reverse (EXC-02, CON.1).
+     */
+    @Transactional
+    public boolean cancelTransaction(String sourceTxnId) {
+        return transactionRepository.findBySourceTxnId(sourceTxnId)
+                .map(txn -> {
+                    if (txn.getStatus() == TransactionStatus.CONFIRMED) {
+                        txn.setStatus(TransactionStatus.CANCELLED);
+                        transactionRepository.save(txn);
+                        // Trừ lại số điểm đã cộng
+                        balanceRepository.findByMemberIdAndProgramIdForUpdate(txn.getMemberId(), DEFAULT_PROGRAM)
+                                .ifPresent(bal -> {
+                                    bal.setConfirmedBalance(Math.max(0L, bal.getConfirmedBalance() - txn.getAmount()));
+                                    balanceRepository.save(bal);
+                                });
+                        log.info("[Earning Ledger] Reversal completed for sourceTxnId: {}", sourceTxnId);
+                        return true;
+                    }
+                    return false;
+                }).orElse(false);
+    }
 }

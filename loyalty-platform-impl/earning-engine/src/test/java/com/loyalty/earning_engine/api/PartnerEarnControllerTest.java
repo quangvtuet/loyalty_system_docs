@@ -1,8 +1,10 @@
 package com.loyalty.earning_engine.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loyalty.earning_engine.dto.EarnEventResponse;
 import com.loyalty.earning_engine.dto.PartnerEarnRequest;
 import com.loyalty.earning_engine.service.EarnCalculator;
+import com.loyalty.earning_engine.service.EarningLedgerService;
 import com.loyalty.earning_engine.service.IdempotencyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -28,9 +31,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - testSubmitEarn_DuplicateTransaction_Returns409    → CON.1 / EXC-01 / G6-A01: HTTP 409 matches OpenAPI
  * - testSubmitEarn_MissingTransactionId_Returns400    → OpenAPI 400 bad request
  * - testSubmitEarn_MissingMemberId_Returns400         → OpenAPI 400 bad request
+ * - testCancelEarn_HappyPath_Returns200               → EXC-02 / CON.1 cancelEarnTransaction, HTTP 200
  *
  * I-3 mocked: IdempotencyService (Redis) mocked via @MockitoBean — no live Redis.
- *             EarnCalculator mocked — no live Kafka, DB.
+ *             EarnCalculator, EarningLedgerService mocked — no live Kafka, DB.
  */
 @WebMvcTest(PartnerEarnController.class)
 class PartnerEarnControllerTest {
@@ -42,6 +46,9 @@ class PartnerEarnControllerTest {
 
     @MockitoBean
     private EarnCalculator earnCalculator;
+
+    @MockitoBean
+    private EarningLedgerService earningLedgerService;
 
     @MockitoBean
     private IdempotencyService idempotencyService;
@@ -56,7 +63,17 @@ class PartnerEarnControllerTest {
     void testSubmitEarn_HappyPath_Returns202() throws Exception {
         // Arrange: new event, not a duplicate
         when(idempotencyService.isDuplicate("txn-ctrl-001", "PARTNER")).thenReturn(false);
-        doNothing().when(earnCalculator).processEarn(any(), any(), any(), any(), any(), any());
+        EarnEventResponse mockResponse = EarnEventResponse.builder()
+                .sourceTxnId("txn-ctrl-001")
+                .memberId("member-001")
+                .basePoints(1000L)
+                .bonusPoints(0L)
+                .totalPoints(1000L)
+                .outcome("CONFIRMED")
+                .status(202)
+                .message("Earn request accepted and processed successfully")
+                .build();
+        when(earnCalculator.processEarn(any(), any(), any(), any(), any(), any())).thenReturn(mockResponse);
 
         PartnerEarnRequest request = new PartnerEarnRequest();
         request.setTransactionId("txn-ctrl-001");
@@ -70,7 +87,8 @@ class PartnerEarnControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.status").value(202))
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.sourceTxnId").value("txn-ctrl-001"))
+                .andExpect(jsonPath("$.outcome").value("CONFIRMED"));
 
         // Assert: earn was processed (not swallowed)
         verify(earnCalculator).processEarn(eq("member-001"), eq(1000), eq("txn-ctrl-001"), any(), any(), any());
@@ -80,10 +98,6 @@ class PartnerEarnControllerTest {
      * UC-LB-01 alt — CON.1 duplicate event at the HTTP layer (EXC-01 / G6-A01).
      * POST /api/v1/partners/earn with same transactionId → HTTP 409 Conflict.
      * OpenAPI operationId: recordEarn, response: 409 (ERR_EARN_DUPLICATE).
-     *
-     * This test attempts the I-5 hard rule skip at the HTTP layer (T3):
-     * a caller sends the exact same transactionId twice; the second call must be rejected with 409.
-     * Spec-trace: G6-A01, CON.1, I-5, T3, T5
      */
     @Test
     void testSubmitEarn_DuplicateTransaction_Returns409() throws Exception {
@@ -100,7 +114,8 @@ class PartnerEarnControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409));
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("ERR_EARN_DUPLICATE"));
 
         // Assert: EarnCalculator NOT called — no second PointTransaction written (CON.1)
         verify(earnCalculator, never()).processEarn(any(), any(), any(), any(), any(), any());
@@ -109,12 +124,10 @@ class PartnerEarnControllerTest {
     /**
      * Bad request — missing required transactionId.
      * HTTP 400 — matches OpenAPI recordEarn 400 response.
-     * Spec-trace: T5 (bad-request path)
      */
     @Test
     void testSubmitEarn_MissingTransactionId_Returns400() throws Exception {
         PartnerEarnRequest request = new PartnerEarnRequest();
-        // transactionId intentionally omitted
         request.setMemberId("member-001");
         request.setSpendAmount(500);
 
@@ -129,13 +142,11 @@ class PartnerEarnControllerTest {
     /**
      * Bad request — missing required memberId.
      * HTTP 400 — matches OpenAPI recordEarn 400 response.
-     * Spec-trace: T5 (bad-request path)
      */
     @Test
     void testSubmitEarn_MissingMemberId_Returns400() throws Exception {
         PartnerEarnRequest request = new PartnerEarnRequest();
         request.setTransactionId("txn-nomember");
-        // memberId intentionally omitted
         request.setSpendAmount(500);
 
         mockMvc.perform(post("/api/v1/partners/earn")
@@ -144,5 +155,23 @@ class PartnerEarnControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(earnCalculator, never()).processEarn(any(), any(), any(), any(), any(), any());
+    }
+
+    /**
+     * Core Banking reversal of rewarded earn event (EXC-02, CON.1).
+     * PATCH /api/v1/partners/earn/{sourceTxnId}/cancel → HTTP 200 OK.
+     * OpenAPI operationId: cancelEarnTransaction
+     */
+    @Test
+    void testCancelEarn_HappyPath_Returns200() throws Exception {
+        when(earningLedgerService.cancelTransaction("txn-rev-001")).thenReturn(true);
+
+        mockMvc.perform(patch("/api/v1/partners/earn/txn-rev-001/cancel")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.outcome").value("CANCELLED"))
+                .andExpect(jsonPath("$.sourceTxnId").value("txn-rev-001"));
+
+        verify(earningLedgerService).cancelTransaction(eq("txn-rev-001"));
     }
 }

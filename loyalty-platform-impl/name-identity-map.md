@@ -12,7 +12,7 @@
 | API Gateway | Edge & Ingestion Zone | — | *(simulated via direct HTTP calls in tests; not a separate Java module in this implementation)* | — | — |
 | Message Broker | Edge & Ingestion Zone | 9092 | *(Kafka — provided by `docker-compose.yml`)* | — | `loyalty.earning.qp_accrued` topic, `loyalty.tiering.tier_changed` topic |
 | Earning Engine Service | Domain Services Zone | 8081 | `earning-engine/` | `com.loyalty.earning_engine` | `EarningEngineApplication`, `EarnCalculator`, `EarningLedgerService`, `IdempotencyService` |
-| Tiering System Service | Domain Services Zone | 8082 | `tiering-system/` | `com.loyalty.tiering_system` | `TieringSystemApplication`, `QpLedgerService`, `TierUpgradeService`, `GracePeriodService` |
+| Tiering System Service | Domain Services Zone | 8082 | `tiering-system/` | `com.loyalty.tiering_system` | `TieringSystemApplication`, `MemberTierController`, `QpLedgerService`, `TierUpgradeService`, `GracePeriodService` |
 | Redemption Engine Service | Domain Services Zone | 8083 | `redemption-engine/` | `com.loyalty.redemption_engine` | `RedemptionEngineApplication`, `RedemptionService`, `CatalogService`, `BalanceLockService`, `FifoDebitService` |
 | Program Management Service | Domain Services Zone | 8084 | `program-management/` | `com.loyalty.program_management` | `ProgramManagementApplication`, `ProgramService`, `CampaignService`, `AuditLogService` |
 | Analytics & Reporting Service | Analytics Zone | 8085 | `analytics-reporting/` | `com.loyalty.analytics_reporting` | `AnalyticsReportingApplication`, `ReportingService` |

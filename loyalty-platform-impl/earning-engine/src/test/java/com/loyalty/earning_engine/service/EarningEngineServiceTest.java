@@ -1,14 +1,17 @@
 package com.loyalty.earning_engine.service;
 
+import com.loyalty.earning_engine.domain.FifoDebitAllocation;
 import com.loyalty.earning_engine.domain.PointBalance;
 import com.loyalty.earning_engine.domain.PointTransaction;
 import com.loyalty.earning_engine.domain.TransactionStatus;
 import com.loyalty.earning_engine.domain.TransactionType;
 import com.loyalty.earning_engine.dto.FifoDebitResponse;
 import com.loyalty.earning_engine.dto.FifoRestoreResponse;
+import com.loyalty.earning_engine.repository.FifoDebitAllocationRepository;
 import com.loyalty.earning_engine.repository.PointBalanceRepository;
 import com.loyalty.earning_engine.repository.PointTransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -33,6 +36,7 @@ import static org.mockito.Mockito.*;
  * - testProcessEarn_FloorRounding_PointsFloored           → DD-01 §3.1 FLOOR formula
  * - testDebitPointsFifo_MultipleBatches_DebitsOldestFirst → CT-13 DebitPointsFifo, FIFO ordering (FR-03-021)
  * - testRestorePoints_RestoresToOriginalBatches_PreservesEarnDate → CT-13 RestorePoints (CON.3 / EXC-05)
+ * - testRestorePoints_IdempotentReplay_NoDoubleCredit     → CT-13 / CON.3 Idempotency
  */
 class EarningEngineServiceTest {
 
@@ -41,6 +45,9 @@ class EarningEngineServiceTest {
 
     @Mock
     private PointBalanceRepository balanceRepository;
+
+    @Mock
+    private FifoDebitAllocationRepository allocationRepository;
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -53,7 +60,7 @@ class EarningEngineServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, null);
+        earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, allocationRepository);
         earnCalculator = new EarnCalculator(earningLedgerService, kafkaTemplate);
 
         when(balanceRepository.findByMemberIdAndProgramIdForUpdate(anyString(), anyString()))
@@ -144,6 +151,7 @@ class EarningEngineServiceTest {
      * CT-13: DebitPointsFifo — exercises FIFO batch allocation across multiple unexpired earn batches.
      * Batch 1 (oldest, 300 pts) + Batch 2 (newer, 500 pts).
      * Debit 400 pts -> Batch 1 fully depleted (0 pts), Batch 2 partially debited (remaining = 400).
+     * Production path: verifies FifoDebitAllocation entities are persisted.
      */
     @Test
     void testDebitPointsFifo_MultipleBatches_DebitsOldestFirst() {
@@ -160,8 +168,11 @@ class EarningEngineServiceTest {
         LocalDateTime oldestDate = LocalDateTime.now().minusDays(10);
         LocalDateTime newerDate = LocalDateTime.now().minusDays(2);
 
+        UUID batch1Id = UUID.randomUUID();
+        UUID batch2Id = UUID.randomUUID();
+
         PointTransaction batch1 = PointTransaction.builder()
-                .id(UUID.randomUUID())
+                .id(batch1Id)
                 .memberId("member-001")
                 .type(TransactionType.EARN)
                 .amount(300)
@@ -172,7 +183,7 @@ class EarningEngineServiceTest {
                 .build();
 
         PointTransaction batch2 = PointTransaction.builder()
-                .id(UUID.randomUUID())
+                .id(batch2Id)
                 .memberId("member-001")
                 .type(TransactionType.EARN)
                 .amount(500)
@@ -185,6 +196,8 @@ class EarningEngineServiceTest {
         List<PointTransaction> batches = new ArrayList<>(List.of(batch1, batch2));
         when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq("DEFAULT_PROG"), eq(TransactionStatus.CONFIRMED), any()))
                 .thenReturn(batches);
+        when(allocationRepository.findByOrderIdOrderByCreatedAtAsc("order-001"))
+                .thenReturn(Collections.emptyList());
 
         // Act: debit 400 points
         FifoDebitResponse response = earningLedgerService.debitPointsFifo("member-001", "DEFAULT_PROG", 400L, "order-001");
@@ -201,11 +214,25 @@ class EarningEngineServiceTest {
 
         // PointBalance must be updated to 400 (800 - 400)
         assertEquals(400L, balance.getConfirmedBalance());
+
+        // Verify FifoDebitAllocation was saved for each batch
+        ArgumentCaptor<FifoDebitAllocation> allocCaptor = ArgumentCaptor.forClass(FifoDebitAllocation.class);
+        verify(allocationRepository, times(2)).save(allocCaptor.capture());
+
+        List<FifoDebitAllocation> savedAllocations = allocCaptor.getAllValues();
+        assertEquals(batch1Id, savedAllocations.get(0).getBatchId());
+        assertEquals(300, savedAllocations.get(0).getPointsDebited());
+        assertFalse(savedAllocations.get(0).isRestored());
+
+        assertEquals(batch2Id, savedAllocations.get(1).getBatchId());
+        assertEquals(100, savedAllocations.get(1).getPointsDebited());
+        assertFalse(savedAllocations.get(1).isRestored());
     }
 
     /**
      * CT-13: RestorePoints — verifies that CON.3 / EXC-05 auto-reversal restores
-     * points to the original earn batches with original earn date and expiry intact.
+     * points to the exact original earn batches using FifoDebitAllocation,
+     * preserving original earn date and expiry date intact.
      */
     @Test
     void testRestorePoints_RestoresToOriginalBatches_PreservesEarnDate() {
@@ -222,8 +249,11 @@ class EarningEngineServiceTest {
         LocalDateTime originalEarnDate = LocalDateTime.now().minusDays(10);
         LocalDateTime originalExpiryDate = LocalDateTime.now().plusMonths(11);
 
+        UUID batch1Id = UUID.randomUUID();
+        UUID batch2Id = UUID.randomUUID();
+
         PointTransaction batch1 = PointTransaction.builder()
-                .id(UUID.randomUUID())
+                .id(batch1Id)
                 .memberId("member-001")
                 .type(TransactionType.EARN)
                 .amount(300)
@@ -234,7 +264,7 @@ class EarningEngineServiceTest {
                 .build();
 
         PointTransaction batch2 = PointTransaction.builder()
-                .id(UUID.randomUUID())
+                .id(batch2Id)
                 .memberId("member-001")
                 .type(TransactionType.EARN)
                 .amount(500)
@@ -244,9 +274,30 @@ class EarningEngineServiceTest {
                 .expiryDate(LocalDateTime.now().plusMonths(12))
                 .build();
 
-        List<PointTransaction> batches = new ArrayList<>(List.of(batch1, batch2));
-        when(transactionRepository.findUnexpiredBatchesForFifoDebit(eq("member-001"), eq("DEFAULT_PROG"), eq(TransactionStatus.CONFIRMED), any()))
-                .thenReturn(batches);
+        FifoDebitAllocation alloc1 = FifoDebitAllocation.builder()
+                .id(UUID.randomUUID())
+                .orderId("order-001")
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .batchId(batch1Id)
+                .pointsDebited(300)
+                .restored(false)
+                .build();
+
+        FifoDebitAllocation alloc2 = FifoDebitAllocation.builder()
+                .id(UUID.randomUUID())
+                .orderId("order-001")
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .batchId(batch2Id)
+                .pointsDebited(100)
+                .restored(false)
+                .build();
+
+        when(allocationRepository.findByOrderIdOrderByCreatedAtAsc("order-001"))
+                .thenReturn(List.of(alloc1, alloc2));
+        when(transactionRepository.findById(batch1Id)).thenReturn(Optional.of(batch1));
+        when(transactionRepository.findById(batch2Id)).thenReturn(Optional.of(batch2));
 
         // Act: restore 400 points under CON.3
         FifoRestoreResponse response = earningLedgerService.restorePoints(
@@ -266,5 +317,41 @@ class EarningEngineServiceTest {
 
         // Balance restored back to 800 (400 + 400)
         assertEquals(800L, balance.getConfirmedBalance());
+
+        // Allocations marked as restored
+        assertTrue(alloc1.isRestored());
+        assertTrue(alloc2.isRestored());
+        verify(allocationRepository, times(2)).save(any(FifoDebitAllocation.class));
+    }
+
+    /**
+     * CT-13 / CON.3 Idempotency: Replaying an already-restored order returns RESTORED
+     * without double-crediting balances or batches.
+     */
+    @Test
+    @DisplayName("G5 / CON.3: Duplicate restore request is idempotent and does not double-credit")
+    void testRestorePoints_IdempotentReplay_NoDoubleCredit() {
+        FifoDebitAllocation alloc = FifoDebitAllocation.builder()
+                .id(UUID.randomUUID())
+                .orderId("order-001")
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .batchId(UUID.randomUUID())
+                .pointsDebited(300)
+                .restored(true) // already restored
+                .build();
+
+        when(allocationRepository.findByOrderIdOrderByCreatedAtAsc("order-001"))
+                .thenReturn(List.of(alloc));
+
+        FifoRestoreResponse response = earningLedgerService.restorePoints(
+                "member-001", "DEFAULT_PROG", "order-001", 300L, "PARTNER_FAILURE");
+
+        assertEquals("RESTORED", response.getStatus());
+        assertEquals("Points restore already applied", response.getMessage());
+
+        // Verify balanceRepository and transactionRepository were NOT mutated again
+        verify(balanceRepository, never()).findByMemberIdAndProgramIdForUpdate(anyString(), anyString());
+        verify(transactionRepository, never()).findById(any());
     }
 }

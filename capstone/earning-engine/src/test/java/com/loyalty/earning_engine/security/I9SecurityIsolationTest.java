@@ -1,17 +1,22 @@
 package com.loyalty.earning_engine.security;
 
+import com.loyalty.earning_engine.domain.OwnershipViolationException;
 import com.loyalty.earning_engine.domain.PointBalance;
 import com.loyalty.earning_engine.domain.PointTransaction;
+import com.loyalty.earning_engine.domain.TransactionStatus;
+import com.loyalty.earning_engine.domain.TransactionType;
 import com.loyalty.earning_engine.repository.FifoDebitAllocationRepository;
 import com.loyalty.earning_engine.repository.PointBalanceRepository;
 import com.loyalty.earning_engine.repository.PointTransactionRepository;
 import com.loyalty.earning_engine.service.EarningLedgerService;
+import com.loyalty.earning_engine.store.OwnedEarningStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -44,25 +49,143 @@ class I9SecurityIsolationTest {
     @Mock
     private FifoDebitAllocationRepository allocationRepository;
 
+    private OwnedEarningStore ownedEarningStore;
     private EarningLedgerService earningLedgerService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        ownedEarningStore = new OwnedEarningStore(transactionRepository, balanceRepository);
         earningLedgerService = new EarningLedgerService(transactionRepository, balanceRepository, allocationRepository);
     }
 
     /**
+     * NEG-I9-01: Direct write attempt by Partner Systems to Earning DB is refused under EXC-04.
+     */
+    @Test
+    @DisplayName("NEG-I9-01: Direct write attempt by Partner Systems to Earning DB throws OwnershipViolationException and preserves ledger")
+    void testPartnerSystems_DirectWriteToEarningDb_RefusedWithUnchangedLedger() {
+        PointTransaction forgedTxn = PointTransaction.builder()
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .sourceTxnId("forged-partner-001")
+                .amount(50000)
+                .remainingBalance(50000)
+                .type(TransactionType.EARN)
+                .status(TransactionStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // Attempt direct write from Partner Systems
+        assertThrows(OwnershipViolationException.class, () ->
+                ownedEarningStore.appendTransaction("Partner Systems", forgedTxn)
+        );
+
+        // Assert: 0 writes occurred to Earning DB
+        verify(transactionRepository, never()).save(any(PointTransaction.class));
+        verify(balanceRepository, never()).save(any(PointBalance.class));
+    }
+
+    /**
+     * NEG-I9-02: Direct write attempt by Core Banking System to Earning DB is refused under EXC-04.
+     */
+    @Test
+    @DisplayName("NEG-I9-02: Direct write attempt by Core Banking System to Earning DB throws OwnershipViolationException and preserves ledger")
+    void testCoreBankingSystem_DirectWriteToEarningDb_RefusedWithUnchangedLedger() {
+        PointTransaction forgedTxn = PointTransaction.builder()
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .sourceTxnId("forged-core-001")
+                .amount(100000)
+                .remainingBalance(100000)
+                .type(TransactionType.EARN)
+                .status(TransactionStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // Attempt direct write from Core Banking System
+        assertThrows(OwnershipViolationException.class, () ->
+                ownedEarningStore.appendTransaction("Core Banking System", forgedTxn)
+        );
+
+        verify(transactionRepository, never()).save(any(PointTransaction.class));
+        verify(balanceRepository, never()).save(any(PointBalance.class));
+    }
+
+    /**
+     * NEG-I9-03: Direct write attempt by CRM & Notification Gateway to Earning DB is refused under EXC-04.
+     */
+    @Test
+    @DisplayName("NEG-I9-03: Direct write attempt by CRM & Notification Gateway to Earning DB throws OwnershipViolationException and preserves ledger")
+    void testCrmNotificationGateway_DirectWriteToEarningDb_RefusedWithUnchangedLedger() {
+        PointBalance forgedBalance = PointBalance.builder()
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .confirmedBalance(999999L)
+                .pendingBalance(0L)
+                .build();
+
+        // Attempt direct balance update from CRM & Notification Gateway
+        assertThrows(OwnershipViolationException.class, () ->
+                ownedEarningStore.updateBalance("CRM & Notification Gateway", forgedBalance)
+        );
+
+        verify(balanceRepository, never()).save(any(PointBalance.class));
+        verify(transactionRepository, never()).save(any(PointTransaction.class));
+    }
+
+    /**
+     * NEG-I9-04: Direct write attempt by Member to Earning DB is refused under EXC-04.
+     */
+    @Test
+    @DisplayName("NEG-I9-04: Direct write attempt by Member to Earning DB throws OwnershipViolationException and preserves ledger")
+    void testMember_DirectWriteToEarningDb_RefusedWithUnchangedLedger() {
+        PointTransaction forgedTxn = PointTransaction.builder()
+                .memberId("attacker-001")
+                .programId("DEFAULT_PROG")
+                .sourceTxnId("forged-member-001")
+                .amount(1000000)
+                .remainingBalance(1000000)
+                .type(TransactionType.BONUS)
+                .status(TransactionStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        assertThrows(OwnershipViolationException.class, () ->
+                ownedEarningStore.appendTransaction("Member", forgedTxn)
+        );
+
+        verify(transactionRepository, never()).save(any(PointTransaction.class));
+    }
+
+    /**
+     * POS-I9-01: Authorized owner (Earning Engine Service) can write to Earning DB.
+     */
+    @Test
+    @DisplayName("POS-I9-01: Authorized writer Earning Engine Service successfully appends to Earning DB")
+    void testEarningEngineService_AuthorizedOwnerWrite_AppendedSuccessfully() {
+        PointTransaction validTxn = PointTransaction.builder()
+                .memberId("member-001")
+                .programId("DEFAULT_PROG")
+                .sourceTxnId("valid-txn-001")
+                .amount(500)
+                .remainingBalance(500)
+                .type(TransactionType.EARN)
+                .status(TransactionStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(transactionRepository.save(validTxn)).thenReturn(validTxn);
+
+        PointTransaction saved = ownedEarningStore.appendTransaction("Earning Engine Service", validTxn);
+
+        assertNotNull(saved);
+        verify(transactionRepository, times(1)).save(validTxn);
+    }
+
+    /**
      * T4 / I-9 Hard Rule Negative Test:
-     * Non-owning caller attempts direct FIFO debit mutation with invalid parameters
-     * (e.g. negative points or missing orderId).
-     *
-     * Verification:
-     * 1. Operation is refused with IllegalArgumentException.
-     * 2. PointTransactionRepository is NEVER saved.
-     * 3. PointBalanceRepository is NEVER saved.
-     * 4. FifoDebitAllocationRepository is NEVER saved.
-     * 5. Earning DB ledger state remains completely intact.
+     * Non-owning caller attempts direct FIFO debit mutation with invalid parameters.
      */
     @Test
     @DisplayName("T4: Direct/invalid debit attempt without valid contract is rejected with zero ledger mutation")
@@ -84,12 +207,6 @@ class I9SecurityIsolationTest {
     /**
      * T4 / I-9 Hard Rule Negative Test:
      * Non-owner / unauthorized caller attempts to restore points without an existing CT-13 debit allocation.
-     *
-     * Verification:
-     * 1. Operation is refused with IllegalStateException (ERR_RED_UNKNOWN_ALLOCATION).
-     * 2. PointTransactionRepository is NEVER saved (no rogue REVERSAL written).
-     * 3. PointBalance is NEVER incremented.
-     * 4. Earning DB ledger remains strictly unmodified.
      */
     @Test
     @DisplayName("T4: Direct restore attempt without valid allocation is rejected with zero ledger mutation")
@@ -108,10 +225,6 @@ class I9SecurityIsolationTest {
     /**
      * T4 / I-9 Hard Rule Negative Test:
      * Non-owner attempts to cancel a non-existent or unowned source transaction.
-     *
-     * Verification:
-     * 1. cancelTransaction returns false.
-     * 2. PointTransactionRepository and PointBalanceRepository are NEVER touched.
      */
     @Test
     @DisplayName("T4: Unauthorized cancellation of unknown transaction leaves Earning DB untouched")
@@ -129,10 +242,6 @@ class I9SecurityIsolationTest {
     /**
      * T4 / I-9 Negative Test:
      * Direct debit request against a member with 0 / missing balance in Earning DB.
-     *
-     * Verification:
-     * 1. Refused with IllegalStateException (ERR_RED_INSUFFICIENT_BALANCE).
-     * 2. Zero transactions or balance changes committed to Earning DB.
      */
     @Test
     @DisplayName("T4: Direct debit against missing member balance refused with zero state change")

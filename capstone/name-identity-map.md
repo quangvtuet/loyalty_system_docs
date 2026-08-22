@@ -64,8 +64,8 @@ Per capstone rules: **I-3 mocked** — no real host names, no production credent
 
 | Lab 1 I-7 Data Object | Source of Truth | Implementing JPA Entity | Table Name |
 |---|---|---|---|
-| `PointTransaction` | Earning DB | `com.loyalty.earning_engine.domain.PointTransaction` | `point_transaction` |
-| `PointBalance` | Earning DB | `com.loyalty.earning_engine.domain.PointBalance` | `point_balance` |
+| `PointTransaction` | Earning DB | `com.loyalty.earning_engine.domain.PointTransaction` (gated by `OwnedEarningStore` / `OwnershipViolationException`) | `point_transaction` |
+| `PointBalance` | Earning DB | `com.loyalty.earning_engine.domain.PointBalance` (gated by `OwnedEarningStore` / `OwnershipViolationException`) | `point_balance` |
 | `FifoDebitAllocation` | Earning DB | `com.loyalty.earning_engine.domain.FifoDebitAllocation` | `fifo_debit_allocation` |
 | `MemberTier` | Tiering DB | `com.loyalty.tiering_system.domain.MemberTier` | `member_tier` |
 | `RedemptionOrder` | Redemption DB | `com.loyalty.redemption_engine.domain.RedemptionOrder` | `redemption_order` |

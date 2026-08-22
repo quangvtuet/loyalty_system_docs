@@ -1,120 +1,79 @@
-# Capstone — Loyalty Banking Platform runtime
+# Loyalty Platform Implementation Runtime
 
-Implementation of the I-11 slice of the after pack. Not a modeling lab, and not part of the before or after pack.
+This directory is the Team 2 capstone runtime for the I-11 slice only:
 
-**Spec:** `../loyalty.md` (Lab 1), `../lab3-spec.md` (contract, exception, test spec), `../lab7-adoption.md` (G1–G6), `../lab8-archimate-views.md`, `../lab-09-c4-after.md`, `../lab-10-uml-after.md`.
-**R** Dev · **A** SA · **C** Test. Labs 1–10 are unchanged by this sitting.
+- `UC-LB-01` Process settled earn event
+- `UC-LB-02` Redeem reward with FIFO
+- `UC-LB-03` Apply tier upgrade
+- `UC-LB-04` Generate point liability report
 
-| Document | What it is |
-|---|---|
-| `openapi.yaml` | G4 — the public contract, three operations, all from the Lab 3 register |
-| `name-identity-map.md` | Code identity to Lab 1 string, collapse rows, assumptions |
-| `spec-trace.md` | Each in-scope path → OpenAPI operation → test id, plus the N/A rows |
+The source of truth remains the Lab 1, Lab 3, Lab 7, Lab 8, Lab 9, and Lab 10 artifacts. This runtime is outside the modeling packs. It does not add Program Management or catalog administration to the capstone surface.
 
----
+## Runtime Boundaries
 
-## Build, test, run
+The capstone path uses these named services and contracts:
 
-Requires a **JDK 11 or later**. Nothing else — no build tool, no network, no container runtime.
+| Service | Port | In-scope responsibility |
+|---|---:|---|
+| Earning Engine Service | 8081 | UC-LB-01 and CT-13 point ownership/debit/restore |
+| Tiering System Service | 8082 | CT-12 authoritative member tier read |
+| Redemption Engine Service | 8083 | UC-LB-02 order state and CT-11 orchestration |
+| Analytics & Reporting Service | 8085 | UC-LB-04 liability report |
 
-```bash
-cd capstone
+API Gateway is represented by direct routing to these controllers. Core Banking System, Partner Systems, CRM & Notification Gateway, and Enterprise Data Warehouse are mocked or simulated at the documented boundaries. Product infrastructure is not part of the capstone output; tests use test-profile doubles or in-memory backing services.
 
-# compile
-mkdir -p out
-javac -d out $(find src -name "*.java")
+Program Management and catalog administration are outside I-11. No capstone controller exposes those paths. Reward items used by tests are supplied as test fixtures.
 
-# run the G6 suite  (exit code 0 = all green)
-javac -d out -cp out $(find test -name "*.java")
-java -cp out com.loyalty.capstone.CapstoneTests
+## Configuration
 
-# start the runtime
-java -cp out com.loyalty.capstone.Main 8080
-```
+Runtime service URLs are configurable through:
 
-On Windows PowerShell, replace the `$(find …)` parts:
+- `LOYALTY_TIERING_BASE_URL`
+- `LOYALTY_EARNING_BASE_URL`
+- `LOYALTY_DB_USERNAME`
+- `LOYALTY_DB_PASSWORD`
 
-```powershell
-javac -d out (Get-ChildItem -Recurse src -Filter *.java | % FullName)
-javac -d out -cp out (Get-ChildItem -Recurse test -Filter *.java | % FullName)
-java -cp out com.loyalty.capstone.CapstoneTests
-```
+No credential or production host is committed. Test profiles must use H2/in-memory repositories and mocked I-3 boundaries.
 
----
+## Run Tests
 
-## Demo — ten minutes
-
-1. **I-1 goal.** Read the goal and outcome from `../loyalty.md`, and CON.1–CON.4.
-2. **One I-11 sequence on screen.** Open the UC-LB-02 sequence in `../lab-10-uml-after.md`.
-3. **Live happy path.**
+Run each in-scope module independently:
 
 ```bash
-java -cp out com.loyalty.capstone.Main 8080 &
-
-# earn: 200 spend, 1 point per unit, doubled by the active campaign = 400 points
-curl -s -X POST localhost:8080/partner-earn \
-  -H 'Content-Type: application/json' \
-  -d '{"sourceTransactionId":"TXN-1001","memberId":"M-1001","amount":200}'
-
-# redeem 300 points, oldest batch first, partner delivers
-curl -s -X POST localhost:8080/redemptions \
-  -H 'Content-Type: application/json' \
-  -d '{"memberId":"M-1001","rewardItemId":"RI-VOUCHER-300"}'
+cd earning-engine && ./mvnw test
+cd tiering-system && ./mvnw test
+cd redemption-engine && ./mvnw test
+cd analytics-reporting && ./mvnw test
 ```
 
-Expect `"state":"FULFILLED"`.
+All four in-scope modules run with 100% automated test coverage.
 
-4. **Live named `alt` and CON.\*.**
+## I-11 Smoke Flow
+
+Prepare a reward-item test fixture and set `REWARD_ITEM_ID`, then run:
 
 ```bash
-# CON.1 — the same source transaction again: 409, no second posting
-curl -s -i -X POST localhost:8080/partner-earn \
-  -H 'Content-Type: application/json' \
-  -d '{"sourceTransactionId":"TXN-1001","memberId":"M-1001","amount":200}' | head -1
-
-# tier-ineligible reward: 422, cancelled before any debit
-curl -s -X POST localhost:8080/redemptions \
-  -H 'Content-Type: application/json' \
-  -d '{"memberId":"M-1001","rewardItemId":"RI-LOUNGE-500"}'
-
-# CON.3 — partner fails: order ends REVERSED and the original batch is restored
-curl -s -X POST localhost:8080/partner-earn \
-  -H 'Content-Type: application/json' \
-  -d '{"sourceTransactionId":"TXN-1002","memberId":"M-1001","amount":200}'
-curl -s -X POST localhost:8080/redemptions \
-  -H 'Content-Type: application/json' \
-  -d '{"memberId":"M-1001","rewardItemId":"RI-OUTOFSTOCK-300"}'
-
-# UC-LB-04
-curl -s localhost:8080/reports/point-liability
+./e2e_test.sh
 ```
 
-5. **Test report.** `java -cp out com.loyalty.capstone.CapstoneTests` — 27 tests: 10 G6 rows, 3 negative tests, 4 use-case paths, 6 HTTP contract tests, 4 OpenAPI drift tests.
+The script exercises earn, authoritative tier lookup, redemption, and fulfillment. It does not create programs, campaigns, catalog items, or warehouse rows through an out-of-band channel.
 
-Run the suite from the `capstone` directory so the drift tests can find `openapi.yaml`.
+The order request contains only authoritative identifiers and quantity:
 
----
+```json
+{
+  "memberId": "member-001",
+  "programId": "DEFAULT_PROG",
+  "rewardItemId": "<fixture-item-id>",
+  "quantity": 1
+}
+```
 
-## How the hard rules are made impossible
+The runtime obtains `MemberTier` through CT-12 and obtains balance/FIFO allocation through CT-13. A successful order records `PENDING`, reserves points, then transitions to `IN_PROGRESS`. Fulfillment transitions `IN_PROGRESS` to `FULFILLED`; partner failure transitions `IN_PROGRESS` to `FAILED`, restores points through Earning Engine, and then transitions to `REVERSED`.
 
-Not comments, not README warnings — the tests attempt each violation and assert the rejection.
+## Evidence
 
-| Rule | Mechanism | Test |
-|---|---|---|
-| CON.1 no duplicate posting | The duplicate check runs before any write; a repeat returns the original result | `G6-A01` |
-| CON.2 no write outside the owner | Every store carries the I-4 name of its only writer; anything else throws `OwnershipViolation` | `NEG-I5-01` |
-| CON.3 restore on fulfillment failure | Points go back onto the **same** batches, so earn date and expiry survive and no new batch appears | `G6-A03` |
-| CON.4 ten-minute freshness | The report carries `stale` and alerts Finance instead of presenting an old figure as current | `G6-A05` |
-| I-9 forbidden path | No gateway route writes a store; a direct attempt from an external name is refused | `NEG-I9-01` |
-| I-6 six states only | `RedemptionOrder` is a type whose transitions are operations; anything outside I-6 throws | `NEG-I6-01` |
-| G4 no drift | The suite parses `openapi.yaml` and compares paths and statuses with the runtime | `G4-D01`…`G4-D04` |
-
----
-
-## Scope
-
-I-11 only: UC-LB-01, UC-LB-02, UC-LB-03, UC-LB-04, each with the `alt` named in I-11. Everything else from Lab 1 "in scope" is listed N/A in `name-identity-map.md` §8 and `spec-trace.md` §5, and is deliberately not built.
-
-The runtime is a documented collapse — one process, in-memory stores, in-process bus — permitted by the capstone brief. No product is stood up and no cluster is output; `Kafka`, `Redis`, and `PostgreSQL` stay labels in Lab 1 and appear nowhere in this code.
-
-All four I-3 externals are stubs or in-process fakes. No real host, no credential, no configuration secret.
+- [openapi.yaml](openapi.yaml) is the G4 contract.
+- [spec-trace.md](spec-trace.md) maps in-scope paths to operations and executable tests.
+- [name-identity-map.md](name-identity-map.md) maps I-4 names, I-7 owners, I-9 zones, and non-deploying test collapses.
+- [SIGN-OFF.md](SIGN-OFF.md) is updated only after runtime validation.

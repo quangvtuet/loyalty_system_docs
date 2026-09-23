@@ -1,8 +1,13 @@
 # Quality Gates — Design
+
+> **Not a gate for this pack — outside the modeling pack.**
+> The only quality gates for this pack are **G1-G6**, adopted in [`../lab7-adoption.md`](../lab7-adoption.md).
+> This document was written before the pack was re-sequenced. It does not gate, block, or sign off anything, and it still uses the old container names and the old constraint set.
+
 **Domain**: Loyalty Banking
-**Version**: 1.0
-**Date**: 2026-08-13
-**Source**: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) | FR-01..05 | AS-01..05
+**Version**: 1.1
+**Date**: 2026-08-14
+**Source**: [loyalty_domain.md](../lab2-requirements.md) | FR-01..05 | AS-01..05
 
 ---
 
@@ -51,7 +56,7 @@ Compliance              Validation               Sign-Off                  Accur
 | G01-01-003 | Bonus rule is evaluated **after** base earn calculation | FR-01-020 | Trace execution order; assert base calculated first | 🔲 |
 | G01-01-004 | When multiple bonus campaigns apply (no stacking), the **highest multiplier** wins | FR-01-022 | Two campaigns: 2× and 3×; assert 3× applied, 2× skipped | 🔲 |
 | G01-01-005 | When stacking is enabled, **all** applicable bonus points are summed | FR-01-022 | Two campaigns: +50 and +100 flat bonus; assert +150 total | 🔲 |
-| G01-01-006 | The **same source transaction** cannot credit points more than once (idempotency) | FR-01-041 | Submit identical event twice; assert only one credit exists in ledger | 🔲 |
+| G01-01-006 | The **same source transaction** cannot credit points more than once (idempotency) | FR-01-041 | Submit identical event twice; assert only one credit exists in Sổ cái (Earning Ledger) | 🔲 |
 | G01-01-007 | `PENDING` points transition to `CONFIRMED` upon settlement; transition to `CANCELLED` upon reversal | FR-01-031, FR-01-032 | Submit auth → verify PENDING; send settlement → verify CONFIRMED | 🔲 |
 | G01-01-008 | FIFO expiry: oldest earn batch consumed first during redemption | FR-01-053 | Create 2 batches (Jan, Mar); redeem → assert Jan batch consumed first | 🔲 |
 | G01-01-009 | Point expiry auto-debit fires on scheduled expiry date | FR-01-051 | Set expiry to tomorrow; run expiry job; verify debit in ledger | 🔲 |
@@ -64,9 +69,9 @@ Compliance              Validation               Sign-Off                  Accur
 | ID | Business Rule | FR Source | Test Assertion | Status |
 |----|--------------|-----------|---------------|--------|
 | G01-02-001 | QP balance is **separate** from redeemable point balance; earning 100 QP does not add 100 redeemable points | FR-02-001 | Check both balances after QP accrual; assert independence | 🔲 |
-| G01-02-002 | Tier upgrade takes effect **immediately** when QP threshold is crossed | FR-02-011 | Member at Silver (999 QP); earns 1 more QP → assert instant Gold upgrade | 🔲 |
+| G01-02-002 | Tier upgrade takes effect **immediately** when QP threshold is crossed | FR-02-011 | Member at Silver (999 QP); earns 1 more QP → assert instant Gold upgrade (1,000 QP threshold) | 🔲 |
 | G01-02-003 | A member may upgrade through **multiple tiers** in one QP accrual if balance exceeds multiple thresholds | FR-02-013 | Member at Silver (0 QP) earns 5,000 QP (Gold=1,000, Platinum=3,000) → assert Platinum upgrade | 🔲 |
-| G01-02-004 | Tier downgrade takes effect only **after** the evaluation cycle + grace period | FR-02-022, FR-02-030 | End-of-period: member below threshold → assert still on current tier during grace period | 🔲 |
+| G01-02-004 | Tier downgrade takes effect only **after** the evaluation cycle + grace period (30 days) | FR-02-022, FR-02-030 | End-of-period: member below threshold → assert still on current tier during 30-day grace period | 🔲 |
 | G01-02-005 | Member downgrades **one tier at a time** per cycle (default config) | FR-02-023 | Platinum member qualifies for Silver at evaluation → assert downgrade to Gold, not Silver | 🔲 |
 | G01-02-006 | QP resets to **zero** at the start of each new tier period; redeemable balance unaffected | FR-02-003 | After period reset: assert QP=0; assert redeemable balance unchanged | 🔲 |
 | G01-02-007 | Grace period rescue: member earns required QP before grace expires → downgrade cancelled | FR-02-033 | Initiate grace period; member earns QP to meet threshold → assert downgrade_cancelled event | 🔲 |
@@ -132,18 +137,18 @@ Compliance              Validation               Sign-Off                  Accur
 
 | Flow ID | Scenario | Modules Crossed | Pass Conditions |
 |---------|----------|----------------|----------------|
-| **FLOW-01** | **Standard Earn + Bonus** | Core Banking → Earning Engine → Program Mgmt (Campaign) → Ledger | Base points + bonus points both credited; campaign ID recorded; ledger shows 2 entries (EARN + BONUS) |
+| **FLOW-01** | **Standard Earn + Bonus** | Core Banking → Earning Engine → Program Mgmt (Campaign) → Sổ cái (Earning Ledger) | Base points + bonus points both credited; campaign ID recorded; Sổ cái (Earning Ledger) shows 2 entries (EARN + BONUS) |
 | **FLOW-02** | **Earn Triggers Tier Upgrade** | Core Banking → Earning (QP) → Tiering → Benefit Activation → Earning | QP accrued; threshold crossed → Gold tier activated; Earning Engine applies 1.5× rate on next transaction |
 | **FLOW-03** | **End-of-Period Tier Downgrade with Grace** | Tiering Batch → Notification → Member earns QP → Grace Rescue | Batch initiates downgrade; notification sent; member earns rescue QP; downgrade cancelled; member retains tier |
-| **FLOW-04** | **Redemption with FIFO Point Consumption** | Member → Redemption Engine → Earning Ledger (FIFO) → Fulfillment | Oldest batch consumed first; PENDING_DEBIT created; fulfillment FULFILLED; CONFIRMED_DEBIT finalized |
+| **FLOW-04** | **Redemption with FIFO Point Consumption** | Member → Redemption Engine → Sổ cái (Earning Ledger) (FIFO) → Fulfillment | Oldest batch consumed first; PENDING_DEBIT created; fulfillment FULFILLED; CONFIRMED_DEBIT finalized |
 | **FLOW-05** | **Fulfillment Failure → Auto Reversal** | Redemption Engine → Fulfillment Partner (FAILED) → Ledger (REVERSAL) | Points reversed with original earn_date and expiry_date restored; member balance correct; notification sent |
 | **FLOW-06** | **Campaign Activation Mid-Day** | Program Mgmt → Earning Engine | Campaign activated at 14:00; transactions before 14:00 unaffected; transactions from 14:00 onward apply campaign bonus |
 | **FLOW-07** | **Earn Rule Version Change** | Program Mgmt → Earning Engine | Earn rate changed; verify past ledger entries unchanged; next earn event uses new rate |
-| **FLOW-08** | **Partner Earn Event** | Partner API → Earning Engine → Ledger | Partner submits earn event via API; OAuth authenticated; points credited; source_type='PARTNER' tagged in ledger |
+| **FLOW-08** | **Partner Earn Event** | Partner API → Earning Engine → Sổ cái (Earning Ledger) | Partner submits earn event via API; OAuth authenticated; points credited; source_type='PARTNER' tagged in Sổ cái (Earning Ledger) |
 | **FLOW-09** | **Tier-Restricted Redemption Attempt** | Member (Silver) → Redemption Engine → Tiering (tier check) | Silver member requests Platinum item; Redemption Engine calls Tier API; tier check fails; redemption rejected |
 | **FLOW-10** | **Analytics Aggregation** | Earning Engine → ETL → DW → Report | Earn event committed; within 10 min appears in DW; Point Issuance Report reflects new data |
 | **FLOW-11** | **Manual Balance Adjustment with Approval** | Program Admin → Program Mgmt → Approval Workflow → Ledger | High-value adjustment submitted; routed to approver; approved; ledger updated; audit log complete |
-| **FLOW-12** | **Point Expiry and Breakage Capture** | Earning Engine (Expiry Job) → Ledger → Analytics (Breakage Rate) | Expiry job fires; expired debit in ledger; DW reflects expired volume; Breakage Rate report updated |
+| **FLOW-12** | **Point Expiry and Breakage Capture** | Earning Engine (Expiry Job) → Sổ cái (Earning Ledger) → Analytics (Breakage Rate) | Expiry job fires; expired debit in Sổ cái (Earning Ledger); DW reflects expired volume; Breakage Rate report updated |
 
 ---
 
@@ -336,4 +341,4 @@ Compliance              Validation               Sign-Off                  Accur
 
 ---
 
-*Source documents: [loyalty_domain.md](file:///d:/learn/loyalty/loyalty_domain.md) · [FR-01](file:///d:/learn/loyalty/requirements/FR-01-earning-engine.md) · [FR-02](file:///d:/learn/loyalty/requirements/FR-02-tiering-system.md) · [FR-03](file:///d:/learn/loyalty/requirements/FR-03-redemption-engine.md) · [FR-04](file:///d:/learn/loyalty/requirements/FR-04-program-management.md) · [FR-05](file:///d:/learn/loyalty/requirements/FR-05-analytics-reporting.md) · [AS-01](file:///d:/learn/loyalty/analytics/AS-01-earning-engine.md) · [AS-02](file:///d:/learn/loyalty/analytics/AS-02-tiering-system.md) · [AS-03](file:///d:/learn/loyalty/analytics/AS-03-redemption-engine.md) · [AS-04](file:///d:/learn/loyalty/analytics/AS-04-program-management.md) · [AS-05](file:///d:/learn/loyalty/analytics/AS-05-analytics-reporting.md)*
+*Source documents: [loyalty_domain.md](../lab2-requirements.md) · [FR-01](../lab2-requirements.md) · [FR-02](../lab2-requirements.md) · [FR-03](../lab2-requirements.md) · [FR-04](../lab2-requirements.md) · [FR-05](../lab2-requirements.md) · [AS-01](../lab2-requirements.md) · [AS-02](../lab2-requirements.md) · [AS-03](../lab2-requirements.md) · [AS-04](../lab2-requirements.md) · [AS-05](../lab2-requirements.md)*

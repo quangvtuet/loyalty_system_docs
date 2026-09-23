@@ -2,6 +2,8 @@
 
 Welcome to the **Loyalty Banking Platform** repository. This project is a comprehensive case study and executable reference architecture demonstrating **Model-Driven Design (MDD)** for an enterprise banking loyalty system.
 
+> 💡 **New to this project or architecture?** Check out the [**🎓 Beginner's Guide (GETTING-STARTED.md)**](GETTING-STARTED.md) for a gentle 3-day roadmap, mental models, and component walkthroughs.
+
 ---
 
 ## 🎯 Quick Navigation & Learning Path

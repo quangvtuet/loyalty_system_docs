@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9bc9c2b3-4e9a-4b8c-a95d-4c34fd1fec6c" name="Changes" comment="tier system">
-      <change beforePath="$PROJECT_DIR$/architecture/Architectural-Governance-Framework.md" beforeDir="false" afterPath="$PROJECT_DIR$/architecture/Architectural-Governance-Framework.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/capstone/test/com/loyalty/capstone/CapstoneTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/capstone/test/com/loyalty/capstone/CapstoneTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loyalty-platform-impl/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/loyalty-platform-impl/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +62,7 @@
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "feature/capstone__temp",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/hoangdd/Desktop/personal/workspace/AI-study-2/loyalty-platform-impl/tiering-system",
     "nodejs_package_manager_path": "npm",
